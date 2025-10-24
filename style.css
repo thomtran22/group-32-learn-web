@@ -715,3 +715,294 @@
   position: absolute;
   object-fit: cover;
 }
+
+.thuong-header {
+  background-color: #fff;
+  border-bottom: 1px solid #eee;
+  font-family: "Inter", sans-serif;
+}
+
+.thuong-header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+}
+
+.thuong-logo img {
+  height: 45px;
+  object-fit: contain;
+}
+
+.thuong-nav {
+  display: flex;
+  gap: 25px;
+}
+
+.thuong-nav a {
+  text-decoration: none;
+  color: #222;
+  font-weight: 500;
+  font-size: 15px;
+  transition: color 0.3s;
+}
+
+.thuong-nav a:hover {
+  color: #e63946;
+}
+
+.thuong-search {
+  position: relative;
+}
+
+.thuong-search input {
+  padding: 6px 30px 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.thuong-search-icon {
+  position: absolute;
+  right: 8px;
+  top: 6px;
+  font-size: 16px;
+  color: #888;
+}
+
+.thuong-icons {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.thuong-icons i {
+  font-size: 20px;
+  color: #222;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.thuong-icons i:hover {
+  color: #e63946;
+}
+
+/* =============================== */
+/* 🔹 PHẦN BODY CHI TIẾT SẢN PHẨM 🔹 */
+/* =============================== */
+
+.thuong-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  font-family: "Inter", sans-serif;
+}
+
+.thuong-product-detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 40px;
+  margin-bottom: 80px;
+}
+
+.thuong-images {
+  flex: 1 1 45%;
+}
+
+.thuong-main-img {
+  width: 100%;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
+.thuong-thumb-list {
+  display: flex;
+  gap: 10px;
+}
+
+.thuong-thumb-list img {
+  width: 80px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.thuong-thumb-list img:hover {
+  border-color: #000;
+  transform: scale(1.05);
+}
+
+.thuong-info {
+  flex: 1 1 45%;
+}
+
+.thuong-info h1 {
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.thuong-price {
+  font-size: 22px;
+  color: #e63946;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.thuong-color,
+.thuong-size {
+  margin-bottom: 15px;
+}
+
+.thuong-color span,
+.thuong-size span {
+  display: inline-block;
+  margin-right: 10px;
+  font-weight: 600;
+}
+
+.thuong-size button {
+  margin-right: 10px;
+  padding: 6px 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.thuong-size button:hover {
+  background-color: #000;
+  color: #fff;
+  border-color: #000;
+}
+
+.thuong-quantity {
+  margin-bottom: 20px;
+}
+
+.thuong-quantity input {
+  width: 60px;
+  text-align: center;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.thuong-add-cart {
+  display: inline-block;
+  background-color: #000;
+  color: #fff;
+  padding: 12px 28px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.thuong-add-cart:hover {
+  background-color: #333;
+}
+
+.thuong-description {
+  margin-top: 30px;
+  font-size: 16px;
+  color: #444;
+  line-height: 1.6;
+}
+
+/* --- Sản phẩm bán chạy --- */
+.thuong-hot-title {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 30px;
+}
+
+.thuong-hot-products {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 25px;
+}
+
+.thuong-card {
+  text-align: center;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #eee;
+  transition: 0.3s;
+}
+
+.thuong-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+.thuong-card img {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+}
+
+.thuong-card h3 {
+  font-size: 18px;
+  margin: 10px 0 5px;
+}
+
+.thuong-card .thuong-price {
+  font-size: 17px;
+  margin-bottom: 15px;
+}
+
+/* --- Footer --- */
+footer {
+  background-color: #f3f3f3;
+  padding: 40px 20px;
+  font-size: 14px;
+  color: #444;
+}
+
+.thuong-footer-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 25px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.thuong-footer-container h4 {
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.thuong-footer-container ul {
+  list-style: none;
+  padding: 0;
+}
+
+.thuong-footer-container li {
+  margin-bottom: 6px;
+}
+
+.thuong-footer-container a {
+  color: #444;
+  text-decoration: none;
+}
+
+.thuong-footer-container a:hover {
+  text-decoration: underline;
+}
+
+.thuong-footer-bottom {
+  text-align: center;
+  margin-top: 30px;
+  font-size: 13px;
+  color: #777;
+}
