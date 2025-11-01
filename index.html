@@ -190,5 +190,29 @@
         <img src="./asset/images/image-33-69.png" alt="Logo 4" />
       </div>
     </footer>
+      <div id="ai-fab" aria-label="Chat AI" title="Chat AI">
+        <img src="./asset/images/ic_ai.png" alt="AI" />
+      </div>
+
+      <div id="ai-popup" hidden>
+        <div class="ai-head">
+          <div class="ai-title">AI Chat</div>
+          <button id="ai-close" aria-label="Đóng">×</button>
+        </div>
+        <div class="ai-body">
+          <div class="ai-model">
+            <input id="ai-model" value="llama3.1" />
+            <span>model</span>
+          </div>
+          <div id="ai-msgs"></div>
+        </div>
+        <div class="ai-foot">
+          <input id="ai-input" placeholder="Nhập câu hỏi..." />
+          <button id="ai-send">Gửi</button>
+        </div>
+      </div>
+
+      <script src="./ai-chat-widget.js"></script>
+
   </body>
 </html>
