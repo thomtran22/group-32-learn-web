@@ -13,4 +13,5 @@ Mục tiêu: hiện thực hóa bản thiết kế thành một website hiện �
 - Trang chi tiết sản phẩm: hình ảnh, size, màu sắc, giá  
 - Giỏ hàng & thanh toán  
 - Đăng ký/Đăng nhập người dùng  
+
 - Responsive: tối ưu cho desktop, tablet và mobile  
