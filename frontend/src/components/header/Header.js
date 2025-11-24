@@ -7,6 +7,8 @@ import { useCart } from '../../context/CartContext';
 
 function Header() {
   const { cartCount } = useCart();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const closeModal = () => setIsModalOpen(false);
   const navLinkClass = ({ isActive }) =>
     `text-xl md:text-lg font-bold tracking-widest transition duration-150 uppercase border-b-2 pb-1 ${isActive
       ? "text-red-600 border-red-600"
@@ -59,11 +61,19 @@ function Header() {
                 </Link>
 
                 {/* Người dùng */}
-                <Link to="/profile" className="flex items-center gap-2 group p-2 hover:bg-gray-100 rounded-lg transition-all duration-300">
-                  <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 group-hover:bg-red-100 transition-colors">
-                    <FaUser className="text-xl text-gray-600 group-hover:text-red-600" />
-                  </div>
-                </Link>
+              <div
+                className="flex items-center gap-2 group p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 cursor-pointer"
+                onClick={() => setIsModalOpen(true)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") setIsModalOpen(true);
+                }}
+              >
+                <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 group-hover:bg-red-100 transition-colors">
+                  <FaUser className="text-xl text-gray-600 group-hover:text-red-600" />
+                </div>
+              </div>
               </div>
             </div>
 
@@ -87,6 +97,7 @@ function Header() {
           </div>
         </div>
       </header>
+      {isModalOpen && <LoginModal closeModal={closeModal} />}
     </>
   );
 }
