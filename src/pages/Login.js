@@ -1,13 +1,10 @@
 // src/pages/Login.js
 import React from "react";
+import "../assets/css/style.css";
+import LoginSignupPage from "../components/LoginSignupPage";
 
 function Login() {
-  return (
-    <div style={{ padding: "50px", textAlign: "center" }}>
-      <h1>Đăng nhập / Đăng ký</h1>
-      <p>Đang cập nhật...</p>
-    </div>
-  );
+  return <LoginSignupPage />;
 }
 
 export default Login;
