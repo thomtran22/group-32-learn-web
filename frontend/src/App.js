@@ -5,7 +5,12 @@ import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Cart from "./pages/Cart";
 import Login from "./pages/Login";
+import Checkout from "./pages/Checkout"
+
 import "./assets/css/style.css";
+import "./assets/css/globals.css";
+import "./assets/css/cart.css";
+import "./assets/css/checkout.css";
 
 function App() {
   return (
@@ -14,6 +19,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />}/>
         <Route path="/login" element={<Login />} />
       </Routes>
       <Footer />

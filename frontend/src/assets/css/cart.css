@@ -1,0 +1,206 @@
+.container {
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+/* --- Cart Layout --- */
+.cart-layout {
+    display: flex;
+    gap: 30px;
+}
+.cart-details {
+    flex: 2.5;
+}
+.order-summary {
+    flex: 1;
+}
+
+/* --- Cart Table --- */
+.cart-table {
+    width: 100%;
+}
+.cart-header, .cart-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+.cart-header {
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-light);
+    font-size: 12px;
+}
+.header-item {
+    text-align: left;
+}
+.product-col { flex: 3; }
+.price-col, .subtotal-col { flex: 1; text-align: left; }
+.quantity-col { flex: 1.2; }
+
+/* Product Info */
+.cart-item .product-col {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.cart-item .product-col img {
+    width: 90px;
+    height: 110px;
+    object-fit: cover;
+    border: 1px solid var(--border-color);
+}
+.product-info p {
+    margin: 4px 0;
+    color: var(--text-light);
+    font-size: 13px;
+}
+.product-name {
+    font-weight: 700;
+    text-decoration: none;
+    color: var(--text-color);
+    font-size: 16px;
+}
+.product-name:hover { color: var(--primary-color); }
+.remove-item {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 13px;
+}
+
+/* Quantity Selector */
+.quantity-selector {
+    display: flex;
+    border: 1px solid var(--border-color);
+    width: fit-content;
+}
+.quantity-selector input {
+    width: 40px;
+    text-align: center;
+    border: none;
+    font-size: 16px;
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+.quantity-selector input::-webkit-outer-spin-button,
+.quantity-selector input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.btn-quantity {
+    border: none;
+    background: #fff;
+    cursor: pointer;
+    font-size: 20px;
+    padding: 5px 12px;
+    color: var(--text-light);
+}
+
+/* Order Summary */
+.order-summary {
+    background-color: var(--background-color);
+    padding: 25px;
+    height: fit-content;
+}
+.order-summary h2 {
+    font-size: 18px;
+    margin-top: 0;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+.summary-row.total {
+    font-weight: 700;
+    font-size: 16px;
+}
+.btn-checkout {
+    width: 100%;
+    background-color: var(--primary-color);
+    color: #fff;
+    border: none;
+    padding: 15px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    margin-bottom: 20px;
+}
+
+/* Coupon, Shipping, Payment */
+.coupon-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+.coupon-input {
+    display: flex;
+}
+.coupon-input input {
+    flex-grow: 1;
+    border: 1px solid var(--border-color);
+    padding: 10px;
+}
+.coupon-input button {
+    border: none;
+    background-color: var(--secondary-color);
+    color: #fff;
+    padding: 0 15px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.shipping-info {
+    font-size: 13px;
+    padding: 15px 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    margin-top: 20px;
+}
+.payment-methods {
+    margin-top: 20px;
+}
+.payment-methods p {
+    margin-bottom: 10px;
+    color: var(--text-light);
+}
+.payment-methods img {
+    margin-right: 10px;
+}
+
+/* --- Responsive for Cart --- */
+@media (max-width: 992px) {
+    .cart-layout {
+        flex-direction: column;
+    }
+}
+@media (max-width: 600px) {
+    .cart-header { display: none; }
+    .cart-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+        position: relative;
+    }
+    .price-col, .subtotal-col, .quantity-col {
+        width: 100%;
+        text-align: left;
+    }
+    .subtotal-col {
+        text-align: right;
+        font-weight: 700;
+        font-size: 16px;
+    }
+    .quantity-col::before {
+        content: 'Số lượng: ';
+        font-weight: 700;
+        margin-right: 10px;
+    }
+     .price-col::before {
+        content: 'Giá: ';
+        font-weight: 700;
+        margin-right: 10px;
+    }
+}

@@ -3,6 +3,12 @@
 :root {
     --color-text-dark: #000;
     --color-text-light: #EE1010;
+
+    --primary-color: #c9252c; /* Màu đỏ nút bấm, link */
+    --secondary-color: #212529; /* Màu đen xám */
+    --border-color: #e5e5e5;
+    --background-color: #f8f9fa;
+    
     --font: "Inter Tight", sans-serif;
 
     --fs-xxl: 36px;
