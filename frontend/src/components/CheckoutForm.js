@@ -1,10 +1,69 @@
-import React from "react";
+import React, {useState, useEffect} from "react";
 
 const CheckoutForm = ({formData, handleChange}) => {
+
+    const [provinces, setProvinces] = useState([]);
+    const [districts, setDistricts] = useState([]);
+    const [wards, setWards] = useState([]);
+
+    useEffect(() => {
+        const fetchProvinces = async () => {
+            try {
+                const response = await fetch('https://provinces.open-api.vn/api/?depth=1');
+                const data = await response.json();
+                setProvinces(data);
+            } catch (error) {
+                console.error("Lỗi khi lấy danh sách tỉnh thành:", error);
+            }
+        };
+        fetchProvinces();
+    }, []);
+
+    {/*Xử lí khi chọn Tỉnh thành phố*/}
+    const handleProvinceChange = async (e) => {
+        handleChange(e);
+        handleChange({ target: { name: 'district', value: '' } });
+        handleChange({ target: { name: 'ward', value: '' } });
+        setDistricts([]);
+        setWards([]);
+
+        {/*Lấy danh sách Quận/Huyện mới dựa trên code Tỉnh*/}
+        const provinceCode = e.target.value;
+        if (provinceCode) {
+            try {
+                const res = await fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
+                const data = await res.json();
+                setDistricts(data.districts);
+            } catch (error) {
+                console.error("Lỗi lấy quận huyện:", error);
+            }
+        }
+    };
+
+    {/*Xu li khi chon quan huyen */}
+    const handleDistrictChange = async (e) => {
+        handleChange(e);
+
+        handleChange({target: {name: 'ward', value: ''}});
+        setWards([]);
+
+        const districtCode = e.target.value;
+        if(districtCode) {
+            try {
+                const res = await fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
+                const data = await res.json();
+                setWards(data.wards);
+            } catch (error) {
+                console.error("Lỗi lấy xã phường:", error);
+            }
+        }
+    };
+
     return (
         <section className="billing-details">
             <h2 className="section-title">ĐỊA CHỈ GIAO HÀNG</h2>
             <form action="#" method="POST">
+                {/*Nhap ho ten*/}
                 <div className="form-group">
                     <label htmlFor="fullname">Họ và tên *</label>
                     <input
@@ -17,6 +76,7 @@ const CheckoutForm = ({formData, handleChange}) => {
                     />
                 </div>
                 
+                {/*Nhap so dien thoai*/}
                 <div className="form-row">
                     <div className="form-group">
                         <label htmlFor="phone">Số điện thoại *</label>
@@ -28,6 +88,8 @@ const CheckoutForm = ({formData, handleChange}) => {
                             onChange={handleChange}     // <-- Kết nối với hàm xử lý
                         />
                     </div>
+
+                    {/*Nhap email*/}
                     <div className="form-group">
                         <label htmlFor="email">Email *</label>
                         <input 
@@ -41,28 +103,40 @@ const CheckoutForm = ({formData, handleChange}) => {
                 </div>
 
                 <div className="form-row">
+                    {/*Chon tinh thanh pho*/}
                     <div className="form-group">
                         <label htmlFor="city">Tỉnh/Thành phố *</label>
                         <select
                             id="city"
                             name="city"
                             value={formData.city} // <-- Kết nối với state
-                            onChange={handleChange}     // <-- Kết nối với hàm xử lý
+                            onChange={handleProvinceChange}    // <-- Kết nối với hàm xử lý
                         >
-                            <option value="hanoi" >Hà Nội</option>
-                            {/* Thêm các tỉnh thành khác ở đây */}
+                            <option value="" >Hà Nội</option>
+                            {provinces.map((province) => (
+                                <option key={province.code} value={province.code}>
+                                    {province.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
+
+                    {/*Chon quan huyen*/}
                     <div className="form-group">
                         <label htmlFor="district">Quận/Huyện *</label>
                         <select
                             id="district"
                             name="district"
                             value={formData.district} // <-- Kết nối với state
-                            onChange={handleChange}     // <-- Kết nối với hàm xử lý
+                            onChange={handleDistrictChange} // Dùng hàm xử lý riêng
+                            disabled={!formData.city}
                         >
-                            <option value="" disabled >Chọn quận huyện</option>
-                            {/* Thêm các quận huyện ở đây */}
+                            <option value="">Chọn Quận/Huyện</option>
+                            {districts.map((district) => (
+                                <option key={district.code} value={district.code}>
+                                    {district.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
                 </div>
@@ -70,18 +144,28 @@ const CheckoutForm = ({formData, handleChange}) => {
                 <div className="form-row">
                     <div className="form-group">
                         <label htmlFor="ward">Xã/Phường *</label>
-                        <select id="ward" name="ward" value={formData.ward} onChange={handleChange}>
-                            <option value="" disabled >Chọn xã/phường</option>
-                            {/* Thêm các xã phường ở đây */}
+                        <select 
+                            id="ward" 
+                            name="ward" 
+                            value={formData.ward} 
+                            onChange={handleChange} // Xã phường chỉ cần handleChange gốc
+                            disabled={!formData.district} // Khóa nếu chưa chọn Huyện
+                        >
+                            <option value="">Chọn xã/phường</option>
+                            {wards.map((ward) => (
+                                <option key={ward.code} value={ward.code}>
+                                    {ward.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
                     <div className="form-group">
-                        <label htmlFor="street">Street address *</label>
+                        <label htmlFor="street">Địa chỉ cụ thể *</label>
                         <input 
                             type="text"
                             id="street"
                             name="street"
-                            placeholder="Ví dụ: Số 20, ngõ 90"
+                            placeholder="Số nhà, tên đường..."
                             value={formData.street} // <-- Kết nối với state
                             onChange={handleChange}     // <-- Kết nối với hàm xử lý
                         />
@@ -96,7 +180,7 @@ const CheckoutForm = ({formData, handleChange}) => {
                         id="ordernotes"
                         name="ordernotes"
                         rows="4"
-                        placeholder="Notes about your order, e.g. special notes for delivery."
+                        placeholder="Ví dụ: Giao hàng vào giờ hành chính..."
                         value={formData.ordernotes}
                         onChange={handleChange}
                     >

@@ -13,7 +13,7 @@ const Checkout = () => {
         fullname: '',
         phone: '',
         email: '',
-        city: 'hanoi',
+        city: '',
         district: '',
         ward: '',
         street: '',
@@ -97,8 +97,8 @@ const Checkout = () => {
                     <CheckoutForm formData={formData} handleChange={handleChange}/>
                     <CheckoutSummary 
                         items={cartItems}
-                        total={totalAmountFormatted}
-                        totalNumber={totalAmount}
+                        totalAmountFormatted={totalAmountFormatted} 
+                        totalAmount={totalAmount}
                         onSubmit={handleSubmit}
                         paymentMethod={paymentMethod}
                         setPaymentMethod={setPaymentMethod}

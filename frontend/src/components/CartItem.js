@@ -13,14 +13,16 @@ const CartItem = ({item, onRemove, onUpdateQuantity}) => {
                     <a href="#" className="product-name">{item.name}</a>
                     <p>Màu sắc: {item.color}</p>
                     <p>Cỡ: {item.size}</p>
-                    <a
-                        href="#"
-                        className="remove-item"
+                    <button className="remove-item"
                         onClick={(e) => {
                             e.preventDefault();
-                            onRemove(item.id);
+                            if (window.confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
+                                onRemove(item.id);
+                            }
                         }}
-                    >Xoá</a>
+                    >
+                        <i className="fas fa-trash-alt"></i> Xóa  
+                    </button>
                 </div>
             </div>
             <div className="price-col">{priceFormatted} VND</div>

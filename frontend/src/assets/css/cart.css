@@ -452,6 +452,12 @@
     margin-left: 20px;
 }
 
+/* Đường kẻ ngang */
+.summary-divider {
+    border-top: 1px solid var(--border-color, #e5e5e5);
+    margin: 15px 0 20px 0;
+}
+
 .order-summary .summary-row {
     display: flex;
     justify-content: space-between;
@@ -468,6 +474,38 @@
 .total-amount {
     color: var(--primary-color);
     font-weight: 700;
+}
+
+/* Style riêng cho phí ship */
+.shipping-fee.free {
+    color: #27ae60; /* Màu xanh lá */
+    font-weight: 700;
+}
+
+/* Shipping Alert (Thông báo Freeship) */
+.shipping-alert {
+    padding: 12px;
+    font-size: 13px;
+    text-align: center;
+    background-color: #fff;
+    border: 1px dashed;
+    margin-bottom: 20px;
+}
+
+.shipping-alert.success {
+    border-color: #27ae60;
+    background-color: #f0fdf4;
+    color: #27ae60;
+}
+
+.shipping-alert.warning {
+    border-color: #f39c12;
+    background-color: #fefcf5;
+    color: #d35400;
+}
+
+.shipping-alert p {
+    margin: 0;
 }
 
 /* Payment Methods Container */

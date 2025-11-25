@@ -1,8 +1,8 @@
 import React from 'react';
 
 import VnPayLogo from "../assets/images/vnpay.png"
-// Nhận thêm props: paymentMethod, setPaymentMethod, totalNumber
-const CheckoutSummary = ({ items, totalAmountFormatted, totalNumber, onSubmit, paymentMethod, setPaymentMethod }) => {
+
+const CheckoutSummary = ({ items ,totalAmount, totalAmountFormatted, onSubmit, paymentMethod, setPaymentMethod }) => {
   
   return (
     <aside className="your-order">
@@ -27,7 +27,7 @@ const CheckoutSummary = ({ items, totalAmountFormatted, totalNumber, onSubmit, p
 
         <div className="summary-row total">
           <span>Tổng cộng</span>
-          <span className="total-amount">{totalAmountFormatted}</span>
+          <span className="total-amount">{totalAmountFormatted} VND</span>
         </div>
       </div>
 
@@ -71,7 +71,7 @@ const CheckoutSummary = ({ items, totalAmountFormatted, totalNumber, onSubmit, p
               </p>
               <div className="qr-image-wrapper">
                 <img 
-                  src={`https://img.vietqr.io/image/MB-0987654321-compact2.png?amount=${totalNumber}&addInfo=Thanh toan don hang&accountName=CONG TY ABC`}
+                  src={`https://img.vietqr.io/image/MB-0987654321-compact2.png?amount=${totalAmount}&addInfo=Thanh toan don hang&accountName=CONG TY ABC`}
                   alt="QR Code Thanh Toán" 
                   className="qr-image"
                 />

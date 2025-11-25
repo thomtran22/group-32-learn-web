@@ -5,7 +5,7 @@ import CartItem from "../components/CartItem";
 import OrderSummary from '../components/OrderSummary';
 
 const Cart = () => {
-    const { cartItems, handleRemoveItem, handleUpdateQuantity, totalAmountFormatted } = useCart();
+    const { cartItems, handleRemoveItem, handleUpdateQuantity,totalAmount, totalAmountFormatted } = useCart();
 
     {/*Nếu giỏ hàng trống*/}
     if(cartItems.length === 0) {
@@ -24,35 +24,38 @@ const Cart = () => {
     }
     return (
         <>
-          <div className="container">
+            <div className="container">
 
-              <div className="cart-layout">
-                  {/* Cột bên trái: Chi tiết giỏ hàng */}
-                  <section className="cart-details">
-                      <div className="cart-table">
-                          {/* Tiêu đề bảng */}
-                          <div className="cart-header">
-                              <div className="header-item product-col">SẢN PHẨM</div>
-                              <div className="header-item">GIÁ</div>
-                              <div className="header-item">SỐ LƯỢNG</div>
-                              <div className="header-item subtotal-col">ĐƠN GIÁ</div>
-                          </div>
+                <div className="cart-layout">
+                    {/* Cột bên trái: Chi tiết giỏ hàng */}
+                    <section className="cart-details">
+                        <div className="cart-table">
+                            {/* Tiêu đề bảng */}
+                            <div className="cart-header">
+                                <div className="header-item product-col">SẢN PHẨM</div>
+                                <div className="header-item">GIÁ</div>
+                                <div className="header-item">SỐ LƯỢNG</div>
+                                <div className="header-item subtotal-col">ĐƠN GIÁ</div>
+                            </div>
 
-                          {cartItems.map(product => (
-                              <CartItem 
-                                  key={product.id}
-                                  item={product} 
-                                  onRemove = {handleRemoveItem}
-                                  onUpdateQuantity = {handleUpdateQuantity}
-                              />
-                          ))}
-                      </div>
-                  </section>
+                            {cartItems.map(product => (
+                                <CartItem 
+                                    key={product.id}
+                                    item={product} 
+                                    onRemove = {handleRemoveItem}
+                                    onUpdateQuantity = {handleUpdateQuantity}
+                                />
+                            ))}
+                        </div>
+                    </section>
 
-                  {/* Cột bên phải: Tóm tắt đơn hàng */}
-                  <OrderSummary total={totalAmountFormatted}/>
-              </div>
-          </div>
+                    {/* Cột bên phải: Tóm tắt đơn hàng */}
+                    <OrderSummary 
+                        totalString={totalAmountFormatted}
+                        totalNumber={totalAmount}
+                    />
+                </div>
+            </div>
         </>
     );
 };
