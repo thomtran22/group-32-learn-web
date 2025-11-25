@@ -119,6 +119,51 @@
     font-size: 16px;
     border-bottom: none;
 }
+
+/* CSS cho phần chọn thanh toán */
+.payment-option {
+    border: 1px solid #ddd;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    background: #fff;
+    transition: all 0.3s;
+}
+
+.payment-option.active {
+    border-color: #d32f2f; /* Màu đỏ chủ đạo */
+    background-color: #fff9f9;
+}
+
+.payment-option input {
+    margin-right: 10px;
+}
+
+.payment-option label {
+    font-weight: 500;
+    cursor: pointer;
+}
+
+/* CSS cho hộp QR Code */
+.qr-code-box {
+    margin-top: 10px;
+    text-align: center;
+    background: #f4f4f4;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.qr-code-box img {
+    max-width: 150px; /* Chỉnh kích thước QR cho vừa vặn */
+    margin: 5px 0;
+    border: 1px solid #ccc;
+}
+
+.bank-info small {
+    display: block;
+    color: #555;
+}
 .payment-method {
     padding: 15px;
     background-color: #f7f7f7;

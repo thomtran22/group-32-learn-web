@@ -7,6 +7,8 @@ const Checkout = () => {
 
     const { cartItems, totalAmount, totalAmountFormatted } = useCart();
 
+    const [paymentMethod, setPaymentMethod] = useState('COD');
+
     const [formData, setFormData] = useState({
         fullname: '',
         phone: '',
@@ -40,11 +42,20 @@ const Checkout = () => {
         const orderDetails = {
             customerInfo: formData, // Thông tin khách hàng từ form
             orderItems: cartItems,   // Thông tin sản phẩm từ giỏ hàng
-            totalAmount: totalAmount // Dùng số, không dùng chuỗi đã format
+            totalAmount: totalAmount, // Dùng số, không dùng chuỗi đã format
+            paymentMethod: paymentMethod
         };
 
-        console.log('ĐƠN HÀNG SẴN SÀNG ĐỂ GỬI ĐI:', orderDetails);
-        alert('Đặt hàng thành công! (Kiểm tra console để xem chi tiết)');
+        console.log('ĐƠN HÀNG:', orderDetails);
+        
+        if(paymentMethod === 'VNPAY'){
+            alert("Đang chuyển hướng sang cổng thanh toán VNPAY Sandbox...");
+
+        } else if (paymentMethod === 'BANKING') {
+            alert("Vui lòng hoàn tất chuyển khoản để chúng tôi giao hàng!");
+        } else {
+            alert('Đặt hàng COD thành công! Chúng tôi sẽ liên hệ sớm.');
+        }
     };
 
     return (
@@ -57,7 +68,14 @@ const Checkout = () => {
 
                 <div className="checkout-layout">
                     <CheckoutForm formData={formData} handleChange={handleChange}/>
-                    <CheckoutSummary items={cartItems} total={totalAmountFormatted} onSubmit={handleSubmit}/>
+                    <CheckoutSummary 
+                        items={cartItems}
+                        total={totalAmountFormatted}
+                        totalNumber={totalAmount}
+                        onSubmit={handleSubmit}
+                        paymentMethod={paymentMethod}
+                        setPaymentMethod={setPaymentMethod}
+                    />
                 </div>
             </div>
         </>
