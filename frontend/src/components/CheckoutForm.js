@@ -33,6 +33,7 @@ const CheckoutForm = ({formData, handleChange}) => {
                         <input 
                             type="email"
                             id="email" name="email"
+                            placeholder="Email của bạn"
                             value={formData.email} // <-- Kết nối với state
                             onChange={handleChange}     // <-- Kết nối với hàm xử lý
                         />

@@ -12,7 +12,7 @@ const Checkout = () => {
     const [formData, setFormData] = useState({
         fullname: '',
         phone: '',
-        email: 'nguyenvathienkf3232@gmail.com',
+        email: '',
         city: 'hanoi',
         district: '',
         ward: '',
@@ -39,22 +39,49 @@ const Checkout = () => {
             return; // Dừng lại nếu thiếu thông tin
         }
 
+        if (!formData.district || !formData.ward || !formData.street) {
+            alert('Vui lòng điền đầy đủ địa chỉ giao hàng.');
+            return;
+        }
+
+        // Validate email format nếu có nhập
+        if (formData.email && !formData.email.includes('@')) {
+            alert('Email không hợp lệ.');
+            return;
+        }
+
         const orderDetails = {
             customerInfo: formData, // Thông tin khách hàng từ form
             orderItems: cartItems,   // Thông tin sản phẩm từ giỏ hàng
             totalAmount: totalAmount, // Dùng số, không dùng chuỗi đã format
-            paymentMethod: paymentMethod
+            paymentMethod: paymentMethod,
+            orderDate: new Date().toISOString()
         };
 
-        console.log('ĐƠN HÀNG:', orderDetails);
+        console.log('===== ĐƠN HÀNG CHI TIẾT =====');
+        console.log(orderDetails);
+        console.log('============================');
         
-        if(paymentMethod === 'VNPAY'){
-            alert("Đang chuyển hướng sang cổng thanh toán VNPAY Sandbox...");
+        switch(paymentMethod) {
+            case 'COD':
+                alert('✅ Đặt hàng thành công!\n\nBạn sẽ thanh toán khi nhận hàng.\nChúng tôi sẽ liên hệ với bạn sớm nhất.');
+                // TODO: Gửi đơn hàng lên server
+                break;
+                
+            case 'BANKING':
+                alert('✅ Đặt hàng thành công!\n\nVui lòng chuyển khoản theo thông tin QR Code đã hiển thị.\nĐơn hàng sẽ được xử lý sau khi nhận được thanh toán.');
+                // TODO: Gửi đơn hàng lên server với trạng thái "chờ thanh toán"
+                break;
+                
+            case 'VNPAY':
+                alert('Đang chuyển hướng đến cổng thanh toán VNPay...');
+                // TODO: Gọi API tạo URL thanh toán VNPay
+                // window.location.href = vnpayUrl;
 
-        } else if (paymentMethod === 'BANKING') {
-            alert("Vui lòng hoàn tất chuyển khoản để chúng tôi giao hàng!");
-        } else {
-            alert('Đặt hàng COD thành công! Chúng tôi sẽ liên hệ sớm.');
+                break;
+                
+            default:
+                alert('Vui lòng chọn phương thức thanh toán.');
         }
     };
 

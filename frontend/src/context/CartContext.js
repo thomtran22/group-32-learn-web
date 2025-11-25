@@ -1,4 +1,4 @@
-import React, {createContext, useState, useContext} from "react";
+import React, {createContext, useState, useContext, useEffect} from "react";
 
 const CartContext = createContext();
 
@@ -7,28 +7,17 @@ export const useCart = () => {
 };
 
 export const CartProvider = ({children}) => {
-    const [cartItems, setCartItems] = useState([
-        {
-            id: 1,
-            name: 'Áo sơ mi nam SKDTK601',
-            image: require('../assets/images/image-34.png'),
-            color: 'Xanh Indigo',
-            size: 'L',
-            price: 379000,
-            quantity: 1,
-        },
-        {
-            id: 2,
-            name: 'Áo polo nam POHTK404',
-            image: require('../assets/images/image-34.png'),
-            color: 'Đen',
-            size: 'XL',
-            price: 479000,
-            quantity: 1,
-        }
-    ]);
+    const [cartItems, setCartItems] = useState(() => {
+        const savedCart = localStorage.getItem('cartItems');
+        return savedCart ? JSON.parse(savedCart) : []; // Kiểm tra trong LocalStorage nếu có thì truyền vào
+    });
 
-    const totalAmount = cartItems.reduce((sum,item) => sum + item.price * item.quantity, 0);
+    useEffect(() => {
+        localStorage.setItem('cartItems', JSON.stringify(cartItems));
+    }, [cartItems]);
+    const totalAmount = cartItems.reduce((total,item) => {
+        return total + (item.price * item.quantity);
+    }, 0);
 
     const totalAmountFormatted = totalAmount.toLocaleString('vi-VN');
     
@@ -37,6 +26,26 @@ export const CartProvider = ({children}) => {
         setCartItems(updateCart);
     };
     
+    const addToCart = (product) => {
+        setCartItems(prevItems => {
+            const existingItem = prevItems.find(
+                item => item.id === product.id && 
+                        item.color === product.color && 
+                        item.size === product.size
+            );
+
+            if (existingItem) {
+                return prevItems.map(item =>
+                    item.id === product.id && 
+                    item.color === product.color && 
+                    item.size === product.size
+                    ? { ...item, quantity: item.quantity + product.quantity }
+                    : item
+                );
+            }
+            return [...prevItems, product];
+        });
+    };
     const handleUpdateQuantity = (itemId, newQuantity) => {
         if(newQuantity < 1) return;
 
@@ -54,12 +63,18 @@ export const CartProvider = ({children}) => {
         setCartItems(updateCart);
     };
 
+    const clearCart = () => {
+        setCartItems([]);
+    };
+
     const value = {
         cartItems,
         handleRemoveItem,
         handleUpdateQuantity,
         totalAmount, // Chia sẻ cả số
-        totalAmountFormatted // Và chuỗi đã format
+        totalAmountFormatted, // Và chuỗi đã format
+        addToCart,
+        clearCart
     };
 
     return (

@@ -1,7 +1,8 @@
 import React from 'react';
 
+import VnPayLogo from "../assets/images/vnpay.png"
 // Nhận thêm props: paymentMethod, setPaymentMethod, totalNumber
-const CheckoutSummary = ({ items, totalFormatted, totalNumber, onSubmit, paymentMethod, setPaymentMethod }) => {
+const CheckoutSummary = ({ items, totalAmountFormatted, totalNumber, onSubmit, paymentMethod, setPaymentMethod }) => {
   
   return (
     <aside className="your-order">
@@ -26,64 +27,119 @@ const CheckoutSummary = ({ items, totalFormatted, totalNumber, onSubmit, payment
 
         <div className="summary-row total">
           <span>Tổng cộng</span>
-          <span style={{color: '#d32f2f', fontWeight: 'bold'}}>{totalFormatted}</span>
+          <span className="total-amount">{totalAmountFormatted}</span>
         </div>
       </div>
 
-      {/* --- PHẦN CHỌN PHƯƠNG THỨC THANH TOÁN (MỚI) --- */}
-      <div className="payment-methods-container" style={{marginTop: '20px'}}>
-        <h3 style={{fontSize: '16px', marginBottom: '15px'}}>Phương thức thanh toán</h3>
+      {/* PHẦN CHỌN PHƯƠNG THỨC THANH TOÁN */}
+      <div className="payment-methods-container">
+        <h3 className="payment-title">Phương thức thanh toán</h3>
         
-        {/* 1. Option COD */}
+        {/* 1. Thanh toán khi nhận hàng (COD) */}
         <div 
-            className={`payment-option ${paymentMethod === 'COD' ? 'active' : ''}`}
-            onClick={() => setPaymentMethod('COD')}
+          className={`payment-option ${paymentMethod === 'COD' ? 'active' : ''}`}
+          onClick={() => setPaymentMethod('COD')}
         >
-            <input type="radio" checked={paymentMethod === 'COD'} readOnly />
-            <label>Thanh toán khi nhận hàng (COD)</label>
+          <input 
+            type="radio" 
+            name="payment" 
+            checked={paymentMethod === 'COD'} 
+            onChange={() => {}} 
+          />
+          <label>
+            <i className="fas fa-money-bill-wave"></i>
+            Thanh toán khi nhận hàng (COD)
+          </label>
         </div>
 
-        {/* 2. Option Banking (Hiện QR) */}
-        <div 
-            className={`payment-option ${paymentMethod === 'BANKING' ? 'active' : ''}`}
-            onClick={() => setPaymentMethod('BANKING')}
-        >
-            <input type="radio" checked={paymentMethod === 'BANKING'} readOnly />
-            <label>Chuyển khoản ngân hàng</label>
-            
-            {/* Chỉ hiện QR khi chọn Banking */}
-            {paymentMethod === 'BANKING' && (
-                <div className="qr-code-box">
-                    <p>Quét mã để thanh toán:</p>
-                    {/* Tạo QR động theo số tiền totalNumber */}
-                    <img 
-                        src={`https://img.vietqr.io/image/MB-0987654321-compact2.png?amount=${totalNumber}&addInfo=DH MUA HANG`} 
-                        alt="QR Code" 
-                    />
-                    <div className="bank-info">
-                        <small>Ngân hàng: MB Bank</small><br/>
-                        <small>STK: 0987654321</small>
-                    </div>
+        {/* 2. Chuyển khoản ngân hàng (QR Code) */}
+        <div className={`payment-option ${paymentMethod === 'BANKING' ? 'active' : ''}`}
+          onClick={() => setPaymentMethod('BANKING')}>
+          
+          <input type="radio" name="payment" checked={paymentMethod === 'BANKING'} onChange={() => {}} />
+          <label>
+            <i className="fas fa-qrcode"></i>
+            Chuyển khoản ngân hàng (QR Code)
+          </label>
+          
+          {/* Hiện QR Code khi chọn Banking */}
+          {paymentMethod === 'BANKING' && (
+            <div className="qr-code-box">
+              <p className="qr-title">
+                <i className="fas fa-mobile-alt"></i> 
+                Quét mã QR để thanh toán
+              </p>
+              <div className="qr-image-wrapper">
+                <img 
+                  src={`https://img.vietqr.io/image/MB-0987654321-compact2.png?amount=${totalNumber}&addInfo=Thanh toan don hang&accountName=CONG TY ABC`}
+                  alt="QR Code Thanh Toán" 
+                  className="qr-image"
+                />
+              </div>
+              <div className="bank-info">
+                <div className="bank-row">
+                  <span className="bank-label">Ngân hàng:</span>
+                  <span className="bank-value">MB Bank (Quân đội)</span>
                 </div>
-            )}
+                <div className="bank-row">
+                  <span className="bank-label">Số tài khoản:</span>
+                  <span className="bank-value">0987654321</span>
+                </div>
+                <div className="bank-row">
+                  <span className="bank-label">Chủ tài khoản:</span>
+                  <span className="bank-value">CONG TY ABC</span>
+                </div>
+                <div className="bank-row">
+                  <span className="bank-label">Số tiền:</span>
+                  <span className="bank-value total-amount">{totalAmountFormatted} VND</span>
+                </div>
+                <div className="bank-note">
+                  <i className="fas fa-info-circle"></i>
+                  Nội dung: <strong>Thanh toan don hang</strong>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* 3. Option VNPay */}
+        {/* 3. Thanh toán qua VNPay */}
         <div 
-            className={`payment-option ${paymentMethod === 'VNPAY' ? 'active' : ''}`}
-            onClick={() => setPaymentMethod('VNPAY')}
+          className={`payment-option ${paymentMethod === 'VNPAY' ? 'active' : ''}`}
+          onClick={() => setPaymentMethod('VNPAY')}
         >
-            <input type="radio" checked={paymentMethod === 'VNPAY'} readOnly />
-            <label style={{display: 'flex', alignItems: 'center'}}>
-                Thanh toán qua VNPAY 
-                <img src="https://vnpay.vn/s1/statics.vnpay.vn/2023/6/0oxhzjmxbksr1686814746087_1566974273.svg" alt="VNPay" style={{height: '15px', marginLeft: '5px'}}/>
-            </label>
+          <input 
+            type="radio" 
+            name="payment" 
+            checked={paymentMethod === 'VNPAY'} 
+            onChange={() => {}} 
+          />
+          <label className="vnpay-label">
+            Thanh toán qua VNPay
+            <img 
+              src={VnPayLogo} 
+              alt="VNPay" 
+              className="vnpay-logo"
+            />
+          </label>
+          {paymentMethod === 'VNPAY' && (
+            <div className="vnpay-note">
+              <i className="fas fa-info-circle"></i>
+              Bạn sẽ được chuyển sang cổng thanh toán VNPay
+            </div>
+          )}
         </div>
       </div>
-      {/* --- HẾT PHẦN THANH TOÁN --- */}
 
       <button type="submit" className="btn-place-order" onClick={onSubmit}>
-          {paymentMethod === 'VNPAY' ? 'TIẾP TỤC QUA VNPAY' : 'ĐẶT HÀNG'}
+        {paymentMethod === 'VNPAY' ? (
+          <>
+            <i className="fas fa-arrow-right"></i> TIẾP TỤC QUA VNPAY
+          </>
+        ) : (
+          <>
+            <i className="fas fa-check"></i> ĐẶT HÀNG
+          </>
+        )}
       </button>
     </aside>
   );

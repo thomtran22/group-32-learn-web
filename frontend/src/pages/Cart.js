@@ -7,6 +7,21 @@ import OrderSummary from '../components/OrderSummary';
 const Cart = () => {
     const { cartItems, handleRemoveItem, handleUpdateQuantity, totalAmountFormatted } = useCart();
 
+    {/*Nếu giỏ hàng trống*/}
+    if(cartItems.length === 0) {
+        return (
+            <div className="container">
+                <div className="empty-cart">
+                    <i className="fas fa-shopping-cart" style={{fontSize: '80px', color: '#ccc'}}></i>
+                    <h2>Giỏ hàng trống</h2>
+                    <p>Bạn chưa có sản phẩm nào trong giỏ hàng</p>
+                    <a href="/" className="btn-continue-shopping">
+                        <i className="fas fa-arrow-left"></i> Tiếp tục mua sắm
+                    </a>
+                </div>
+            </div>
+        );
+    }
     return (
         <>
           <div className="container">
@@ -17,10 +32,10 @@ const Cart = () => {
                       <div className="cart-table">
                           {/* Tiêu đề bảng */}
                           <div className="cart-header">
-                              <div className="header-item product-col">Product</div>
-                              <div className="header-item">Price</div>
-                              <div className="header-item">Quantity</div>
-                              <div className="header-item subtotal-col">Subtotal</div>
+                              <div className="header-item product-col">SẢN PHẨM</div>
+                              <div className="header-item">GIÁ</div>
+                              <div className="header-item">SỐ LƯỢNG</div>
+                              <div className="header-item subtotal-col">ĐƠN GIÁ</div>
                           </div>
 
                           {cartItems.map(product => (
