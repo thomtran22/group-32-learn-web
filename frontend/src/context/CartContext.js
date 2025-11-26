@@ -1,4 +1,5 @@
 import React, {createContext, useState, useContext, useEffect} from "react";
+import { apiAddToCart } from "../services/cartApi";
 
 const CartContext = createContext();
 
@@ -27,7 +28,7 @@ export const CartProvider = ({children}) => {
         setCartItems(updateCart);
     };
     
-    const addToCart = (product) => {
+    const addToCart = async (product) => {
         setCartItems(prevItems => {
             const existingItem = prevItems.find(
                 item => item.id === product.id && 
@@ -45,6 +46,24 @@ export const CartProvider = ({children}) => {
             }
             return [...prevItems, product];
         });
+
+        try {
+            const userId = "660000000000000000000001"; // Ví dụ 1 cái MongoDB ObjectId giả định
+            
+            await apiAddToCart({
+                userId: userId,
+                productId: product.id,
+                name: product.name,
+                price: product.price,
+                image: product.image,
+                quantity: product.quantity,
+                color: product.color,
+                size: product.size
+            });
+            console.log(">> Đã lưu giỏ hàng xuống Database thành công!");
+        } catch (e) {
+            console.error(">> Lỗi khi lưu xuống server:", e);
+        }
     };
     const handleUpdateQuantity = (itemId, newQuantity) => {
         if(newQuantity < 1) return;
