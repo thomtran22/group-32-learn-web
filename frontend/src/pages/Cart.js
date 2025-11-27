@@ -1,11 +1,25 @@
-import React  from "react";
+import React, { useEffect }  from "react";
 
 import {useCart} from '../context/CartContext';
 import CartItem from "../components/CartItem";
 import OrderSummary from '../components/OrderSummary';
 
 const Cart = () => {
-    const { cartItems, handleRemoveItem, handleUpdateQuantity,totalAmount, totalAmountFormatted } = useCart();
+    const { 
+        cartItems,
+        handleRemoveItem,
+        handleUpdateQuantity,
+        totalAmount,
+        totalAmountFormatted,
+        syncCartToServer
+    } = useCart();
+
+    useEffect(() => {
+        return () => {
+            // Rời khỏi trang Cart
+            syncCartToServer();
+        };
+    }, []);
 
     {/*Nếu giỏ hàng trống*/}
     if(cartItems.length === 0) {

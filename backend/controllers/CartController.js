@@ -2,18 +2,29 @@ const Cart = require('../models/CartModel');
 const Product = require('../models/ProductModel');
 
 const addToCart = async (req, res) => {
-    const { userId, productId, quantity, color, size } = req.body;
+    if (!req.user || !req.user.id) {
+        return res.status(401).json({ // 401 Unauthorized
+            success: false, 
+            message: "Bạn cần đăng nhập để thực hiện chức năng này",
+            requireLogin: true 
+        });
+    }
+    
+    const userId = req.user.id;
+
+    const { productId, quantity, color, size } = req.body;
 
     try {
         const product = await Product.findById(productId);
 
         if (!product) {
-            return res.status(404).json({ success: false, message: "Sản phẩm không tồn tại" });
+            return res.status(404).json({ 
+                success: false,
+                message: "Sản phẩm không tồn tại" 
+            });
         }
 
-        const price = product.price;
-        const name = product.name;
-        const image = product.image;
+        const { price, name, image } = product;
 
         let cart = await Cart.findOne({ userId });
 
@@ -30,36 +41,123 @@ const addToCart = async (req, res) => {
             } else {
                 cart.items.push({ productId, name, price, image, quantity, color, size });
             }
-
-            cart.totalAmount = cart.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-
-            await cart.save();
-            return res.status(200).json({
-                success: true,
-                message: "Thêm sản phẩm vào giỏ hàng thành công".
-                cart
-            });
         } else {
-            const newCart = await Cart.create({
+            cart = new Cart({
                 userId,
-                items: [{ productId, name, price, image, quantity, color, size }],
-                totalAmount: price * quantity
-            });
-
-            return res.status(201).json({
-                success: true,
-                message: 'Giỏ hàng được tạo thành công',
-                cart: newCart
+                items: [{ productId, name, price, image, quantity, color, size }]
             });
         }
+
+        cart.totalAmount = cart.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+
+        await cart.save();
+        return res.status(200).json({
+            success: true,
+            message: "Đã thêm vào giỏ",
+            cart
+        });
     } catch (error) {
-        console.log('❌ Add to cart error:', error);
+        console.log('Error:', error);
         res.status(500).json({ 
             success: false,
-            message: "Lỗi server khi thêm giỏ hàng",
+            message: "Lỗi Server"
+        });
+    }
+};
+
+// GET /api/cart/:userId
+const viewCart = async (req, res) => {
+    const { userId } = req.user.id;
+
+    try {
+        const cart = await Cart.findOne({userId}).populate('items.productId', 'name price image');
+
+        if (!cart || cart.items.length === 0) {
+            return res.status(200).json({
+                success: true,
+                cart: { 
+                    items: [],
+                    totalAmount: 0 
+                }
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            cart
+        });
+    } catch (e) {
+        console.error('❌ View cart error:', error);
+
+        res.status(500).json({
+            success: false,
+            message: "Lỗi server",
             error: error.message
         });
     }
 };
 
-module.exports = { addToCart };
+// ==================== 3. CẬP NHẬT TOÀN BỘ GIỎ HÀNG ====================
+// PUT /api/cart/:userId
+// Body: { items: [...], totalAmount: 500000 }
+// Dùng để SYNC localStorage -> Backend khi checkout hoặc beforeunload
+const updateCart = async (req, res) => {
+    const userId = req.user.id;
+    const { items } = req.body; 
+
+
+    try {
+        let cart = await Cart.findOne({userId});
+
+        if (!cart) cart = new Cart({ userId, items: [] });
+
+        cart.items = items;
+        cart.totalAmount = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+        await cart.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Đồng bộ giỏ hàng thành công",
+            cart
+        });
+    } catch (e) {
+        console.error('❌ Update cart error:', error);
+        res.status(500).json({
+            success: false,
+            message: e.message
+        });
+    }
+};
+
+// ==================== 4. XÓA 1 SẢN PHẨM CỤ THỂ ====================
+// DELETE /api/cart/:userId/items/:itemId
+// itemId format: productId_color_size (VD: 507f1f77bcf86cd799439011_Red_L)
+const removeCartItem = async (req, res) => {
+    const userId = req.user.id;
+    const { itemId } = req.params;
+};
+const clearCart = async (req, res) => {
+    const userId = req.user.id;
+
+    try {
+        await Cart.findOneAndDelete({ userId });
+        res.status(200).json({ 
+            success: true,
+            message: "Đã xóa giỏ hàng"
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}; 
+
+module.exports = { 
+    addToCart,
+    viewCart,
+    updateCart,
+    removeCartItem,
+    clearCart
+};

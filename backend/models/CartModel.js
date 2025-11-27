@@ -22,7 +22,7 @@ const cartSchema = new mongoose.Schema({
             size: { type: String, default: '' },
             quantity: {
                 type: Number,
-                required: True,
+                required: true,
                 min: 1,
                 default: 1
             }
@@ -35,4 +35,4 @@ const cartSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Cart', cartSchema);
+module.exports = mongoose.model('Cart', cartSchema, 'Thien.NV225409');

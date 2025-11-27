@@ -1,8 +1,13 @@
 import React from "react";
-import { Link } from 'react-router-dom';
+
+import { useCart } from '../context/CartContext'; 
 import visaLogo from '../assets/images/Visa_Inc._logo.svg.png';
 import mastercardLogo from '../assets/images/Mastercard-logo.svg.webp';
+
+
 const OrderSummary = ({totalString, totalNumber}) => {
+
+    const { handleCheckout } = useCart();
 
     const shippingFee = totalNumber >= 500000 ? 0 : 30000;
 
@@ -36,9 +41,9 @@ const OrderSummary = ({totalString, totalNumber}) => {
                 <span className="total-price">{finalTotalString}  VND</span>
             </div>
 
-            <Link to="/checkout">
-                <button className="btn-checkout">THANH TOÁN</button>
-            </Link>
+            <button className="btn-checkout" onClick={handleCheckout}>
+                THANH TOÁN
+            </button>
 
             <div className="coupon-section">
                 <p className="coupon-title">Mã giảm giá</p>
