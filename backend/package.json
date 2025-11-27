@@ -5,8 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js",
-    "start-with-ngrok": "node start-ngrok.js && node server.js"
+    "dev": "node server.js"
   },
   "dependencies": {
     "crypto": "^1.0.1",
