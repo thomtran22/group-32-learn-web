@@ -65,12 +65,12 @@ const addToCart = async (req, res) => {
     }
 };
 
-// GET /api/cart/:userId
+// GET /api/cart
 const viewCart = async (req, res) => {
-    const { userId } = req.user.id;
+    const userId = req.user.id;
 
     try {
-        const cart = await Cart.findOne({userId}).populate('items.productId', 'name price image');
+        const cart = await Cart.findOne({ userId }).populate('items.productId', 'name price image');
 
         if (!cart || cart.items.length === 0) {
             return res.status(200).json({
@@ -86,7 +86,7 @@ const viewCart = async (req, res) => {
             success: true,
             cart
         });
-    } catch (e) {
+    } catch (error) {
         console.error('❌ View cart error:', error);
 
         res.status(500).json({
@@ -105,14 +105,42 @@ const updateCart = async (req, res) => {
     const userId = req.user.id;
     const { items } = req.body; 
 
-
     try {
-        let cart = await Cart.findOne({userId});
-
+        let cart = await Cart.findOne({ userId });
         if (!cart) cart = new Cart({ userId, items: [] });
 
-        cart.items = items;
-        cart.totalAmount = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+        // Lấy thông tin sản phẩm để bổ sung name/price/image
+        const productIds = items.map(item => item.productId);
+        const products = await Product.find({ _id: { $in: productIds } });
+        const productMap = products.reduce((acc, product) => {
+            acc[product._id.toString()] = product;
+            return acc;
+        }, {});
+
+        const sanitizedItems = [];
+
+        for (const item of items) {
+            const product = productMap[item.productId];
+            if (!product) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Sản phẩm với ID ${item.productId} không tồn tại`
+                });
+            }
+
+            sanitizedItems.push({
+                productId: product._id,
+                name: product.name,
+                price: product.price,
+                image: product.image,
+                color: item.color || '',
+                size: item.size || '',
+                quantity: item.quantity
+            });
+        }
+
+        cart.items = sanitizedItems;
+        cart.totalAmount = sanitizedItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
         await cart.save();
 

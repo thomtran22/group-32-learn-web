@@ -709,6 +709,146 @@
     font-size: 16px;
 }
 
+/* CartItem.css */
+
+/* Wrapper cho phần chọn phân loại */
+.variant-selector {
+    position: relative;
+    margin-top: 5px;
+}
+
+/* Nút mở popup phân loại */
+.variant-btn {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid #e8e8e8;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #666;
+    background-color: #fff;
+    transition: all 0.2s;
+}
+
+.variant-btn:hover {
+    border-color: #ccc;
+    background-color: #f9f9f9;
+}
+
+.variant-btn span {
+    margin-right: 5px;
+}
+
+/* === POPUP STYLES === */
+.variant-popup {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 100;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    width: 280px;
+    border-radius: 4px;
+    margin-top: 5px;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+/* Section trong popup (Màu, Size) */
+.popup-section {
+    margin-bottom: 15px;
+}
+
+.popup-label {
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #888;
+    display: block;
+}
+
+.popup-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* Nút chọn option (Màu/Size) */
+.option-btn {
+    border: 1px solid #ddd;
+    color: #333;
+    background-color: #fff;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+}
+
+.option-btn:hover {
+    border-color: #aaa;
+}
+
+/* Style cho option đang được chọn */
+.option-btn.active {
+    border: 1px solid #ee4d2d;
+    color: #ee4d2d;
+    background-color: #fff5f1; /* Thêm chút nền nhạt cho đẹp */
+}
+
+/* Khu vực nút hành động (Trở lại / Xác nhận) */
+.popup-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-back {
+    border: 1px solid #ddd;
+    background: #fff;
+    padding: 6px 15px;
+    cursor: pointer;
+    font-size: 12px;
+    border-radius: 2px;
+}
+
+.btn-confirm {
+    border: none;
+    background: #ee4d2d;
+    color: #fff;
+    padding: 6px 15px;
+    cursor: pointer;
+    font-size: 12px;
+    border-radius: 2px;
+}
+
+.btn-confirm:hover {
+    background: #d73211;
+}
+
+/* Nút xóa sản phẩm */
+.remove-item-btn {
+    margin-top: 10px;
+    color: #d0011b;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    font-size: 13px;
+}
+
+.remove-item-btn:hover {
+    text-decoration: underline;
+}
+
+/* Hiệu ứng xuất hiện */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 /* ========== RESPONSIVE STYLES ========== */
 
 @media (max-width: 992px) {

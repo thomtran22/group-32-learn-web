@@ -26,7 +26,6 @@ const updateCartRules = () => {
         body('items').isArray().withMessage('Danh sách sản phẩm không hợp lệ'),
         body('items.*.productId').isMongoId(),
         body('items.*.quantity').isInt({ min: 1 }),
-        body('totalAmount').isNumeric(),
     ];
 };
 

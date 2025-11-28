@@ -17,7 +17,7 @@ router.post('/',addToCartRules(),validate, addToCart);
 router.get('/', viewCart);
 
 // Xoa mot san pham trong gio hang
-router.delete('/:userId/items/:itemId', removeCartItem);
+router.delete('/items/:itemId', removeCartItem);
 
 // Xóa toàn bộ sản phẩm trong giỏ hàng
 // DELETE /api/cart

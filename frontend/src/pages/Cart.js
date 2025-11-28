@@ -1,4 +1,4 @@
-import React, { useEffect }  from "react";
+import React, { useEffect, useRef }  from "react";
 
 import {useCart} from '../context/CartContext';
 import CartItem from "../components/CartItem";
@@ -10,17 +10,10 @@ const Cart = () => {
         handleRemoveItem,
         handleUpdateQuantity,
         totalAmount,
-        totalAmountFormatted,
-        syncCartToServer
+        totalAmountFormatted
     } = useCart();
 
-    useEffect(() => {
-        return () => {
-            // Rời khỏi trang Cart
-            syncCartToServer();
-        };
-    }, []);
-
+    
     {/*Nếu giỏ hàng trống*/}
     if(cartItems.length === 0) {
         return (
@@ -52,10 +45,10 @@ const Cart = () => {
                                 <div className="header-item subtotal-col">ĐƠN GIÁ</div>
                             </div>
 
-                            {cartItems.map(product => (
+                            {cartItems.map(item => (
                                 <CartItem 
-                                    key={product.id}
-                                    item={product} 
+                                    key={item.itemId}
+                                    item={item} 
                                     onRemove = {handleRemoveItem}
                                     onUpdateQuantity = {handleUpdateQuantity}
                                 />

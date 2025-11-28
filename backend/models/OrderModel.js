@@ -33,6 +33,7 @@ const orderSchema = new mongoose.Schema({
         ward: { type: String, required: true },
         streetAddress: { type: String, required: true },
     },
+    
     orderNotes: { type: String },
     
     paymentMethod: {

@@ -1,5 +1,5 @@
-import React, { createContext, useState, useContext, useEffect, useRef } from "react";
-import { apiAddToCart, apiViewCart, apiUpdateCart, apiRemoveItem } from "../services/cartApi";
+import React, { createContext, useState, useContext, useEffect, useRef} from "react";
+import { apiAddToCart, apiViewCart, apiUpdateCart, apiRemoveItem, apiClearCart} from "../services/cartApi";
 import { useNavigate } from "react-router-dom"; 
 
 const CartContext = createContext();
@@ -11,10 +11,11 @@ export const useCart = () => {
 export const CartProvider = ({children}) => {
     const navigate = useNavigate();
 
+    // --- STATE ---
     const [cartItems, setCartItems] = useState([]);
+    const [isCartLoaded, setIsCartLoaded] = useState(false);
 
-    // Ref này cực quan trọng cho việc Sync khi rời trang
-    const cartItemsRef = useRef(cartItems);
+    const isUpdateActionRef = useRef(false);
 
     const isLoggedIn = !!localStorage.getItem('token');
 
@@ -24,194 +25,231 @@ export const CartProvider = ({children}) => {
             if (isLoggedIn) {
                 try {
                     const data = await apiViewCart();
+
                     if (data.success && data.cart) {
-                        const mappedItems = data.cart.items
-                            // Lọc bỏ sản phẩm null (trường hợp sản phẩm gốc bị xóa khỏi DB)
-                            .filter(item => item.productId) 
-                            .map(item => ({
-                                id: item.productId._id, 
-                                itemId: item._id,       
-                                name: item.productId.name,
-                                price: item.productId.price,
-                                image: item.productId.image,
+                        const mappedItems = data.cart.items.map(item => {
+                            const productObj = item.productId || {};
+                            return {
+                                itemId: item._id,
+                                productId: productObj._id || item.productId,
+                                name: productObj.name,      
+                                price: productObj.price,    
+                                image: productObj.image,    
+
                                 color: item.color,
                                 size: item.size,
-                                quantity: item.quantity
-                            }));
+                                quantity: item.quantity,
+                                // Fallback mảng rỗng nếu không có dữ liệu
+                                availableColors: productObj.colors || [], 
+                                availableSizes: productObj.sizes || []
+                            };
+                        });
                         setCartItems(mappedItems);
                     }
                 } catch (error) {
-                    console.error("Lỗi tải giỏ hàng server:", error);
+                    console.error("Lỗi tải giỏ hàng:", error);
                 }
             } else {
-                // Khách: Lấy từ LocalStorage
+                // Khách vãng lai: Lấy từ LocalStorage
                 const savedCart = localStorage.getItem('cartItems');
                 if (savedCart) setCartItems(JSON.parse(savedCart));
             }
+            setIsCartLoaded(true);
         };
 
         loadCart();
     }, [isLoggedIn]);
-    
-    // ================== 2. CẬP NHẬT REF & LOCALSTORAGE ==================
-    // (Đã gộp 2 useEffect thừa thành 1 cái duy nhất ở đây)
-    useEffect(() => {
-        // Luôn cập nhật Ref để hàm syncCartToServer đọc được state mới nhất
-        cartItemsRef.current = cartItems;
 
-        // Chỉ lưu LocalStorage nếu là khách
-        if (!isLoggedIn) {
+    useEffect(() => {
+        if (!isLoggedIn && isCartLoaded) {
             localStorage.setItem('cartItems', JSON.stringify(cartItems));
         }
-    }, [cartItems, isLoggedIn]);
+    }, [cartItems, isLoggedIn, isCartLoaded])
 
-    // ================== 3. HÀM ĐỒNG BỘ SERVER (CORE) ==================
-    const syncCartToServer = async () => {
-        if (!isLoggedIn) return;
-
-        const currentItems = cartItemsRef.current; // Lấy từ Ref
-        // Lưu ý: Vẫn gửi lên dù mảng rỗng (để trường hợp xóa hết giỏ hàng thì server cũng xóa theo)
-        
-        try {
-            console.log("⏳ Đang đồng bộ giỏ hàng lên server...");
-            
-            const itemsPayload = currentItems.map(item => ({
-                productId: item.id || item._id,
-                quantity: item.quantity,
-                color: item.color,
-                size: item.size
-            }));
-            
-            await apiUpdateCart(itemsPayload);
-            console.log("✅ Đồng bộ thành công!");
-        } catch (error) {
-            console.error("❌ Lỗi đồng bộ:", error);
-        }
-    };
-
-    // ================== 4. BẮT SỰ KIỆN RỜI TRANG ==================
+    // ================== 3. LOGIC UPDATE SỐ LƯỢNG / PHÂN LOẠI (DEBOUNCE) ==================
+    // Chỉ chạy khi cờ isUpdateActionRef.current = TRUE
     useEffect(() => {
-        const handleBeforeUnload = (event) => {
-            if (isLoggedIn) {
-                syncCartToServer();
-            }
-        };
+        if (!isLoggedIn || !isCartLoaded || !isUpdateActionRef.current) return;
 
-        window.addEventListener('beforeunload', handleBeforeUnload);
-
-        return () => {
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-        };
-    }, [isLoggedIn]);
-
-    // ================== 5. CÁC HÀM XỬ LÝ ==================
-
-    const totalAmount = cartItems.reduce((total,item) => {
-        return total + (item.price * item.quantity);
-    }, 0);
-    const totalAmountFormatted = totalAmount.toLocaleString('vi-VN');
-    
-    // REMOVE
-    const handleRemoveItem = async (id) => {
-        // Cập nhật UI trước
-        setCartItems(prev => prev.filter(item => item.id !== id));
-
-        // Nếu là User, gọi API update luôn để đồng bộ trạng thái xóa ngay lập tức
-        // (Tránh trường hợp sync chậm làm item hiện lại)
-        if (isLoggedIn) {
+        const timeout = setTimeout(async () => {
             try {
-                // Lấy danh sách từ cartItems hiện tại (lúc chưa xóa) để lọc
-                const newItems = cartItems
-                    .filter(item => item.id !== id)
-                    .map(item => ({
-                        productId: item.id,
-                        quantity: item.quantity,
-                        color: item.color,
-                        size: item.size
-                    }));
+                // Chuẩn bị payload chỉ gồm các trường cần thiết
+                const itemsPayload = cartItems.map(item => ({
+                    productId: item.productId, 
+                    quantity: item.quantity,
+                    color: item.color,
+                    size: item.size
+                }));
                 
-                await apiUpdateCart(newItems);
+                console.log("Đang cập nhật thay đổi lên server...");
+                await apiUpdateCart(itemsPayload); // Gọi API PUT
+                
+                // Sau khi xong, tắt cờ update (dù thực ra để true cũng ko sao vì deps thay đổi mới chạy)
+                isUpdateActionRef.current = false; 
             } catch (error) {
-                console.error("Lỗi xóa trên server:", error);
+                console.error("Lỗi cập nhật giỏ hàng:", error);
             }
-        }
-    };
+        }, 800); // Đợi 0.8s sau khi người dùng ngừng bấm
+
+        return () => clearTimeout(timeout);
+    }, [cartItems, isLoggedIn, isCartLoaded]);
+    // ================== CÁC HÀM THAO TÁC ==================
     
-    // ADD
+    // --- ADD ---
     const addToCart = async (product) => {
-        const newItem = { ...product, id: product.id || product._id };
+        isUpdateActionRef.current = false;
 
         setCartItems(prevItems => {
+            // Kiểm tra trùng: So sánh productId trong giỏ với _id của sản phẩm thêm vào
             const existingItem = prevItems.find(
-                item => item.id === newItem.id && 
-                        item.color === newItem.color && 
-                        item.size === newItem.size
+                item => item.productId === product._id && 
+                        item.color === product.color && 
+                        item.size === product.size
             );
 
             if (existingItem) {
                 return prevItems.map(item =>
-                    item === existingItem
-                    ? { ...item, quantity: item.quantity + newItem.quantity } : item
+                    item === existingItem ? { ...item, quantity: item.quantity + product.quantity } : item
                 );
             }
-            return [...prevItems, newItem];
+
+            return [...prevItems, {
+                ...product,
+                itemId: Date.now().toString(), // id tmp
+                productId: product._id,
+                // Giả sử product đầu vào có sẵn options, nếu không thì để mảng rỗng
+                availableColors: product.colors || [],
+                availableSizes: product.sizes || []
+            }];
         });
 
         if(isLoggedIn) {
             try {   
                 await apiAddToCart({
-                    productId: newItem.id,
-                    quantity: newItem.quantity,
-                    color: newItem.color,
-                    size: newItem.size
+                    productId: product._id, // Gửi _id của sản phẩm
+                    quantity: product.quantity,
+                    color: product.color,
+                    size: product.size
                 });
-                console.log(">> Đã thêm vào server thành công!");
             } catch (error) {
-                console.error(">> Lỗi khi lưu xuống server:", error);
+                console.error("Lỗi add server:", error);
+                //Rollback state (xóa item vừa thêm đi)
+            }
+        } else {
+            setTimeout(() => {
+                localStorage.setItem('cartItems', JSON.stringify(cartItems));
+            }, 0);
+        }
+    };
+
+    // --- REMOVE ---
+    const handleRemoveItem = async (itemId) => {
+        isUpdateActionRef.current = false; 
+        
+        const prevCart = [...cartItems]; // Backup để rollback
+        setCartItems(prev => prev.filter(item => item.itemId !== itemId));
+        
+        if (isLoggedIn) {
+            try {
+                await apiRemoveItem(itemId);
+                console.log("Đã xóa sản phẩm trên server");
+            } catch (error) {
+                console.error("Lỗi xóa sản phẩm:", error);
+                alert("Không thể xóa sản phẩm lúc này.");
+                setCartItems(prevCart); // Hoàn tác lại giao diện
             }
         }
     };
 
-    // UPDATE QUANTITY (Chỉ sửa State, Sync xử lý sau)
-    const handleUpdateQuantity = (productId, newQuantity) => {
+    // --- UPDATE QUANTITY ---
+    const handleUpdateQuantity = (itemId, newQuantity) => {
         if(newQuantity < 1) return;
 
-        const updateCart = cartItems.map(item => {
-            if(item.id === productId) {
-                return { ...item, quantity: newQuantity };
+        isUpdateActionRef.current = true;
+
+        setCartItems(prev => prev.map(item => 
+            item.itemId === itemId ? { ...item, quantity: newQuantity } : item
+        ));
+    };
+
+    const updateItemVariant = (itemId, newVariant) => {
+        isUpdateActionRef.current = true;
+
+        setCartItems(prevItems => {
+            const currentItem = prevItems.find(item => item.itemId === itemId);
+            if (!currentItem) return prevItems;
+
+            const duplicateItem = prevItems.find(item => 
+                item.productId === currentItem.productId &&
+                item.color === newVariant.color &&
+                item.size === newVariant.size &&
+                item.itemId !== itemId
+            );
+
+            if (duplicateItem) {
+                const mergedQuantity = duplicateItem.quantity + currentItem.quantity;
+
+                return prevItems.map(item => {
+                    if (item.itemId === duplicateItem.itemId) {
+                        return { ...item, quantity: mergedQuantity };
+                    }
+                    return item;
+                }).filter(item => item.itemId !== itemId); // Xóa dòng cũ
+            } else {
+                return prevItems.map(item => 
+                    item.itemId === itemId 
+                    ? { ...item, color: newVariant.color, size: newVariant.size } 
+                    : item
+                );
             }
-            return item;
         });
-
-        setCartItems(updateCart);
     };
 
-    const clearCart = () => {
-        setCartItems([]);
+    // --- CLEAR ---
+    const clearCart = async () => {
+        // Chặn Auto-Sync (để không kích hoạt API Update nhầm)
+        isUpdateActionRef.current = false; 
+
+        // 2. Xóa UI ngay lập tức
+        setCartItems([]); 
+
+        // 3. Xử lý logic lưu trữ
+        if (isLoggedIn) {
+            try {
+                // Gọi API DELETE (đã định nghĩa ở bước trước)
+                await apiClearCart(); 
+            } catch (error) {
+                console.error("Lỗi xóa giỏ hàng server:", error);
+            }
+        } else {
+            // Khách: Xóa LocalStorage
+            localStorage.removeItem('cartItems');
+        }
     };
 
+    // --- CHECKOUT ---
     const handleCheckout = async () => {
         if (cartItems.length === 0) {
             alert("Giỏ hàng đang trống!");
             return;
         }
-
-        if (isLoggedIn) {
-            await syncCartToServer(); // Đợi server lưu xong
-        }
         navigate('/checkout');
     };
+
+    // --- CALCULATE TOTAL ---
+    const totalAmount = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const totalAmountFormatted = totalAmount.toLocaleString('vi-VN');
 
     const value = {
         cartItems,
         handleRemoveItem,
         handleUpdateQuantity,
+        updateItemVariant,
         totalAmount, 
         totalAmountFormatted,
         addToCart,
         clearCart,
-        handleCheckout,
-        syncCartToServer,
+        handleCheckout
     };
 
     return (

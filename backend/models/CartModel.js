@@ -14,10 +14,6 @@ const cartSchema = new mongoose.Schema({
                 ref: 'Product', // Tham chiếu đến bảng sản phẩm
                 required: true
             },
-
-            name: String,
-            price: Number,
-            image: String,
             color: { type: String, default: '' },
             size: { type: String, default: '' },
             quantity: {

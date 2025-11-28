@@ -32,3 +32,9 @@ export const apiRemoveItem = async (itemId) => {
     const response = await axios.delete(`${API_URL}/${itemId}`, getAuthConfig());
     return response.data;
 };
+
+// API xoa tat ca
+export const apiClearCart = async () => {
+    const response = await axios.delete(API_URL, getAuthConfig());
+    return response.data;
+};
