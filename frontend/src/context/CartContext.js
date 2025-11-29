@@ -19,6 +19,47 @@ export const CartProvider = ({children}) => {
 
     const isLoggedIn = !!localStorage.getItem('token');
 
+    const [selectedItems, setSelectedItems] = useState([]);
+    
+    const selectedTotal = cartItems.reduce((total, item) => {
+        return selectedItems.includes(item.itemId) 
+            ? total + (item.price * item.quantity) 
+            : total;
+    }, 0);
+
+    const onCheckoutClick = () => {
+        handleCheckout(selectedItems); 
+    }
+
+    const handleToggleSelect = (itemId) => {
+        if(selectedItems.includes(itemId)) {
+            setSelectedItems(selectedItems.filter(id => id !== itemId));
+        } else {
+            setSelectedItems([...selectedItems, itemId]);
+        }
+    };
+
+    const handleSelectAll = (e) => {
+        if (e.target.checked) {
+            const allIds = cartItems.map(item => item.itemId);
+            setSelectedItems(allIds);
+        } else {
+            setSelectedItems([]);
+        }
+    };
+
+    // Kiểm tra xem có đang chọn tất cả không để checkbox header hiển thị đúng
+    const isAllSelected = cartItems.length > 0 && selectedItems.length === cartItems.length;
+
+    const handleDeleteSelected = () => {
+        if (selectedItems.length === 0) return;
+
+        if (window.confirm(`Bạn muốn xóa ${selectedItems.length} sản phẩm đã chọn?`)) {
+            selectedItems.forEach(id => handleRemoveItem(id));
+            setSelectedItems([]); // Reset lại mảng đã chọn sau khi xóa
+        }
+    };
+
     // ================== 1. LOAD GIỎ HÀNG ==================
     useEffect(() => {
         const loadCart = async () => {
@@ -228,18 +269,27 @@ export const CartProvider = ({children}) => {
     };
 
     // --- CHECKOUT ---
-    const handleCheckout = async () => {
-        if (cartItems.length === 0) {
-            alert("Giỏ hàng đang trống!");
+    const handleCheckout = (selectedIds = []) => {
+        // Nếu không truyền ID nào (trường hợp gọi từ chỗ khác), mặc định lấy hết (hoặc báo lỗi tùy logic)
+        // Nhưng ở đây ta ưu tiên logic: Chỉ mua cái đã chọn.
+        
+        if (!selectedIds || selectedIds.length === 0) {
+            alert("Vui lòng chọn sản phẩm để thanh toán!");
             return;
         }
-        navigate('/checkout');
+
+        // Lọc ra các object sản phẩm đầy đủ dựa trên ID
+        const itemsToCheckout = cartItems.filter(item => selectedIds.includes(item.itemId));
+
+        // Cách 1: Truyền qua state của navigate (An toàn, sạch sẽ)
+        navigate('/checkout', { state: { items: itemsToCheckout } });
     };
 
     // --- CALCULATE TOTAL ---
     const totalAmount = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
     const totalAmountFormatted = totalAmount.toLocaleString('vi-VN');
 
+    const selectedTotalFormatted = selectedTotal.toLocaleString('vi-VN');
     const value = {
         cartItems,
         handleRemoveItem,
@@ -247,9 +297,17 @@ export const CartProvider = ({children}) => {
         updateItemVariant,
         totalAmount, 
         totalAmountFormatted,
+        selectedTotal,          // Tổng tiền các món đang tick
+        selectedTotalFormatted,
         addToCart,
         clearCart,
-        handleCheckout
+        handleCheckout,
+
+        selectedItems,       // <--- Quan trọng nhất, thiếu cái này nên lỗi .length
+        handleToggleSelect,
+        handleSelectAll,
+        handleDeleteSelected,
+        onCheckoutClick
     };
 
     return (

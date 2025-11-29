@@ -1,11 +1,21 @@
 import React, {useState} from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useCart } from '../context/CartContext';
 import CheckoutForm from '../components/CheckoutForm';
 import CheckoutSummary from '../components/CheckoutSummary';
 
 const Checkout = () => {
 
-    const { cartItems, totalAmount, totalAmountFormatted } = useCart();
+    const { cartItems } = useCart();
+
+    //Lấy state được gửi từ trang Cart (chứa các sản phẩm đã chọn)
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    const itemsToCheckout = location.state?.items || cartItems || [];
+
+    const checkoutTotal = itemsToCheckout.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const checkoutTotalFormatted = checkoutTotal.toLocaleString('vi-VN');
 
     const [paymentMethod, setPaymentMethod] = useState('COD');
 
@@ -52,8 +62,8 @@ const Checkout = () => {
 
         const orderDetails = {
             customerInfo: formData, // Thông tin khách hàng từ form
-            orderItems: cartItems,   // Thông tin sản phẩm từ giỏ hàng
-            totalAmount: totalAmount, // Dùng số, không dùng chuỗi đã format
+            orderItems: itemsToCheckout,    // Thông tin sản phẩm từ giỏ hàng
+            totalAmount: checkoutTotal, // Dùng số, không dùng chuỗi đã format
             paymentMethod: paymentMethod,
             orderDate: new Date().toISOString()
         };
@@ -96,9 +106,9 @@ const Checkout = () => {
                 <div className="checkout-layout">
                     <CheckoutForm formData={formData} handleChange={handleChange}/>
                     <CheckoutSummary 
-                        items={cartItems}
-                        totalAmountFormatted={totalAmountFormatted} 
-                        totalAmount={totalAmount}
+                        items={itemsToCheckout} // Truyền đúng biến itemsToCheckout
+                        totalAmountFormatted={checkoutTotalFormatted} 
+                        totalAmount={checkoutTotal}
                         onSubmit={handleSubmit}
                         paymentMethod={paymentMethod}
                         setPaymentMethod={setPaymentMethod}

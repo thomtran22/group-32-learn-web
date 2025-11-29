@@ -13,4 +13,4 @@ const productSchema = new mongoose.Schema({
     sizes: [{ type: String }]
 }, { timestamps: true });
 
-module.exports = mongoose.model('Product', productSchema,'Thien.NV225409');
+module.exports = mongoose.model('Product', productSchema,'products');

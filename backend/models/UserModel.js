@@ -15,4 +15,4 @@ const userSchema = new mongoose.Schema({
     // Password bỏ qua vì đang test giả
 }, { timestamps: true });
 
-module.exports = mongoose.model('User', userSchema, 'Thien.NV225409');
+module.exports = mongoose.model('User', userSchema, 'users');

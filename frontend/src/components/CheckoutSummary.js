@@ -2,7 +2,11 @@ import React from 'react';
 
 import VnPayLogo from "../assets/images/vnpay.png"
 
-const CheckoutSummary = ({ items ,totalAmount, totalAmountFormatted, onSubmit, paymentMethod, setPaymentMethod }) => {
+const CheckoutSummary = ({ items=[] ,totalAmount, totalAmountFormatted, onSubmit, paymentMethod, setPaymentMethod }) => {
+  
+  if (!items || items.length === 0) {
+      return <div>Không có sản phẩm nào để thanh toán</div>;
+  }
   
   return (
     <aside className="your-order">

@@ -39,18 +39,31 @@ const addToCart = async (req, res) => {
             if(itemIndex > -1) {
                 cart.items[itemIndex].quantity += quantity;
             } else {
-                cart.items.push({ productId, name, price, image, quantity, color, size });
+                cart.items.push({ productId, quantity, color, size });
             }
         } else {
             cart = new Cart({
                 userId,
-                items: [{ productId, name, price, image, quantity, color, size }]
+                items: [{ productId, quantity, color, size }]
             });
         }
 
-        cart.totalAmount = cart.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-
         await cart.save();
+
+        const cartPopulated = await Cart.findOne({ userId }).populate('items.productId');
+
+        let calculatedTotal = 0;
+        if(cartPopulated && cartPopulated.items) {
+             calculatedTotal = cartPopulated.items.reduce((acc, item) => {
+                // item.productId lúc này là Object sản phẩm đầy đủ (nhờ populate)
+                const price = item.productId ? item.productId.price : 0;
+                return acc + (price * item.quantity);
+            }, 0);
+        }
+
+        cart.totalAmount = calculatedTotal;
+        await cart.save();
+        
         return res.status(200).json({
             success: true,
             message: "Đã thêm vào giỏ",
@@ -70,7 +83,7 @@ const viewCart = async (req, res) => {
     const userId = req.user.id;
 
     try {
-        const cart = await Cart.findOne({ userId }).populate('items.productId', 'name price image');
+        const cart = await Cart.findOne({ userId }).populate('items.productId', 'name price image colors sizes');
 
         if (!cart || cart.items.length === 0) {
             return res.status(200).json({
@@ -98,7 +111,7 @@ const viewCart = async (req, res) => {
 };
 
 // ==================== 3. CẬP NHẬT TOÀN BỘ GIỎ HÀNG ====================
-// PUT /api/cart/:userId
+// PUT /api/cart/
 // Body: { items: [...], totalAmount: 500000 }
 // Dùng để SYNC localStorage -> Backend khi checkout hoặc beforeunload
 const updateCart = async (req, res) => {
@@ -159,12 +172,41 @@ const updateCart = async (req, res) => {
 };
 
 // ==================== 4. XÓA 1 SẢN PHẨM CỤ THỂ ====================
-// DELETE /api/cart/:userId/items/:itemId
-// itemId format: productId_color_size (VD: 507f1f77bcf86cd799439011_Red_L)
+// DELETE /api/cart/items/:itemId
 const removeCartItem = async (req, res) => {
     const userId = req.user.id;
-    const { itemId } = req.params;
+    const { itemId } = req.params; // itemId này là _id của subdocument trong mảng items
+
+    try {
+        const cart = await Cart.findOne({ userId });
+        if (!cart) {
+            return res.status(404).json({ success: false, message: "Giỏ hàng không tồn tại" });
+        }
+
+        // Sử dụng $pull của MongoDB để xóa phần tử ra khỏi mảng dựa trên _id
+        await Cart.updateOne(
+            { userId }, 
+            { $pull: { items: { _id: itemId } } } 
+        );
+
+        // Lấy lại giỏ hàng mới để trả về cho Client cập nhật UI ngay lập tức (nếu cần)
+        const updatedCart = await Cart.findOne({ userId }).populate('items.productId');
+
+        res.status(200).json({ 
+            success: true,
+            message: "Đã xóa sản phẩm",
+            cart: updatedCart
+        });
+
+    } catch (error) {
+        console.error("Lỗi xóa item:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi Server khi xóa sản phẩm"
+        });
+    }
 };
+
 const clearCart = async (req, res) => {
     const userId = req.user.id;
 

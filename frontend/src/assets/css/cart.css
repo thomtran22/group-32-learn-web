@@ -53,28 +53,34 @@
     width: 100%;
 }
 .cart-header {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1.2fr 1fr;
-    gap: 15px;
-    padding: 15px 10px;
+    display: flex; /* Đổi từ grid sang flex */
+    align-items: center;
+    padding: 15px 0; /* Bỏ padding ngang nếu cần căn lề chuẩn */
     border-bottom: 2px solid var(--border-color);
     background-color: var(--background-color);
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+.cart-header .product-col {
+    padding-left: 115px; /* 90px (ảnh) + 15px (gap) + 10px (dư) để thẳng với tên */
+    flex: 4;
 }
 
-.cart-header .header-item {
-    font-weight: 700;
-    text-transform: uppercase;
-    color: var(--text-color);
-    font-size: 12px;
-    letter-spacing: 0.5px;
+.cart-header .header-item:nth-child(3) { 
+    flex: 1.5; text-align: center; 
+}
+.cart-header .header-item:nth-child(4) { 
+    flex: 1.5; text-align: center; 
+}
+.cart-header .header-item:last-child {
+    flex: 1.5; text-align: right; padding-right: 15px;
 }
 
 .cart-item {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1.2fr 1fr;
-    gap: 15px;
+    display: flex; /* Đổi từ grid sang flex */
     align-items: center;
-    padding: 20px 10px;
+    padding: 20px 0;
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -98,12 +104,11 @@
 }
 
 .product-name {
-    font-weight: 700;
-    text-decoration: none;
-    color: var(--text-color);
     font-size: 16px;
-    display: block;
-    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+    line-height: 1.4;
+    margin-bottom: 6px; /* Giảm khoảng cách thừa */
 }
 
 .product-name:hover {
@@ -148,7 +153,19 @@
     color: var(--text-color);
 }
 
+.quantity-col {
+    flex: 1.5;
+    display: flex;
+    justify-content: center;
+}
+.price-col {
+    flex: 1.5;
+    text-align: center;
+}
 .subtotal-col {
+    flex: 1.5;
+    text-align: right;
+    padding-right: 15px;
     font-weight: 700;
     color: var(--primary-color);
 }
@@ -163,21 +180,23 @@
 /* Quantity Selector */
 .quantity-selector {
     display: flex;
-    border: 1px solid var(--border-color);
-    width: fit-content;
+    align-items: center;
+    border: 1px solid #d9d9d9; /* Viền bao quanh chung */
     border-radius: 4px;
-    overflow: hidden;
+    width: fit-content;
 }
 
 .quantity-selector input {
-    width: 50px;
-    text-align: center;
+    width: 40px;
+    height: 30px;
     border: none;
-    font-size: 16px;
-    font-weight: 600;
-    padding: 8px 0;
-    appearance: textfield;
-    -moz-appearance: textfield;
+    border-left: 1px solid #d9d9d9;
+    border-right: 1px solid #d9d9d9;
+    text-align: center;
+    font-size: 14px;
+    color: #333;
+    outline: none;
+    background: #fff;
 }
 
 .quantity-selector input::-webkit-outer-spin-button,
@@ -187,14 +206,22 @@
 }
 
 .btn-quantity {
-    border: none;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: #fff;
+    border: none;
     cursor: pointer;
-    font-size: 18px;
-    font-weight: 700;
-    padding: 8px 15px;
-    color: var(--text-color);
-    transition: all 0.2s ease;
+    font-size: 16px;
+    color: #666;
+    padding: 0;
+}
+
+.btn-quantity:hover {
+    background-color: #fafafa;
+    color: #333;
 }
 
 .btn-quantity:hover:not(:disabled) {
@@ -719,25 +746,32 @@
 
 /* Nút mở popup phân loại */
 .variant-btn {
-    cursor: pointer;
     display: inline-flex;
     align-items: center;
-    border: 1px solid #e8e8e8;
-    padding: 2px 8px;
+    padding: 4px 10px;
+    border: 1px solid transparent; /* Ẩn viền đi */
+    background-color: #f5f5f5; /* Nền xám nhẹ */
     border-radius: 4px;
     font-size: 13px;
-    color: #666;
-    background-color: #fff;
+    color: #555;
+    cursor: pointer;
     transition: all 0.2s;
+    position: relative; /* Để icon mũi tên căn chuẩn */
 }
 
 .variant-btn:hover {
-    border-color: #ccc;
-    background-color: #f9f9f9;
+    background-color: #fff;
+    border-color: #ee4d2d;
+    color: #ee4d2d;
 }
 
 .variant-btn span {
-    margin-right: 5px;
+    margin-right: 15px; /* Tạo khoảng cách với mũi tên */
+}
+
+.variant-btn i {
+    font-size: 10px;
+    opacity: 0.7;
 }
 
 /* === POPUP STYLES === */
@@ -797,6 +831,28 @@
     background-color: #fff5f1; /* Thêm chút nền nhạt cho đẹp */
 }
 
+/* --- STYLE CHO NÚT BỊ DISABLE (GIỐNG SHOPEE) --- */
+
+.option-btn.disabled {
+    background-color: #f7f7f7 !important; 
+    color: #d0d0d0 !important; 
+    border-color: #ebebeb !important; 
+    cursor: not-allowed;
+    text-decoration: none; 
+}
+
+/* QUAN TRỌNG: Khi di chuột vào nút disabled thì KHÔNG được đổi màu */
+.option-btn.disabled:hover {
+    background-color: #f7f7f7 !important;
+    color: #d0d0d0 !important;
+    border-color: #ebebeb !important;
+}
+
+/* Ẩn luôn dấu tích nếu lỡ có logic nào bật nó lên */
+.option-btn.disabled .tick-icon {
+    display: none !important;
+}
+
 /* Khu vực nút hành động (Trở lại / Xác nhận) */
 .popup-actions {
     display: flex;
@@ -830,17 +886,82 @@
 
 /* Nút xóa sản phẩm */
 .remove-item-btn {
-    margin-top: 10px;
-    color: #d0011b;
+    margin-top: 12px;
+    font-size: 13px;
+    color: #888;
     background: none;
     border: none;
     cursor: pointer;
-    padding: 0;
-    font-size: 13px;
+    transition: color 0.2s;
 }
 
 .remove-item-btn:hover {
-    text-decoration: underline;
+    color: #ee4d2d;
+    text-decoration: none; /* Bỏ gạch chân cho sạch */
+}
+
+/* Container của mỗi dòng sản phẩm */
+.cart-item {
+    display: flex;
+    align-items: center; /* Căn giữa theo chiều dọc */
+    padding: 15px 0;
+    border-bottom: 1px solid #eee;
+}
+
+/* Cột checkbox mới */
+.checkbox-col {
+    width: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.item-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #ee4d2d; /* Màu cam đỏ giống Shopee */
+}
+
+/* Điều chỉnh lại cột sản phẩm để không bị lệch */
+.product-col {
+    flex: 4; /* Tăng tỉ lệ lên */
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding-left: 10px;
+}
+
+/* --- Bulk Actions (Khu vực nút xóa nhiều) --- */
+.bulk-actions {
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+/* Làm nút này đẹp hơn */
+.btn-delete-selected {
+    padding: 8px 16px;
+    background-color: #fff;
+    color: #d0011b;
+    border: 1px solid #d0011b;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-delete-selected:hover {
+    background-color: #fff1f0; /* Nền đỏ nhạt khi hover */
+}
+
+.btn-delete-selected:active {
+    transform: translateY(0);
 }
 
 /* Hiệu ứng xuất hiện */

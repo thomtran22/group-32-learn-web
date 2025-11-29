@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useCart } from '../context/CartContext'; // Import context để lấy hàm update
 
-const CartItem = ({ item, onRemove, onUpdateQuantity }) => {
-    const { updateItemVariant } = useCart();
+const CartItem = ({ item, onRemove, onUpdateQuantity, isSelected, onToggleSelect }) => {
+    const { updateItemVariant, cartItems } = useCart();
     
     // State quản lý Popup
     const [showPopup, setShowPopup] = useState(false);
@@ -13,9 +13,13 @@ const CartItem = ({ item, onRemove, onUpdateQuantity }) => {
     
     const popupRef = useRef(null);
 
-    // Format tiền
-    const priceFormatted = item.price.toLocaleString('vi-VN');
-    const subtotalFormatted = (item.price * item.quantity).toLocaleString('vi-VN');
+    // Reset lại state tạm mỗi khi mở popup hoặc khi item thay đổi bên ngoài
+    useEffect(() => {
+        if (showPopup) {
+            setTempColor(item.color);
+            setTempSize(item.size);
+        }
+    }, [showPopup, item.color, item.size]);
 
     // Xử lý click ngoài để đóng popup
     useEffect(() => {
@@ -34,12 +38,43 @@ const CartItem = ({ item, onRemove, onUpdateQuantity }) => {
         setShowPopup(false);
     };
 
+    const isOptionDisabled = (type, value) => {
+        const targetColor = type === 'color' ? value : tempColor;
+        const targetSize = type === 'size' ? value : tempSize;
+
+        if (targetColor === item.color && targetSize === item.size) {
+            return false;
+        }
+
+        const isDuplicate = cartItems.some(cartItem => 
+            cartItem.productId === item.productId && // Cùng loại sản phẩm
+            cartItem.itemId !== item.itemId &&       // Khác dòng hiện tại
+            cartItem.color === targetColor &&        // Trùng màu dự kiến
+            cartItem.size === targetSize             // Trùng size dự kiến
+        );
+
+        return isDuplicate;
+    };
+
+    // Format tiền
+    const priceFormatted = item.price.toLocaleString('vi-VN');
+    const subtotalFormatted = (item.price * item.quantity).toLocaleString('vi-VN');
+
     // Nếu không có danh sách màu/size (do chưa populate hoặc lỗi), dùng mảng rỗng
     const colors = item.availableColors && item.availableColors.length > 0 ? item.availableColors : [item.color];
     const sizes = item.availableSizes && item.availableSizes.length > 0 ? item.availableSizes : [item.size];
 
     return (
         <div className="cart-item">
+            <div className="checkbox-col">
+                <input
+                    type="checkbox"
+                    checked={isSelected || false}
+                    onChange={() => onToggleSelect(item.itemId)}
+                    className="item-checkbox"
+                />
+            </div>
+
             <div className="product-col">
                 <img src={item.image} alt={item.name} />
                 <div className="product-info">
@@ -48,14 +83,8 @@ const CartItem = ({ item, onRemove, onUpdateQuantity }) => {
                     {/* === KHU VỰC PHÂN LOẠI HÀNG === */}
                     <div className="variant-selector" ref={popupRef}>
                         
-                        {/* Nút bấm mở popup */}
-                        <div className="variant-btn" 
-                            onClick={() => {
-                                setShowPopup(!showPopup);
-                                setTempColor(item.color); // Reset về giá trị hiện tại khi mở
-                                setTempSize(item.size);
-                            }}
-                        >
+                        {/* Nút bấm mở popup */} 
+                        <div className="variant-btn" onClick={() => setShowPopup(!showPopup)}>
                             <span>Phân loại: {item.color}, {item.size}</span>
                             <i className="fas fa-caret-down"></i>
                         </div>
@@ -67,14 +96,20 @@ const CartItem = ({ item, onRemove, onUpdateQuantity }) => {
                                 <div className="popup-section">
                                     <span className="popup-label">Màu sắc:</span>
                                     <div className="popup-options">
-                                        {colors.map(c => (
-                                            <button className={`option-btn ${tempColor === c ? 'active' : ''}`}
-                                                key={c}
-                                                onClick={() => setTempColor(c)}
-                                            >
-                                                {c}
-                                            </button>
-                                        ))}
+                                        {colors.map((c, index) => {
+                                            const disabled = isOptionDisabled('color', c);
+                                            return (
+                                                <button className={`option-btn ${tempColor === c ? 'active' : ''} ${disabled ? 'disabled' : ''}`}
+                                                    key={index}
+                                                    onClick={() => setTempColor(c)}
+                                                    disabled={disabled}
+                                                    title={disabled ? "Sản phẩm này đã có trong giỏ hàng" : ""}
+                                                >
+                                                    {c}
+                                                    {tempColor === c && <div className="tick-icon">✓</div>}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
 
@@ -82,14 +117,20 @@ const CartItem = ({ item, onRemove, onUpdateQuantity }) => {
                                 <div className="popup-section">
                                     <span className="popup-label">Size:</span>
                                     <div className="popup-options">
-                                        {sizes.map(s => (
-                                            <button className={`option-btn ${tempSize === s ? 'active' : ''}`}
-                                                key={s}
-                                                onClick={() => setTempSize(s)}
-                                            >
-                                                {s}
-                                            </button>
-                                        ))}
+                                        {sizes.map((s, index) => {
+                                            const disabled = isOptionDisabled('size', s);
+                                            return (
+                                                <button className={`option-btn ${tempSize === s ? 'active' : ''} ${disabled ? 'disabled' : ''}`}
+                                                    key={index}
+                                                    onClick={() => !disabled && setTempSize(s)}
+                                                    disabled={disabled}
+                                                    title={disabled ? "Sản phẩm này đã có trong giỏ hàng" : ""}
+                                                >
+                                                    {s}
+                                                    {tempSize === s && <div className="tick-icon">✓</div>}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
 

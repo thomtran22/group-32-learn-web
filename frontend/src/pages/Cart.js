@@ -1,4 +1,4 @@
-import React, { useEffect, useRef }  from "react";
+import React, { useState }  from "react";
 
 import {useCart} from '../context/CartContext';
 import CartItem from "../components/CartItem";
@@ -9,10 +9,15 @@ const Cart = () => {
         cartItems,
         handleRemoveItem,
         handleUpdateQuantity,
-        totalAmount,
-        totalAmountFormatted
-    } = useCart();
+        selectedTotal,
+        selectedTotalFormatted,
+        selectedItems,
+        onCheckoutClick,
+        handleDeleteSelected,
+        handleToggleSelect,
 
+        handleCheckout
+    } = useCart();
     
     {/*Nếu giỏ hàng trống*/}
     if(cartItems.length === 0) {
@@ -36,6 +41,18 @@ const Cart = () => {
                 <div className="cart-layout">
                     {/* Cột bên trái: Chi tiết giỏ hàng */}
                     <section className="cart-details">
+                        <div className="bulk-actions">
+                            {selectedItems.length > 0 && (
+                                <button 
+                                    onClick={handleDeleteSelected}
+                                    className="btn-delete-selected"
+                                >
+                                    <i className="fas fa-trash-alt"></i> {/* Thêm icon thùng rác cho đẹp */}
+                                    <span>Xóa ({selectedItems.length}) sản phẩm đã chọn</span>
+                                </button>
+                            )}
+                        </div>
+
                         <div className="cart-table">
                             {/* Tiêu đề bảng */}
                             <div className="cart-header">
@@ -51,6 +68,8 @@ const Cart = () => {
                                     item={item} 
                                     onRemove = {handleRemoveItem}
                                     onUpdateQuantity = {handleUpdateQuantity}
+                                    isSelected={selectedItems.includes(item.itemId)}
+                                    onToggleSelect={handleToggleSelect}
                                 />
                             ))}
                         </div>
@@ -58,8 +77,10 @@ const Cart = () => {
 
                     {/* Cột bên phải: Tóm tắt đơn hàng */}
                     <OrderSummary 
-                        totalString={totalAmountFormatted}
-                        totalNumber={totalAmount}
+                        totalString={selectedTotalFormatted}
+                        totalNumber={selectedTotal}
+                        onCheckout={onCheckoutClick} 
+                        itemCount={selectedItems.length}  
                     />
                 </div>
             </div>

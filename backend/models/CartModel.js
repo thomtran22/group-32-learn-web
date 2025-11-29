@@ -31,4 +31,4 @@ const cartSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Cart', cartSchema, 'Thien.NV225409');
+module.exports = mongoose.model('Cart', cartSchema, 'carts');
