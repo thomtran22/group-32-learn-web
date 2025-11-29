@@ -11,6 +11,7 @@
     "@testing-library/user-event": "^13.5.0",
     "@unleashit/forgot-password": "^2.0.4",
     "chatbot-widget-ui": "^3.0.3",
+    "gsap": "^3.13.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.9.6",
