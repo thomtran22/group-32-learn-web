@@ -162,11 +162,11 @@ const updateCart = async (req, res) => {
             message: "Đồng bộ giỏ hàng thành công",
             cart
         });
-    } catch (e) {
+    } catch (error) {
         console.error('❌ Update cart error:', error);
         res.status(500).json({
             success: false,
-            message: e.message
+            message: error.message
         });
     }
 };

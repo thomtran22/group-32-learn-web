@@ -3,6 +3,7 @@ const Cart = require('../models/CartModel');
 const crypto = require('crypto');
 const querystring = require('qs');
 const moment = require('moment');
+const { get } = require('http');
 
 const createOrder = async (req, res) => {
     const userId = req.user?.id;
@@ -12,18 +13,53 @@ const createOrder = async (req, res) => {
         shippingAddress, // Địa chỉ giao hàng
         orderNotes,      // Ghi chú đơn hàng
         paymentMethod,   // COD / BANKING / VNPAY
-        itemsPrice,      // Tổng tiền hàng
-        shippingPrice,   // Phí ship
-        totalPrice       // Tổng thu
+        // itemsPrice,      // Tổng tiền hàng
+        // shippingPrice,   // Phí ship
+        // totalPrice       // Tổng thu
     } = req.body;
 
     try {
-        if(!orderItems || orderItems === 0) {
+        if(!orderItems || orderItems.length === 0) {
             return res.status(400).json({
                 success: false,
                 message: "Đơn hàng không có sản phẩm nào"
             });
         }
+
+        let calculatedItemsPrice = 0;
+        const dbOrderItems = [];
+
+        for (const item of orderItems) {
+
+            if (!item.quantity || item.quantity <= 0) {
+                 return res.status(400).json({ success: false, message: `Số lượng không hợp lệ cho sản phẩm ID: ${item.productId}` });
+            }
+
+            // Tìm sản phẩm trong DB để lấy giá gốc
+            const dbProduct = await Product.findById(item.productId);
+            
+            if (!dbProduct) {
+                return res.status(404).json({ success: false, message: `Sản phẩm không tồn tại: ${item.name}` });
+            }
+
+            const itemPrice = dbProduct.price; 
+            const itemTotal = itemPrice * item.quantity;
+            calculatedItemsPrice += itemTotal;
+
+            dbOrderItems.push({
+                name: dbProduct.name,
+                quantity: item.quantity,
+                image: dbProduct.image, // Hoặc lấy item.image nếu muốn giữ ảnh variant
+                price: itemPrice,       // Dùng giá từ DB
+                color: item.color,
+                size: item.size,
+                product: dbProduct._id
+            });
+        }
+
+        const shippingPrice = 0; // Logic phí ship (có thể tính toán sau)
+        const totalPrice = calculatedItemsPrice + shippingPrice;
+
 
         if (!shippingAddress || !shippingAddress.fullName || !shippingAddress.phone) {
             return res.status(400).json({ 
@@ -31,16 +67,6 @@ const createOrder = async (req, res) => {
                 message: "Thiếu thông tin giao hàng" 
             });
         }
-
-        const dbOrderItems = orderItems.map(item => ({
-            name: item.name,
-            quantity: item.quantity,
-            image: item.image,
-            price: item.price,
-            color: item.color,
-            size: item.size,
-            product: item.productId // Lưu reference đến Product gốc
-        }));
 
         // TẠO ĐƠN HÀNG MỚI
         const order = new Order({
@@ -233,7 +259,7 @@ const vnpayReturn = async (req, res) => {
                 });
             }
         } else {
-            res.json({ success: false, message: 'Chữ ký không hợp lệ (Checksum failed)' });
+            res.json({ success: false, message: 'Chữ ký không hợp lệ' });
         }
     } catch (error) {
         console.error("Lỗi xác thực VNPay:", error);
@@ -250,9 +276,26 @@ const viewOrders = async (req, res) => {
     }
 };
 
+const getOrderById = async (req, res) => {
+    try {
+        // Lấy ID từ URL (VD: /api/orders/654abc...)
+        const order = await Order.findById(req.params.id);
+
+        if (order) {
+            res.json({ success: true, order });
+        } else {
+            res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Lỗi Server" });
+    }
+};
+
 module.exports = {
     createOrder,
     createPaymentUrl,
     vnpayReturn,
-    viewOrders
+    viewOrders,
+    getOrderById
 };

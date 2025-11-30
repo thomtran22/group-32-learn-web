@@ -5,7 +5,7 @@ const orderSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        require: false
+        required: false
     },
     orderItems: [
         {
@@ -25,7 +25,7 @@ const orderSchema = new mongoose.Schema({
     shippingAddress: {
         fullName: { type: String, required: true },
         phone: { type: String, required: true },
-        email: { type: String, required: true },
+        email: { type: String },
         
         // Lưu ý: Frontend cần gửi Text (VD: "Hà Nội") thay vì Code (VD: "01")
         city: { type: String, required: true },
