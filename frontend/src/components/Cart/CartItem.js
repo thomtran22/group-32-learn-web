@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useCart } from '../context/CartContext'; // Import context để lấy hàm update
+import { useCart } from '../../context/CartContext'; // Import context để lấy hàm update
 
 const CartItem = ({ item, onRemove, onUpdateQuantity, isSelected, onToggleSelect }) => {
     const { updateItemVariant, cartItems } = useCart();

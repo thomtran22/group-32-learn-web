@@ -15,6 +15,8 @@ import "./assets/css/style.css";
 import "./assets/css/globals.css";
 import "./assets/css/cart.css";
 import "./assets/css/checkout.css";
+import "./assets/css/orders.css";
+import "./assets/css/payment-result.css";
 
 function App() {
   return (

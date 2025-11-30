@@ -1,99 +1,136 @@
-// src/pages/PaymentResult.js
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { getVnpayMessage } from '../utils/vnpayResponeCode'; // Import file vừa tạo
+import { apiVerifyVnpayReturn } from '../services/orderApi';
+import { getVnpayMessage } from '../utils/vnpayResponeCode';
 
 const PaymentResult = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
 
-    const [statusData, setStatusData] = useState({ icon: 'loading', title: 'Đang xử lý...', msg: '' });
-    const [isVerified, setIsVerified] = useState(false); // Đã check với backend chưa
+    const [loading, setLoading] = useState(true);
+    const [statusData, setStatusData] = useState({ 
+        type: 'loading', 
+        title: 'Đang xử lý...', 
+        msg: 'Vui lòng đợi trong giây lát' 
+    });
 
     useEffect(() => {
         const vnpResponseCode = searchParams.get('vnp_ResponseCode');
-        const vnpTxnRef = searchParams.get('vnp_TxnRef');
 
         if (!vnpResponseCode) {
-            navigate('/'); // Không có mã thì đá về trang chủ
+            navigate('/');
             return;
         }
 
-        // 1. Lấy thông báo dựa trên mã lỗi VNPay trả về
-        const result = getVnpayMessage(vnpResponseCode);
-        
-        // Cập nhật giao diện ngay lập tức để người dùng biết nguyên nhân
-        setStatusData(result);
-
-        // 2. Vẫn cần gọi Backend để check chữ ký (SecureHash) bảo mật
-        const verifyOnBackend = async () => {
+        const processPayment = async () => {
             try {
-                const { data } = await axios.get(`http://localhost:5000/api/orders/vnpay-return${window.location.search}`);
-                
-                if (!data.success) {
-                    // Nếu Backend bảo chữ ký sai -> Ghi đè lại thông báo lỗi bảo mật
+                // Lấy Thông báo mã lỗi (Client side checking)
+                const clientCheck = getVnpayMessage(vnpResponseCode);
+
+                // Nếu mã lỗi VNPay trả về không phải '00' (Thất bại/Hủy)
+                if (vnpResponseCode !== '00') {
                     setStatusData({
-                        icon: 'error',
-                        title: 'Lỗi bảo mật',
-                        msg: 'Chữ ký không hợp lệ (Checksum failed). Giao dịch không được ghi nhận.'
+                        type: 'error',
+                        title: clientCheck.title, // Ví dụ: Giao dịch bị hủy
+                        msg: clientCheck.msg
+                    });
+                    setLoading(false);
+                    return;
+                }
+
+                // Nếu mã là '00', gọi Backend để xác thực chữ ký bảo mật (Server side checking)
+                // Truyền nguyên chuỗi query params xuống server
+                const data = await apiVerifyVnpayReturn(window.location.search);
+
+                if (data.success) {
+                    setStatusData({
+                        type: 'success',
+                        title: 'Thanh toán thành công!',
+                        msg: 'Đơn hàng của bạn đã được xác nhận và đang chờ xử lý.'
+                    });
+                    // Tại đây có thể clear giỏ hàng local nếu cần
+                } else {
+                    setStatusData({
+                        type: 'error',
+                        title: 'Xác thực thất bại',
+                        msg: data.message || 'Chữ ký bảo mật không hợp lệ. Vui lòng liên hệ CSKH.'
                     });
                 }
-                setIsVerified(true);
+
             } catch (error) {
+                console.error("Payment verify error:", error);
                 setStatusData({
-                    icon: 'error',
+                    type: 'error',
                     title: 'Lỗi kết nối',
-                    msg: 'Không thể kết nối đến máy chủ để xác thực đơn hàng.'
+                    msg: 'Không thể kết nối đến máy chủ để xác thực giao dịch.'
                 });
+            } finally {
+                setLoading(false);
             }
         };
 
-        verifyOnBackend();
-
+        processPayment();
     }, [searchParams, navigate]);
 
-    // Render icon động
+    // Render Icon bằng SVG (Không cần thư viện)
     const renderIcon = (type) => {
-        if (type === 'loading') return <div className="spinner-border text-primary"></div>;
-        if (type === 'success') return <i className="fas fa-check-circle text-success" style={{fontSize: '80px'}}></i>;
-        if (type === 'warning') return <i className="fas fa-exclamation-triangle text-warning" style={{fontSize: '80px'}}></i>;
-        return <i className="fas fa-times-circle text-danger" style={{fontSize: '80px'}}></i>; // error
+        if (type === 'success') {
+            return (
+                <svg className="status-icon icon-success" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+            );
+        }
+        // Error hoặc Warning dùng chung icon X
+        return (
+            <svg className="status-icon icon-error" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+        );
     };
 
+    if (loading) {
+        return (
+            <div className="loading-container">
+                <div className="loading-spinner"></div>
+                <p style={{marginTop: '20px', color: '#666'}}>Đang xác thực giao dịch...</p>
+            </div>
+        );
+    }
+
     return (
-        <div className="container text-center py-5">
+        <div className="payment-result-container">
             <div className="mb-4">
-                {renderIcon(statusData.icon)}
+                {renderIcon(statusData.type)}
             </div>
 
-            <h2 className="mb-3">{statusData.title}</h2>
-            <p className="text-muted mb-4" style={{fontSize: '1.1rem'}}>{statusData.msg}</p>
+            <h2 className="result-title">{statusData.title}</h2>
+            <p className="result-message">{statusData.msg}</p>
 
-            {/* Chỉ hiện nút bấm khi đã xử lý xong logic */}
-            {statusData.icon !== 'loading' && (
-                <div className="d-flex justify-content-center gap-3">
-                    {statusData.icon === 'success' ? (
-                        // Trường hợp THÀNH CÔNG
-                        <Link to="/my-orders" className="btn btn-primary px-4">
-                            Xem đơn hàng
+            <div className="action-group">
+                {statusData.type === 'success' ? (
+                    // Trường hợp THÀNH CÔNG
+                    <Link to="/orders" className="btn btn-primary">
+                        Xem đơn hàng
+                    </Link>
+                ) : (
+                    // Trường hợp THẤT BẠI
+                    <>
+                        <Link to="/cart" className="btn btn-outline">
+                            Về giỏ hàng
                         </Link>
-                    ) : (
-                        // Trường hợp THẤT BẠI / HỦY
-                        <>
-                            <Link to="/cart" className="btn btn-outline-secondary">
-                                Về giỏ hàng
-                            </Link>
-                            <button 
-                                onClick={() => navigate('/checkout')} 
-                                className="btn btn-warning px-4"
-                            >
-                                Thanh toán lại
-                            </button>
-                        </>
-                    )}
-                </div>
-            )}
+                        <button 
+                            onClick={() => navigate('/checkout')} 
+                            className="btn btn-primary"
+                        >
+                            Thử lại
+                        </button>
+                    </>
+                )}
+            </div>
         </div>
     );
 };

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import VnPayLogo from "../assets/images/vnpay.png"
+import VnPayLogo from "../../assets/images/vnpay.png"
 
 const CheckoutSummary = ({ items=[] ,totalAmount, totalAmountFormatted, onSubmit, paymentMethod, setPaymentMethod }) => {
   

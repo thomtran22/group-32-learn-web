@@ -1,7 +1,7 @@
 import React from "react";
 
-import visaLogo from '../assets/images/Visa_Inc._logo.svg.png';
-import mastercardLogo from '../assets/images/Mastercard-logo.svg.webp';
+import visaLogo from '../../assets/images/Visa_Inc._logo.svg.png';
+import mastercardLogo from '../../assets/images/Mastercard-logo.svg.webp';
 
 const OrderSummary = ({totalString, totalNumber, onCheckout, itemCount}) => {
 

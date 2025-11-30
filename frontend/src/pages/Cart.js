@@ -1,8 +1,8 @@
 import React, { useState }  from "react";
 
 import {useCart} from '../context/CartContext';
-import CartItem from "../components/CartItem";
-import OrderSummary from '../components/OrderSummary';
+import CartItem from "../components/Cart/CartItem";
+import OrderSummary from '../components/Cart/OrderSummary';
 
 const Cart = () => {
     const { 
@@ -14,9 +14,7 @@ const Cart = () => {
         selectedItems,
         onCheckoutClick,
         handleDeleteSelected,
-        handleToggleSelect,
-
-        handleCheckout
+        handleToggleSelect
     } = useCart();
     
     {/*Nếu giỏ hàng trống*/}
@@ -47,7 +45,7 @@ const Cart = () => {
                                     onClick={handleDeleteSelected}
                                     className="btn-delete-selected"
                                 >
-                                    <i className="fas fa-trash-alt"></i> {/* Thêm icon thùng rác cho đẹp */}
+                                    <i className="fas fa-trash-alt"></i>
                                     <span>Xóa ({selectedItems.length}) sản phẩm đã chọn</span>
                                 </button>
                             )}

@@ -1,72 +1,69 @@
-// src/pages/MyOrders.js
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { apiViewOrders } from '../services/orderApi';
+import OrderTabs from '../components/Order/OrderTabs';
+import OrderSearch from '../components/Order/OrderSearch';
+import OrderCard from '../components/Order/OrderCard';
+import EmptyState from '../components/Order/EmptyState';
 
-const MyOrders = () => {
+const Orders = () => {
     const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('All');
 
     useEffect(() => {
         const fetchOrders = async () => {
-            const token = localStorage.getItem('token');
-            const { data } = await axios.get('http://localhost:5000/api/orders/', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (data.success) {
-                setOrders(data.orders);
+            try {
+                setLoading(true);
+                const data = await apiViewOrders();
+                if (data.success) {
+                    // Sắp xếp đơn mới nhất lên đầu
+                    const sortedOrders = data.orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    setOrders(sortedOrders);
+                }
+            } catch (error) {
+                console.error("Lỗi tải đơn hàng:", error);
+            } finally {
+                setLoading(false);
             }
         };
         fetchOrders();
     }, []);
 
-    // Hàm hiển thị màu sắc trạng thái
-    const getStatusBadge = (isPaid, status) => {
-        if (status === 'Cancelled') return <span className="badge bg-danger">Đã hủy</span>;
-        if (isPaid) return <span className="badge bg-success">Đã thanh toán</span>;
-        return <span className="badge bg-warning text-dark">Chưa thanh toán</span>;
-    };
+    // Logic lọc đơn hàng theo Tab
+    const filteredOrders = orders.filter(order => {
+        if (activeTab === 'All') return true;
+        if (activeTab === 'Pending') return ['Pending', 'Confirmed'].includes(order.status);
+        if (activeTab === 'Shipping') return ['Processing', 'Shipping'].includes(order.status);
+        return order.status === activeTab;
+    });
+
+    if (loading) {
+        return (
+            <div className="loading-container">
+                <div className="loading-spinner"></div>
+            </div>
+        );
+    }
 
     return (
-        <div className="container mt-5">
-            <h2>Lịch sử đơn hàng</h2>
-            <table className="table">
-                <thead>
-                    <tr>
-                        <th>Mã đơn</th>
-                        <th>Ngày đặt</th>
-                        <th>Tổng tiền</th>
-                        <th>Thanh toán</th>
-                        <th>Vận chuyển</th>
-                        <th>Chi tiết</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {orders.map(order => (
-                        <tr key={order._id}>
-                            <td>{order._id}</td>
-                            <td>{new Date(order.createdAt).toLocaleDateString('vi-VN')}</td>
-                            <td>{order.totalPrice.toLocaleString('vi-VN')} đ</td>
-                            
-                            {/* Trạng thái thanh toán */}
-                            <td>
-                                {order.paymentMethod === 'COD' 
-                                    ? 'Thanh toán khi nhận hàng' 
-                                    : getStatusBadge(order.isPaid, order.status)
-                                }
-                            </td>
+        <div className="order-page-container">
+            <OrderTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-                            {/* Trạng thái vận chuyển */}
-                            <td>{order.status}</td>
-                            
-                            <td>
-                                <Link to={`/orders/${order._id}`} className="btn btn-sm btn-info">Xem</Link>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+            <div className="order-container">
+                <OrderSearch />
+
+                {filteredOrders.length === 0 ? (
+                    <EmptyState />
+                ) : (
+                    <div className="order-list">
+                        {filteredOrders.map((order) => (
+                            <OrderCard key={order._id} order={order} />
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
 
-export default MyOrders;
+export default Orders;

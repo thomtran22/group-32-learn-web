@@ -1,25 +1,37 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCart } from '../context/CartContext';
-import CheckoutForm from '../components/CheckoutForm';
-import CheckoutSummary from '../components/CheckoutSummary';
+import CheckoutForm from '../components/Checkout/CheckoutForm';
+import CheckoutSummary from '../components/Checkout/CheckoutSummary';
 
 
 import { apiCreateOrder, apiCreatPaymentUrl } from '../services/orderApi';
 
 const Checkout = () => {
 
-    const { cartItems, clearCart, selectedItems } = useCart();
+    const { cartItems, clearCart, selectedItems, removePurchasedItems } = useCart();
 
     //Lấy state được gửi từ trang Cart (chứa các sản phẩm đã chọn)
     const location = useLocation();
     const navigate = useNavigate();
 
-    const itemsToCheckout = location.state?.items || [];
+    const itemsFromLocation = location.state?.items;
 
-    if (itemsToCheckout.length === 0) {
-        navigate('/cart')
-    }
+    // Lấy items từ Context (trường hợp người dùng F5 hoặc điều hướng bình thường từ giỏ)
+    const itemsFromContext = cartItems.filter(item => selectedItems.includes(item._id || item.product)); 
+
+    // 3. Logic gộp: Ưu tiên Location, nếu không có thì lấy Context
+    const itemsToCheckout = (itemsFromLocation && itemsFromLocation.length > 0) 
+                            ? itemsFromLocation 
+                            : itemsFromContext;
+
+    // 4. Nếu vẫn rỗng (người dùng gõ thẳng URL /checkout mà chưa chọn gì) -> đá về trang chủ hoặc giỏ hàng
+    useEffect(() => {
+        if (itemsToCheckout.length === 0) {
+            navigate('/cart');
+        }
+    }, [itemsToCheckout, navigate]);
+
     const checkoutTotal = itemsToCheckout.reduce((total, item) => total + (item.price * item.quantity), 0);
     const checkoutTotalFormatted = checkoutTotal.toLocaleString('vi-VN');
 
@@ -84,10 +96,10 @@ const Checkout = () => {
             orderItems: itemsToCheckout,    // Thông tin sản phẩm từ giỏ hàng
             shippingAddress: shippingAddress,
             paymentMethod: paymentMethod,
-            itemsPrice: checkoutTotal,
-            shippingPrice: 0, // Hardcode freeship hoặc tính toán
-            totalPrice: checkoutTotal,
-            orderNotes: formData.ordernotes
+            // itemsPrice: checkoutTotal,
+            // shippingPrice: 0, // Hardcode freeship hoặc tính toán
+            // totalPrice: checkoutTotal,
+            // orderNotes: formData.ordernotes
         };
 
         try {
@@ -97,8 +109,11 @@ const Checkout = () => {
 
                 const createdOrder = response.order;
                 
+                const boughtItemIds = itemsToCheckout.map(item => item.itemId);
                 if (paymentMethod === 'VNPAY') {
                     console.log("Đang tạo URL thanh toán VNPay...");
+
+                    removePurchasedItems(boughtItemIds);
 
                     const vnpayData = {
                         orderId: createdOrder._id, // Dùng ID đơn hàng vừa tạo làm mã giao dịch
@@ -115,8 +130,8 @@ const Checkout = () => {
                         alert('Lỗi tạo URL thanh toán');
                     }
                 } else {
-                    // COD hoặc BANKING
-                    alert('✅ Đặt hàng thành công!');
+                    // COD
+                    removePurchasedItems(boughtItemIds);
                     
                     // Điều hướng tới trang Cảm ơn hoặc Lịch sử đơn hàng
                     // Truyền theo orderId để hiển thị chi tiết
@@ -140,7 +155,7 @@ const Checkout = () => {
                 </div>
 
                 <div className="checkout-layout">
-                    <CheckoutForm formData={formData} handleChange={handleChange}/>
+                    <CheckoutForm formData={formData} setFormData={handleChange}/>
                     <CheckoutSummary 
                         items={itemsToCheckout} // Truyền đúng biến itemsToCheckout
                         totalAmountFormatted={checkoutTotalFormatted} 
