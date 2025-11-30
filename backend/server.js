@@ -17,11 +17,11 @@ app.use(helmet());
 //app.use(xss()); // Sanitize data
 app.use(hpp()); // Chống HTTP Parameter Pollution
 
-//const orderRoutes = require('./routes/OrderRoutes');
+const orderRoutes = require('./routes/OrderRoutes');
 const cartRoutes = require('./routes/CartRoutes');
 
 // Routes chính
-//app.use('/api/order', orderRoutes);
+app.use('/api/orders', orderRoutes);
 app.use('/api/cart', cartRoutes);
 
 

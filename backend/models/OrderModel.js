@@ -70,4 +70,4 @@ const orderSchema = new mongoose.Schema({
     timestamps: true
 });
 
-module.exports = mongoose.model('Order', orderSchema, 'Thien.NV225409');
+module.exports = mongoose.model('Order', orderSchema, 'orders');

@@ -4,20 +4,27 @@ import { useCart } from '../context/CartContext';
 import CheckoutForm from '../components/CheckoutForm';
 import CheckoutSummary from '../components/CheckoutSummary';
 
+
+import { apiCreateOrder, apiCreatPaymentUrl } from '../services/orderApi';
+
 const Checkout = () => {
 
-    const { cartItems } = useCart();
+    const { cartItems, clearCart, selectedItems } = useCart();
 
     //Lấy state được gửi từ trang Cart (chứa các sản phẩm đã chọn)
     const location = useLocation();
     const navigate = useNavigate();
 
-    const itemsToCheckout = location.state?.items || cartItems || [];
+    const itemsToCheckout = location.state?.items || [];
 
+    if (itemsToCheckout.length === 0) {
+        navigate('/cart')
+    }
     const checkoutTotal = itemsToCheckout.reduce((total, item) => total + (item.price * item.quantity), 0);
     const checkoutTotalFormatted = checkoutTotal.toLocaleString('vi-VN');
 
     const [paymentMethod, setPaymentMethod] = useState('COD');
+    const [isLoading, setIsLoading] = useState(false);
 
     const [formData, setFormData] = useState({
         fullname: '',
@@ -41,7 +48,7 @@ const Checkout = () => {
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (!formData.fullname || !formData.phone) {
@@ -60,38 +67,67 @@ const Checkout = () => {
             return;
         }
 
-        const orderDetails = {
-            customerInfo: formData, // Thông tin khách hàng từ form
-            orderItems: itemsToCheckout,    // Thông tin sản phẩm từ giỏ hàng
-            totalAmount: checkoutTotal, // Dùng số, không dùng chuỗi đã format
-            paymentMethod: paymentMethod,
-            orderDate: new Date().toISOString()
+        setIsLoading(true);
+
+        // Mapping lại địa chỉ theo cấu trúc Schema Backend
+        const shippingAddress = {
+            fullName: formData.fullname,
+            phone: formData.phone,
+            email: formData.email,
+            city: formData.city || "Việt Nam", // Giá trị mặc định hoặc từ form
+            district: formData.district,
+            ward: formData.ward,
+            streetAddress: formData.street
         };
 
-        console.log('===== ĐƠN HÀNG CHI TIẾT =====');
-        console.log(orderDetails);
-        console.log('============================');
-        
-        switch(paymentMethod) {
-            case 'COD':
-                alert('✅ Đặt hàng thành công!\n\nBạn sẽ thanh toán khi nhận hàng.\nChúng tôi sẽ liên hệ với bạn sớm nhất.');
-                // TODO: Gửi đơn hàng lên server
-                break;
-                
-            case 'BANKING':
-                alert('✅ Đặt hàng thành công!\n\nVui lòng chuyển khoản theo thông tin QR Code đã hiển thị.\nĐơn hàng sẽ được xử lý sau khi nhận được thanh toán.');
-                // TODO: Gửi đơn hàng lên server với trạng thái "chờ thanh toán"
-                break;
-                
-            case 'VNPAY':
-                alert('Đang chuyển hướng đến cổng thanh toán VNPay...');
-                // TODO: Gọi API tạo URL thanh toán VNPay
-                // window.location.href = vnpayUrl;
+        const orderData = {
+            orderItems: itemsToCheckout,    // Thông tin sản phẩm từ giỏ hàng
+            shippingAddress: shippingAddress,
+            paymentMethod: paymentMethod,
+            itemsPrice: checkoutTotal,
+            shippingPrice: 0, // Hardcode freeship hoặc tính toán
+            totalPrice: checkoutTotal,
+            orderNotes: formData.ordernotes
+        };
 
-                break;
+        try {
+            const response = await apiCreateOrder(orderData);
+
+            if (response.success) {
+
+                const createdOrder = response.order;
                 
-            default:
-                alert('Vui lòng chọn phương thức thanh toán.');
+                if (paymentMethod === 'VNPAY') {
+                    console.log("Đang tạo URL thanh toán VNPay...");
+
+                    const vnpayData = {
+                        orderId: createdOrder._id, // Dùng ID đơn hàng vừa tạo làm mã giao dịch
+                        amount: checkoutTotal,     // Số tiền
+                        language: 'vn'
+                    };
+
+                    const vnpayResponse = await apiCreatPaymentUrl(vnpayData);
+
+                    if (vnpayResponse.success) {
+                        // Chuyển hướng người dùng sang VNPay Gateway
+                        window.location.href = vnpayResponse.url;
+                    } else {
+                        alert('Lỗi tạo URL thanh toán');
+                    }
+                } else {
+                    // COD hoặc BANKING
+                    alert('✅ Đặt hàng thành công!');
+                    
+                    // Điều hướng tới trang Cảm ơn hoặc Lịch sử đơn hàng
+                    // Truyền theo orderId để hiển thị chi tiết
+                    navigate('/orders');
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            alert(error.message || 'Có lỗi xảy ra');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -112,6 +148,7 @@ const Checkout = () => {
                         onSubmit={handleSubmit}
                         paymentMethod={paymentMethod}
                         setPaymentMethod={setPaymentMethod}
+                        isLoading={isLoading} 
                     />
                 </div>
             </div>

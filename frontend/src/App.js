@@ -6,6 +6,9 @@ import Home from "./pages/Home";
 import Cart from "./pages/Cart";
 import Login from "./pages/Login";
 import Checkout from "./pages/Checkout"
+import PaymentResult from './pages/PaymentResult'; 
+import Orders from './pages/Orders';
+
 import { CartProvider } from './context/CartContext'; 
 
 import "./assets/css/style.css";
@@ -23,6 +26,8 @@ function App() {
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />}/>
           <Route path="/login" element={<Login />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/payment-result" element={<PaymentResult />} />
         </Routes>
         <Footer />
       </CartProvider>
