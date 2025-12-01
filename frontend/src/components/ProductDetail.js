@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaShoppingBag } from "react-icons/fa";
+// Import 'BrowserRouter' từ react-router-dom nếu nó cần để giải quyết lỗi trước đó
+// import { BrowserRouter } from 'react-router-dom';
 
 function ProductDetail({ productId, onProductSelect }) {
   const [product, setProduct] = useState(null);
@@ -7,6 +9,33 @@ function ProductDetail({ productId, onProductSelect }) {
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState("L");
   const [loading, setLoading] = useState(true);
+
+  // 💡 STATE MỚI: Lưu trữ URL của ảnh chính đang hiển thị
+  const [mainImage, setMainImage] = useState("");
+  // 💡 STATE MỚI: Lưu trữ danh sách ảnh thumbnails
+  const [thumbnails, setThumbnails] = useState([]);
+
+  // Hàm xử lý click vào ảnh nhỏ
+  const handleThumbnailClick = (clickedImageURL) => {
+    // 1. Lấy ảnh chính hiện tại
+    const currentMainImage = mainImage;
+
+    // 2. Cập nhật ảnh chính mới
+    setMainImage(clickedImageURL);
+
+    // 3. Cập nhật danh sách thumbnails:
+    // - Loại bỏ ảnh vừa click ra khỏi thumbnails
+    // - Thêm ảnh chính cũ (currentMainImage) vào danh sách thumbnails
+
+    // Tạo danh sách thumbnails mới bằng cách lọc bỏ ảnh vừa click
+    let updatedThumbnails = thumbnails.filter((url) => url !== clickedImageURL);
+
+    // Thêm ảnh chính cũ vào danh sách (để nó trở thành thumbnail)
+    updatedThumbnails.push(currentMainImage);
+
+    // Cập nhật state thumbnails
+    setThumbnails(updatedThumbnails);
+  };
 
   // Fetch dữ liệu khi productId thay đổi
   useEffect(() => {
@@ -16,8 +45,7 @@ function ProductDetail({ productId, onProductSelect }) {
         const prodRes = await fetch(
           `http://localhost:5000/api/product/${productId}`
         );
-
-        // CẬP NHẬT: Gửi kèm ID sản phẩm đang xem để Server loại trừ
+        // Gửi kèm ID sản phẩm đang xem để Server loại trừ trong list gợi ý
         const bestRes = await fetch(
           `http://localhost:5000/api/best-sellers?excludeId=${productId}`
         );
@@ -33,6 +61,16 @@ function ProductDetail({ productId, onProductSelect }) {
 
         setProduct(prodData);
         setBestSellers(bestData);
+
+        // 💡 LOGIC KHỞI TẠO ẢNH: Tách ảnh chính và ảnh thumbnails
+        if (prodData.images && prodData.images.length > 0) {
+          setMainImage(prodData.images[0]); // Ảnh đầu tiên làm ảnh chính
+          setThumbnails(prodData.images.slice(1)); // Ảnh còn lại làm thumbnails
+        } else {
+          setMainImage("");
+          setThumbnails([]);
+        }
+
         setLoading(false);
       } catch (error) {
         setLoading(false);
@@ -84,13 +122,23 @@ function ProductDetail({ productId, onProductSelect }) {
       <div className="product-detail-section">
         {/* Gallery */}
         <div className="product-gallery">
+          {/* ẢNH THUMBNAILS (ĐƯỢC HIỂN THỊ CÁC ẢNH PHỤ VÀ ẢNH CHÍNH CŨ) */}
           <div className="thumbnails">
-            {product.images.slice(1).map((img, idx) => (
-              <img key={idx} src={img} alt={`thumb ${idx + 1}`} />
+            {thumbnails.map((imgURL, idx) => (
+              <img
+                key={idx}
+                src={imgURL}
+                alt={`thumb ${idx + 1}`}
+                // 💡 Gán sự kiện onClick để đổi ảnh
+                onClick={() => handleThumbnailClick(imgURL)}
+                // Nếu muốn thêm hiệu ứng active cho ảnh nhỏ, hãy thêm class 'active' tại đây.
+              />
             ))}
           </div>
+
+          {/* ẢNH CHÍNH (LUÔN HIỂN THỊ mainImage) */}
           <div className="main-image">
-            <img src={product.images[0]} alt={product.name} />
+            <img src={mainImage} alt={product.name} />
           </div>
         </div>
 
@@ -154,7 +202,7 @@ function ProductDetail({ productId, onProductSelect }) {
         </div>
       </div>
 
-      {/* SẢN PHẨM NGẪU NHIÊN */}
+      {/* SẢN PHẨM GỢI Ý */}
       <section className="best-sellers">
         <h2 className="section-title">CÓ THỂ BẠN CŨNG THÍCH</h2>
         <div className="product-grid">

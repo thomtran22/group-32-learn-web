@@ -283,3 +283,8 @@ hr {
     width: calc((100% - 20px) / 2);
   }
 }
+
+.thumbnails img.active {
+  border-color: var(--primary-color);
+  /* Có thể thêm hiệu ứng đổ bóng hoặc khác biệt rõ rệt hơn */
+}
