@@ -1,8 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "../assets/images/logo.svg";
+import LoginModal from "./LoginModal";
+import { FaUser, FaShoppingCart, FaSearch } from "react-icons/fa";
 
 function Header() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const closeModal = () => setIsModalOpen(false);
   return (
     <>
     <div className="top-header">
@@ -20,16 +24,25 @@ function Header() {
               <img src={logo} alt="Logo" />
             </Link>
             <form className="inner-form">
-              <input type="text" placeholder="Tìm kiếm sản phẩm..." />
+              <input type="text" placeholder="Bạn đang tìm gì..." />
+              <button className="btn-search">
+                <FaSearch/>
+              </button>
             </form>
             <div className="header-actions">
-              <Link to="/cart" className="btn-cart">Giỏ hàng</Link>
-              <Link to="/login" className="btn-login">Đăng nhập/Đăng ký</Link>
+              <Link to="/cart" className="btn-cart">
+                <FaShoppingCart className="btn-cart-1"/>
+              </Link>
+              <div 
+                className="btn-login"
+                onClick={()=> setIsModalOpen(true)}>
+                  <FaUser className="btn-user"/>
+              </div> 
             </div>
           </div>
           <nav className="inner-bottom">
             <ul>
-              <li><Link to="/">Giới thiệu</Link></li>
+              <li><Link to="/">Trang chủ</Link></li>
               <li><Link to="/">Sản phẩm</Link></li>
               <li><Link to="/">Khuyến mại</Link></li>
               <li><Link to="/">Tin tức</Link></li>
@@ -40,6 +53,8 @@ function Header() {
         </div>
       </div>
     </header>
+
+    {isModalOpen && <LoginModal closeModal = {closeModal}/>}
     </>
   );
 }

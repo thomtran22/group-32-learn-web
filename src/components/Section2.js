@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import product1 from "../assets/images/product-1.jpg";
 import product2 from "../assets/images/product-2.jpg";
 import product3 from "../assets/images/product-3.jpg";
@@ -20,11 +21,15 @@ function Section2() {
           {products.map((product) => (
             <div className="product-item" key={product.id}>
               <div className="inner-image">
-                <a href="#"><img src={product.image} alt={product.name} /></a>
+                <Link to={`/products/${product.id}`}>
+                  <img src={product.image} alt={product.name} />
+                </Link>
               </div>
               <div className="inner-content">
                 <h3 className="inner-title">
-                  <a href="#">{product.name}</a>
+                  <Link to={`/products/${product.id}`}>
+                    {product.name}
+                  </Link>
                 </h3>
                 <div className="inner-price">{product.price}</div>
               </div>

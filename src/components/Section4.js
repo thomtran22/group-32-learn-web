@@ -1,4 +1,3 @@
-// src/components/Section4.js
 import React from "react";
 import blog1 from "../assets/images/blog-1.jpg";
 import blog2 from "../assets/images/blog-2.png";
