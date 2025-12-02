@@ -7,10 +7,17 @@ const productSchema = new mongoose.Schema({
     price: { type: Number, required: true },
     image: { type: String, required: true },
     description: { type: String, default: '' },
-    // Lưu danh sách màu (VD: ["Red", "Blue"])
-    colors: [ { type: String } ],
-    // Lưu danh sách size (VD: ["M", "L", "XL"])
-    sizes: [{ type: String }]
+    // // Lưu danh sách màu (VD: ["Red", "Blue"])
+    // colors: [ { type: String } ],
+    // // Lưu danh sách size (VD: ["M", "L", "XL"])
+    // sizes: [{ type: String }]
+    variants: [
+        {
+            color: { type: String, required: true },
+            size: { type: String, required: true },
+            quantity: { type: Number, required: true, default: 0 } // Số lượng của riêng màu/size này
+        }
+    ]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Product', productSchema,'products');

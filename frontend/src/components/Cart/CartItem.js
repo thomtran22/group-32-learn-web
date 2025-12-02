@@ -13,6 +13,9 @@ const CartItem = ({ item, onRemove, onUpdateQuantity, isSelected, onToggleSelect
     
     const popupRef = useRef(null);
 
+    // Lấy variants từ item (được CartContext truyền vào)
+    const variants = item.variants || [];
+    
     // Reset lại state tạm mỗi khi mở popup hoặc khi item thay đổi bên ngoài
     useEffect(() => {
         if (showPopup) {
@@ -38,14 +41,31 @@ const CartItem = ({ item, onRemove, onUpdateQuantity, isSelected, onToggleSelect
         setShowPopup(false);
     };
 
-    const isOptionDisabled = (type, value) => {
+    // Hàm kiểm tra trạng thái của một Option (Màu hoặc Size)
+    const getOptionStatus = (type, value) => {
         const targetColor = type === 'color' ? value : tempColor;
         const targetSize = type === 'size' ? value : tempSize;
 
+        // 1. Nếu là chính nó hiện tại -> Không disable
         if (targetColor === item.color && targetSize === item.size) {
-            return false;
+            return { disabled: false, reason: "" };
         }
 
+        // 2. CHECK TỒN KHO (Logic mới theo DB Variants)
+        // Nếu sản phẩm có variants, ta phải check xem combo này có tồn tại và còn hàng không
+        if (variants.length > 0) {
+            const variantExist = variants.find(v => 
+                v.color === targetColor && 
+                v.size === targetSize && 
+                v.quantity > 0
+            );
+            
+            if (!variantExist) {
+                return { disabled: true, reason: "Hết hàng hoặc không tồn tại" };
+            }
+        }
+
+        // 3. CHECK TRÙNG TRONG GIỎ (Logic cũ)
         const isDuplicate = cartItems.some(cartItem => 
             cartItem.productId === item.productId && // Cùng loại sản phẩm
             cartItem.itemId !== item.itemId &&       // Khác dòng hiện tại
@@ -53,7 +73,11 @@ const CartItem = ({ item, onRemove, onUpdateQuantity, isSelected, onToggleSelect
             cartItem.size === targetSize             // Trùng size dự kiến
         );
 
-        return isDuplicate;
+        if (isDuplicate) {
+            return { disabled: true, reason: "Sản phẩm này đã có trong giỏ hàng" };
+        }
+
+        return { disabled: false, reason: "" };
     };
 
     // Format tiền
@@ -97,13 +121,13 @@ const CartItem = ({ item, onRemove, onUpdateQuantity, isSelected, onToggleSelect
                                     <span className="popup-label">Màu sắc:</span>
                                     <div className="popup-options">
                                         {colors.map((c, index) => {
-                                            const disabled = isOptionDisabled('color', c);
+                                            const { disabled, reason } = getOptionStatus('color', c);
                                             return (
                                                 <button className={`option-btn ${tempColor === c ? 'active' : ''} ${disabled ? 'disabled' : ''}`}
                                                     key={index}
-                                                    onClick={() => setTempColor(c)}
+                                                    onClick={() => !disabled && setTempColor(c)}
                                                     disabled={disabled}
-                                                    title={disabled ? "Sản phẩm này đã có trong giỏ hàng" : ""}
+                                                    title={reason} 
                                                 >
                                                     {c}
                                                     {tempColor === c && <div className="tick-icon">✓</div>}
@@ -118,13 +142,13 @@ const CartItem = ({ item, onRemove, onUpdateQuantity, isSelected, onToggleSelect
                                     <span className="popup-label">Size:</span>
                                     <div className="popup-options">
                                         {sizes.map((s, index) => {
-                                            const disabled = isOptionDisabled('size', s);
+                                            const { disabled, reason } = getOptionStatus('size', s);
                                             return (
                                                 <button className={`option-btn ${tempSize === s ? 'active' : ''} ${disabled ? 'disabled' : ''}`}
                                                     key={index}
                                                     onClick={() => !disabled && setTempSize(s)}
                                                     disabled={disabled}
-                                                    title={disabled ? "Sản phẩm này đã có trong giỏ hàng" : ""}
+                                                    title={reason}
                                                 >
                                                     {s}
                                                     {tempSize === s && <div className="tick-icon">✓</div>}
@@ -159,7 +183,7 @@ const CartItem = ({ item, onRemove, onUpdateQuantity, isSelected, onToggleSelect
                         onClick={(e) => {
                             e.preventDefault();
                             if (window.confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
-                                onRemove(item.itemId); // Sử dụng itemId để xóa chính xác dòng này
+                                onRemove(item.itemId); 
                             }
                         }}
                     >
@@ -174,12 +198,12 @@ const CartItem = ({ item, onRemove, onUpdateQuantity, isSelected, onToggleSelect
                 <div className="quantity-selector">
                     <button 
                         className="btn-quantity minus"
-                        onClick={() => onUpdateQuantity(item.itemId, item.quantity - 1)} // Dùng itemId
+                        onClick={() => onUpdateQuantity(item.itemId, item.quantity - 1)} 
                     >-</button>
                     <input type="number" value={item.quantity} min="1" readOnly/>
                     <button 
                         className="btn-quantity plus"
-                        onClick={() => onUpdateQuantity(item.itemId, item.quantity + 1)} // Dùng itemId
+                        onClick={() => onUpdateQuantity(item.itemId, item.quantity + 1)} 
                     >+</button>
                 </div>
             </div>

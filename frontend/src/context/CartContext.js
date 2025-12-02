@@ -73,6 +73,20 @@ export const CartProvider = ({children}) => {
                     if (data.success && data.cart) {
                         const mappedItems = data.cart.items.map(item => {
                             const productObj = item.productId || {};
+
+                            let extractedColors = [];
+                            let extractedSizes = [];
+
+                            if (productObj.variants && productObj.variants.length > 0) {
+                                // Lọc ra các màu duy nhất
+                                extractedColors = [...new Set(productObj.variants.map(v => v.color))];
+                                // Lọc ra các size duy nhất
+                                extractedSizes = [...new Set(productObj.variants.map(v => v.size))];
+                            } else {
+                                // Fallback nếu dữ liệu cũ
+                                extractedColors = productObj.colors || [];
+                                extractedSizes = productObj.sizes || [];
+                            }
                             return {
                                 itemId: item._id,
                                 productId: productObj._id || item.productId,
@@ -83,9 +97,12 @@ export const CartProvider = ({children}) => {
                                 color: item.color,
                                 size: item.size,
                                 quantity: item.quantity,
-                                // Fallback mảng rỗng nếu không có dữ liệu
-                                availableColors: productObj.colors || [], 
-                                availableSizes: productObj.sizes || []
+
+                                availableColors: extractedColors, 
+                                availableSizes: extractedSizes,
+                            
+                                // Lưu thêm variants để dùng check tồn kho sau này (nếu cần)
+                                variants: productObj.variants || [] 
                             };
                         });
                         setCartItems(mappedItems);
@@ -157,17 +174,29 @@ export const CartProvider = ({children}) => {
                 );
             }
 
+            let extractedColors = [];
+            let extractedSizes = [];
+            if (product.variants && product.variants.length > 0) {
+                extractedColors = [...new Set(product.variants.map(v => v.color))];
+                extractedSizes = [...new Set(product.variants.map(v => v.size))];
+            } else {
+                extractedColors = product.colors || [];
+                extractedSizes = product.sizes || [];
+            }
+
             const newItem = {
-                itemId: Date.now().toString(), // ID tạm cho FE
+                itemId: Date.now().toString(),
                 productId: product._id,
                 name: product.name,
                 price: product.price,
-                image: product.image, // Đảm bảo product đầu vào có trường này
+                image: product.image,
                 color: product.color,
                 size: product.size,
                 quantity: product.quantity,
-                availableColors: product.colors || [],
-                availableSizes: product.sizes || []
+                
+                availableColors: extractedColors,
+                availableSizes: extractedSizes,
+                variants: product.variants || [] // Lưu cả variants
             };
             return [...prevItems, newItem];
         });
@@ -185,9 +214,10 @@ export const CartProvider = ({children}) => {
                 //Rollback state (xóa item vừa thêm đi)
             }
         } else {
-            setTimeout(() => {
-                localStorage.setItem('cartItems', JSON.stringify(cartItems));
-            }, 0);
+            setCartItems(newCart => {
+                localStorage.setItem('cartItems', JSON.stringify(newCart));
+                return newCart;
+            });
         }
     };
 

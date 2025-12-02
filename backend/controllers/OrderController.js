@@ -14,9 +14,6 @@ const createOrder = async (req, res) => {
         shippingAddress, // Địa chỉ giao hàng
         orderNotes,      // Ghi chú đơn hàng
         paymentMethod,   // COD / BANKING / VNPAY
-        // itemsPrice,      // Tổng tiền hàng
-        // shippingPrice,   // Phí ship
-        // totalPrice       // Tổng thu
     } = req.body;
 
     try {
@@ -27,8 +24,15 @@ const createOrder = async (req, res) => {
             });
         }
 
+        const productIds = orderItems.map(item => item.productId);
+
+        const dbProducts = await Product.find({ _id: { $in: productIds } });
+
         let calculatedItemsPrice = 0;
         const dbOrderItems = [];
+
+        // Danh sách các update operation để chạy transaction hoặc bulkWrite
+        const bulkUpdateOps = [];
 
         for (const item of orderItems) {
 
@@ -36,25 +40,46 @@ const createOrder = async (req, res) => {
                 return res.status(400).json({ success: false, message: `Số lượng không hợp lệ cho sản phẩm ID: ${item.productId}` });
             }
 
-            // Tìm sản phẩm trong DB để lấy giá gốc
-            const dbProduct = await Product.findById(item.productId);
+            const dbProduct = dbProducts.find(p => p._id.toString() === item.productId);
             
             if (!dbProduct) {
                 return res.status(404).json({ success: false, message: `Sản phẩm không tồn tại: ${item.name}` });
             }
 
-            const itemPrice = dbProduct.price; 
-            const itemTotal = itemPrice * item.quantity;
-            calculatedItemsPrice += itemTotal;
+            const variant = dbProduct.variants.find(v => v.color === item.color && v.size === item.size);
 
+            // Check tồn kho lần cuối
+            if (variant.quantity < item.quantity) {
+                 return res.status(400).json({ 
+                     success: false, 
+                     message: `Sản phẩm ${dbProduct.name} (${item.color}, ${item.size}) không đủ hàng. Chỉ còn ${variant.quantity}.` 
+                });
+            }
+
+            const itemPrice = dbProduct.price; 
+            calculatedItemsPrice += itemPrice * item.quantity;
             dbOrderItems.push({
                 name: dbProduct.name,
                 quantity: item.quantity,
-                image: dbProduct.image, // Hoặc lấy item.image nếu muốn giữ ảnh variant
-                price: itemPrice,       // Dùng giá từ DB
+                image: dbProduct.image, 
+                price: itemPrice,
                 color: item.color,
                 size: item.size,
                 product: dbProduct._id
+            });
+
+            // update trừ tồn kho
+            bulkUpdateOps.push({
+                updateOne: {
+                    filter: { 
+                        _id: dbProduct._id, 
+                        "variants.color": item.color,
+                        "variants.size": item.size
+                    },
+                    update: { 
+                        $inc: { "variants.$.quantity": -item.quantity } 
+                    }
+                }
             });
         }
 
@@ -84,6 +109,10 @@ const createOrder = async (req, res) => {
         });
 
         const createdOrder = await order.save();
+        //Tru ton kho
+        if (bulkUpdateOps.length > 0) {
+            await Product.bulkWrite(bulkUpdateOps);
+        }
 
         if(userId) {
             const boughtProductIds = orderItems.map(item => item.itemId);
