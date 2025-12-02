@@ -1,4 +1,5 @@
 const Order = require('../models/OrderModel');
+const Product = require('../models/ProductModel');
 const Cart = require('../models/CartModel');
 const crypto = require('crypto');
 const querystring = require('qs');
@@ -32,7 +33,7 @@ const createOrder = async (req, res) => {
         for (const item of orderItems) {
 
             if (!item.quantity || item.quantity <= 0) {
-                 return res.status(400).json({ success: false, message: `Số lượng không hợp lệ cho sản phẩm ID: ${item.productId}` });
+                return res.status(400).json({ success: false, message: `Số lượng không hợp lệ cho sản phẩm ID: ${item.productId}` });
             }
 
             // Tìm sản phẩm trong DB để lấy giá gốc
@@ -70,16 +71,16 @@ const createOrder = async (req, res) => {
 
         // TẠO ĐƠN HÀNG MỚI
         const order = new Order({
-            user: userId, // Có thể null nếu cho phép khách vãng lai (tuỳ logic project của bạn)
+            user: userId || null, 
             orderItems: dbOrderItems,
             shippingAddress,
             orderNotes,
             paymentMethod,
-            itemsPrice,
+            itemsPrice: calculatedItemsPrice, // <-- QUAN TRỌNG: Dùng biến đã tính, không dùng req.body
             shippingPrice,
-            totalPrice,
-            isPaid: false, // Mặc định chưa thanh toán
-            status: 'Pending' // Trạng thái chờ xử lý
+            totalPrice: totalPrice,           // <-- QUAN TRỌNG
+            isPaid: false,
+            status: 'Pending'
         });
 
         const createdOrder = await order.save();
@@ -187,7 +188,7 @@ function sortObject(obj) {
 	let str = [];
 	let key;
 	for (key in obj){
-		if (obj.hasOwnProperty(key)) {
+		if (Object.prototype.hasOwnProperty.call(obj, key)) {
 		str.push(encodeURIComponent(key));
 		}
 	}

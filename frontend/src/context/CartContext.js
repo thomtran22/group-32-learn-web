@@ -14,18 +14,21 @@ export const CartProvider = ({children}) => {
     // --- STATE ---
     const [cartItems, setCartItems] = useState([]);
     const [isCartLoaded, setIsCartLoaded] = useState(false);
-
-    const isUpdateActionRef = useRef(false);
-
-    const isLoggedIn = !!localStorage.getItem('token');
-
     const [selectedItems, setSelectedItems] = useState([]);
+    
+    const isUpdateActionRef = useRef(false);
+    const isLoggedIn = !!localStorage.getItem('token');
     
     const selectedTotal = cartItems.reduce((total, item) => {
         return selectedItems.includes(item.itemId) 
             ? total + (item.price * item.quantity) 
             : total;
     }, 0);
+
+    // --- CALCULATE TOTAL ---
+    const totalAmount = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const totalAmountFormatted = totalAmount.toLocaleString('vi-VN');
+    const selectedTotalFormatted = selectedTotal.toLocaleString('vi-VN');
 
     const onCheckoutClick = () => {
         handleCheckout(selectedItems); 
@@ -154,14 +157,19 @@ export const CartProvider = ({children}) => {
                 );
             }
 
-            return [...prevItems, {
-                ...product,
-                itemId: Date.now().toString(), // id tmp
+            const newItem = {
+                itemId: Date.now().toString(), // ID tạm cho FE
                 productId: product._id,
-                // Giả sử product đầu vào có sẵn options, nếu không thì để mảng rỗng
+                name: product.name,
+                price: product.price,
+                image: product.image, // Đảm bảo product đầu vào có trường này
+                color: product.color,
+                size: product.size,
+                quantity: product.quantity,
                 availableColors: product.colors || [],
                 availableSizes: product.sizes || []
-            }];
+            };
+            return [...prevItems, newItem];
         });
 
         if(isLoggedIn) {
@@ -268,28 +276,48 @@ export const CartProvider = ({children}) => {
         }
     };
 
-    // --- CHECKOUT ---
-    const handleCheckout = (selectedIds = []) => {
-        // Nếu không truyền ID nào (trường hợp gọi từ chỗ khác), mặc định lấy hết (hoặc báo lỗi tùy logic)
-        // Nhưng ở đây ta ưu tiên logic: Chỉ mua cái đã chọn.
+    const removePurchasedItems = (itemIds) => {
+        // Cập nhật State CartItems (Để giao diện mất ngay món đó)
+        setCartItems(prev => prev.filter(item => !itemIds.includes(item.itemId)));
         
+        // Cập nhật State SelectedItems (Bỏ tick những món đã xóa)
+        setSelectedItems(prev => prev.filter(id => !itemIds.includes(id)));
+
+        // KHÔNG CẦN GỌI API apiRemoveItem
+        //apiCreateOrder ở backend đã làm việc này rồi.
+        
+        // Cập nhật LocalStorage nếu là khách vãng lai (Optional, vì khách vãng lai ko có userId để backend xóa)
+        if (!isLoggedIn) {
+            const remainingItems = cartItems.filter(item => !itemIds.includes(item.itemId));
+            localStorage.setItem('cartItems', JSON.stringify(remainingItems));
+        }
+    };
+
+    // --- CHECKOUT ---
+    const handleCheckout = (selectedIds = []) => {       
         if (!selectedIds || selectedIds.length === 0) {
             alert("Vui lòng chọn sản phẩm để thanh toán!");
             return;
         }
 
         // Lọc ra các object sản phẩm đầy đủ dựa trên ID
-        const itemsToCheckout = cartItems.filter(item => selectedIds.includes(item.itemId));
+        const rawItems = cartItems.filter(item => selectedIds.includes(item.itemId));
+
+        const itemsToCheckout = rawItems.map(item => ({
+            itemId: item.itemId,      // Để xóa khỏi giỏ sau khi mua
+            productId: item.productId, // Để gửi API tạo đơn
+            name: item.name,          // Để hiển thị UI Checkout
+            price: item.price,        // Để hiển thị UI Checkout
+            image: item.image,        // Để hiển thị UI Checkout
+            color: item.color,
+            size: item.size,
+            quantity: item.quantity
+        }));
 
         // Cách 1: Truyền qua state của navigate (An toàn, sạch sẽ)
         navigate('/checkout', { state: { items: itemsToCheckout } });
     };
 
-    // --- CALCULATE TOTAL ---
-    const totalAmount = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-    const totalAmountFormatted = totalAmount.toLocaleString('vi-VN');
-
-    const selectedTotalFormatted = selectedTotal.toLocaleString('vi-VN');
     const value = {
         cartItems,
         handleRemoveItem,
@@ -307,7 +335,8 @@ export const CartProvider = ({children}) => {
         handleToggleSelect,
         handleSelectAll,
         handleDeleteSelected,
-        onCheckoutClick
+        onCheckoutClick,
+        removePurchasedItems
     };
 
     return (

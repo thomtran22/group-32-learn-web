@@ -6,6 +6,12 @@ const CheckoutForm = ({formData, handleChange}) => {
     const [districts, setDistricts] = useState([]);
     const [wards, setWards] = useState([]);
 
+    const [selectedCodes, setSelectedCodes] = useState({
+        city: '',
+        district: '',
+        ward: ''
+    });
+
     useEffect(() => {
         const fetchProvinces = async () => {
             try {
@@ -21,14 +27,22 @@ const CheckoutForm = ({formData, handleChange}) => {
 
     {/*Xử lí khi chọn Tỉnh thành phố*/}
     const handleProvinceChange = async (e) => {
-        handleChange(e);
+        const provinceCode = e.target.value;
+
+        setSelectedCodes(prev => ({ ...prev, city: provinceCode, district: '', ward: '' }));
+
+        {/*Lấy danh sách Quận/Huyện mới dựa trên code Tỉnh*/}
+        const selectedProvince = provinces.find(p => p.code == provinceCode);
+        const provinceName = selectedProvince ? selectedProvince.name : '';
+
+        // Update formData: Lưu Tên Tỉnh, Reset Huyện và Xã
+        handleChange({ target: { name: 'city', value: provinceName } }); 
         handleChange({ target: { name: 'district', value: '' } });
         handleChange({ target: { name: 'ward', value: '' } });
+        
         setDistricts([]);
         setWards([]);
 
-        {/*Lấy danh sách Quận/Huyện mới dựa trên code Tỉnh*/}
-        const provinceCode = e.target.value;
         if (provinceCode) {
             try {
                 const res = await fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
@@ -42,12 +56,17 @@ const CheckoutForm = ({formData, handleChange}) => {
 
     {/*Xu li khi chon quan huyen */}
     const handleDistrictChange = async (e) => {
-        handleChange(e);
+        const districtCode = e.target.value;
+        
+        setSelectedCodes(prev => ({ ...prev, district: districtCode, ward: '' }));
 
-        handleChange({target: {name: 'ward', value: ''}});
+        const selectedDistrict = districts.find(d => d.code == districtCode);
+        const districtName = selectedDistrict ? selectedDistrict.name : '';
+
+        handleChange({ target: { name: 'district', value: districtName } });
+        handleChange({ target: { name: 'ward', value: '' } });
         setWards([]);
 
-        const districtCode = e.target.value;
         if(districtCode) {
             try {
                 const res = await fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
@@ -58,6 +77,17 @@ const CheckoutForm = ({formData, handleChange}) => {
             }
         }
     };
+
+    const handleWardChange = (e) => {
+        const wardCode = e.target.value;
+
+        setSelectedCodes(prev => ({ ...prev, ward: wardCode }));
+        
+        const selectedWard = wards.find(w => w.code == wardCode);
+        const wardName = selectedWard ? selectedWard.name : '';
+        
+        handleChange({ target: { name: 'ward', value: wardName } });
+    }
 
     return (
         <section className="billing-details">
@@ -71,21 +101,21 @@ const CheckoutForm = ({formData, handleChange}) => {
                         id="fullname"
                         name="fullname" 
                         placeholder="Họ tên của bạn"
-                        value={formData.fullname} // <-- Kết nối với state
-                        onChange={handleChange}     // <-- Kết nối với hàm xử lý
+                        value={formData.fullname}
+                        onChange={handleChange} 
                     />
                 </div>
                 
-                {/*Nhap so dien thoai*/}
                 <div className="form-row">
+                    {/*Nhap so dien thoai*/}
                     <div className="form-group">
                         <label htmlFor="phone">Số điện thoại *</label>
                         <input 
                             type="tel" id="phone"
                             name="phone"
                             placeholder="Số điện thoại của bạn"
-                            value={formData.phone} // <-- Kết nối với state
-                            onChange={handleChange}     // <-- Kết nối với hàm xử lý
+                            value={formData.phone} 
+                            onChange={handleChange}
                         />
                     </div>
 
@@ -96,8 +126,8 @@ const CheckoutForm = ({formData, handleChange}) => {
                             type="email"
                             id="email" name="email"
                             placeholder="Email của bạn"
-                            value={formData.email} // <-- Kết nối với state
-                            onChange={handleChange}     // <-- Kết nối với hàm xử lý
+                            value={formData.email}
+                            onChange={handleChange}
                         />
                     </div>
                 </div>
@@ -109,10 +139,10 @@ const CheckoutForm = ({formData, handleChange}) => {
                         <select
                             id="city"
                             name="city"
-                            value={formData.city} // <-- Kết nối với state
-                            onChange={handleProvinceChange}    // <-- Kết nối với hàm xử lý
+                            value={selectedCodes.city} 
+                            onChange={handleProvinceChange}
                         >
-                            <option value="" >Hà Nội</option>
+                            <option value="">-- Chọn Tỉnh/Thành phố --</option>
                             {provinces.map((province) => (
                                 <option key={province.code} value={province.code}>
                                     {province.name}
@@ -127,11 +157,11 @@ const CheckoutForm = ({formData, handleChange}) => {
                         <select
                             id="district"
                             name="district"
-                            value={formData.district} // <-- Kết nối với state
+                            value={selectedCodes.district}
                             onChange={handleDistrictChange} // Dùng hàm xử lý riêng
-                            disabled={!formData.city}
+                            disabled={districts.length === 0}
                         >
-                            <option value="">Chọn Quận/Huyện</option>
+                            <option value="">-- Chọn Quận/Huyện --</option>
                             {districts.map((district) => (
                                 <option key={district.code} value={district.code}>
                                     {district.name}
@@ -147,11 +177,11 @@ const CheckoutForm = ({formData, handleChange}) => {
                         <select 
                             id="ward" 
                             name="ward" 
-                            value={formData.ward} 
-                            onChange={handleChange} // Xã phường chỉ cần handleChange gốc
-                            disabled={!formData.district} // Khóa nếu chưa chọn Huyện
+                            value={selectedCodes.ward}
+                            onChange={handleWardChange} // Xã phường chỉ cần handleChange gốc
+                            disabled={wards.length === 0} // Khóa nếu chưa chọn Huyện
                         >
-                            <option value="">Chọn xã/phường</option>
+                            <option value="">-- Chọn Xã/Phường --</option>
                             {wards.map((ward) => (
                                 <option key={ward.code} value={ward.code}>
                                     {ward.name}
@@ -166,13 +196,13 @@ const CheckoutForm = ({formData, handleChange}) => {
                             id="street"
                             name="street"
                             placeholder="Số nhà, tên đường..."
-                            value={formData.street} // <-- Kết nối với state
-                            onChange={handleChange}     // <-- Kết nối với hàm xử lý
+                            value={formData.street} 
+                            onChange={handleChange}     
                         />
                     </div>
                 </div>
                 
-                <h2 className="section-title" style={{ marginTop: '30px' }}>THÔNG TIN BỔ SUNG</h2>
+                <h2 className="section-title">THÔNG TIN BỔ SUNG</h2>
                 <div className="form-group">
                     <label htmlFor="ordernotes">Order notes (optional)</label>
 

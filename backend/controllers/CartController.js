@@ -1,6 +1,7 @@
 const Cart = require('../models/CartModel');
 const Product = require('../models/ProductModel');
 
+// POST /api/cart
 const addToCart = async (req, res) => {
     if (!req.user || !req.user.id) {
         return res.status(401).json({ // 401 Unauthorized
@@ -110,10 +111,8 @@ const viewCart = async (req, res) => {
     }
 };
 
-// ==================== 3. CẬP NHẬT TOÀN BỘ GIỎ HÀNG ====================
 // PUT /api/cart/
 // Body: { items: [...], totalAmount: 500000 }
-// Dùng để SYNC localStorage -> Backend khi checkout hoặc beforeunload
 const updateCart = async (req, res) => {
     const userId = req.user.id;
     const { items } = req.body; 
@@ -171,7 +170,6 @@ const updateCart = async (req, res) => {
     }
 };
 
-// ==================== 4. XÓA 1 SẢN PHẨM CỤ THỂ ====================
 // DELETE /api/cart/items/:itemId
 const removeCartItem = async (req, res) => {
     const userId = req.user.id;

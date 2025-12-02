@@ -18,7 +18,7 @@ const Checkout = () => {
     const itemsFromLocation = location.state?.items;
 
     // Lấy items từ Context (trường hợp người dùng F5 hoặc điều hướng bình thường từ giỏ)
-    const itemsFromContext = cartItems.filter(item => selectedItems.includes(item._id || item.product)); 
+    const itemsFromContext = cartItems.filter(item => selectedItems.includes(item.itemId)); 
 
     // 3. Logic gộp: Ưu tiên Location, nếu không có thì lấy Context
     const itemsToCheckout = (itemsFromLocation && itemsFromLocation.length > 0) 
@@ -86,7 +86,7 @@ const Checkout = () => {
             fullName: formData.fullname,
             phone: formData.phone,
             email: formData.email,
-            city: formData.city || "Việt Nam", // Giá trị mặc định hoặc từ form
+            city: formData.city, // Giá trị mặc định hoặc từ form
             district: formData.district,
             ward: formData.ward,
             streetAddress: formData.street
@@ -99,7 +99,7 @@ const Checkout = () => {
             // itemsPrice: checkoutTotal,
             // shippingPrice: 0, // Hardcode freeship hoặc tính toán
             // totalPrice: checkoutTotal,
-            // orderNotes: formData.ordernotes
+            orderNotes: formData.ordernotes
         };
 
         try {
@@ -135,12 +135,15 @@ const Checkout = () => {
                     
                     // Điều hướng tới trang Cảm ơn hoặc Lịch sử đơn hàng
                     // Truyền theo orderId để hiển thị chi tiết
-                    navigate('/orders');
+                    // replace: true để user không back lại trang checkout được
+                    navigate('/orders', { replace: true });
                 }
+            } else {
+                alert(response.message || 'Tạo đơn hàng thất bại');
             }
         } catch (error) {
             console.error(error);
-            alert(error.message || 'Có lỗi xảy ra');
+            alert(error.message || 'Có lỗi xảy ra kết nối server');
         } finally {
             setIsLoading(false);
         }
@@ -155,7 +158,7 @@ const Checkout = () => {
                 </div>
 
                 <div className="checkout-layout">
-                    <CheckoutForm formData={formData} setFormData={handleChange}/>
+                    <CheckoutForm formData={formData} handleChange={handleChange}/>
                     <CheckoutSummary 
                         items={itemsToCheckout} // Truyền đúng biến itemsToCheckout
                         totalAmountFormatted={checkoutTotalFormatted} 

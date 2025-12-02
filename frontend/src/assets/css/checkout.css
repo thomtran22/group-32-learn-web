@@ -73,7 +73,7 @@
 }
 .form-group textarea {
     resize: vertical;
-}
+}   
 
 /* --- Your Order Section --- */
 .your-order {
@@ -322,6 +322,34 @@
 
 .btn-place-order i {
     font-size: 16px;
+}
+
+/* Style cho ô textarea */
+#ordernotes {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px 15px; 
+    border: 1px solid #e1e1e1; 
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 14px;
+    color: #333;
+    background-color: #fff; 
+    resize: vertical;
+    outline: none; 
+    transition: all 0.3s ease; 
+}
+
+/* Hiệu ứng khi người dùng click chuột vào ô (Focus) */
+#ordernotes:focus {
+    border-color: #d70018;
+    box-shadow: 0 0 0 3px rgba(215, 0, 24, 0.1);
+}
+
+/* Style cho Placeholder (dòng chữ gợi ý mờ mờ) */
+#ordernotes::placeholder {
+    color: #999;
+    font-style: italic;
 }
 
 /* --- Responsive --- */
