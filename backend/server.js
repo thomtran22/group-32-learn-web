@@ -25,8 +25,7 @@ const productSchema = new mongoose.Schema({
   productId: { type: String, required: true, unique: true },
   sizes: [String],
   description: [String],
-  images: [String],
-  colors: [{ id: String, name: String, image: String }],
+  images: [{ color: String, url: String }],
   isBestSeller: { type: Boolean, default: false },
 });
 const Product = mongoose.model("Product", productSchema);
@@ -34,6 +33,7 @@ const Product = mongoose.model("Product", productSchema);
 const cartItemSchema = new mongoose.Schema({
   productId: { type: String, required: true },
   productName: { type: String, required: true },
+  color: { type: String, required: true },
   size: { type: String, required: true },
   quantity: { type: Number, required: true, min: 1 },
   dateAdded: { type: Date, default: Date.now },
@@ -57,16 +57,17 @@ const SEED_PRODUCTS = [
       "- Kiểu dáng: Cổ bẻ",
     ],
     images: [
-      "https://down-vn.img.susercontent.com/file/sg-11134201-22100-3cgf3tr1mtiv02.webp",
-      "https://down-vn.img.susercontent.com/file/sg-11134201-22100-tm3s9fb3mtiv10.webp",
-      "https://down-vn.img.susercontent.com/file/vn-11134207-7ras8-m502ps5kle8nf3.webp",
-    ],
-    colors: [
       {
-        id: "black",
-        name: "Đen",
-        image:
-          "https://down-vn.img.susercontent.com/file/sg-11134201-22100-3cgf3tr1mtiv02.webp",
+        color: "đen",
+        url: "https://down-vn.img.susercontent.com/file/sg-11134201-22100-3cgf3tr1mtiv02.webp",
+      },
+      {
+        color: "xanh lá",
+        url: "https://down-vn.img.susercontent.com/file/sg-11134201-22100-tm3s9fb3mtiv10.webp",
+      },
+      {
+        color: "xám",
+        url: "https://down-vn.img.susercontent.com/file/vn-11134207-7ras8-m502ps5kle8nf3.webp",
       },
     ],
     isBestSeller: true,
@@ -78,16 +79,12 @@ const SEED_PRODUCTS = [
     sizes: ["M", "L", "XL"],
     description: ["- Chất liệu: Cotton"],
     images: [
-      "https://down-vn.img.susercontent.com/file/vn-11134207-7ras8-m502ps5kle8nf3.webp",
-    ],
-    colors: [
       {
-        id: "grey",
-        name: "Xám",
-        image:
-          "https://down-vn.img.susercontent.com/file/vn-11134207-7ras8-m502ps5kle8nf3.webp",
+        color: "xám",
+        url: "https://down-vn.img.susercontent.com/file/vn-11134207-7ras8-m502ps5kle8nf3.webp",
       },
     ],
+
     isBestSeller: true,
   },
   {
@@ -97,16 +94,12 @@ const SEED_PRODUCTS = [
     sizes: ["M", "L", "XL"],
     description: ["- Chất liệu: Poly"],
     images: [
-      "https://down-vn.img.susercontent.com/file/vn-11134258-820l4-mhkjhwcmlfk2b4.webp",
-    ],
-    colors: [
       {
-        id: "blue",
-        name: "Xanh",
-        image:
-          "https://down-vn.img.susercontent.com/file/vn-11134258-820l4-mhkjhwcmlfk2b4.webp",
+        color: "xanh",
+        url: "https://down-vn.img.susercontent.com/file/vn-11134258-820l4-mhkjhwcmlfk2b4.webp",
       },
     ],
+
     isBestSeller: true,
   },
   {
@@ -116,16 +109,12 @@ const SEED_PRODUCTS = [
     sizes: ["M", "L", "XL"],
     description: ["- Chất liệu: Vải lưới"],
     images: [
-      "https://down-vn.img.susercontent.com/file/vn-11134207-7ras8-md9rlu2rgbe57d.webp",
-    ],
-    colors: [
       {
-        id: "red",
-        name: "Đỏ",
-        image:
-          "https://down-vn.img.susercontent.com/file/vn-11134207-7ras8-md9rlu2rgbe57d.webp",
+        color: "đỏ",
+        url: "https://down-vn.img.susercontent.com/file/vn-11134207-7ras8-md9rlu2rgbe57d.webp",
       },
     ],
+
     isBestSeller: true,
   },
   {
@@ -135,16 +124,12 @@ const SEED_PRODUCTS = [
     sizes: ["M", "L", "XL"],
     description: ["- Chất liệu: Dệt kim"],
     images: [
-      "https://down-vn.img.susercontent.com/file/sg-11134201-22100-tm3s9fb3mtiv10.webp",
-    ],
-    colors: [
       {
-        id: "green",
-        name: "Xanh Lá",
-        image:
-          "https://down-vn.img.susercontent.com/file/sg-11134201-22100-tm3s9fb3mtiv10.webp",
+        color: "xanh lá",
+        url: "https://down-vn.img.susercontent.com/file/sg-11134201-22100-tm3s9fb3mtiv10.webp",
       },
     ],
+
     isBestSeller: false,
   },
 ];
@@ -160,10 +145,6 @@ async function seedDatabase() {
 }
 seedDatabase();
 
-// ===========================================
-// CẬP NHẬT LOGIC: Lấy sản phẩm ngẫu nhiên
-// ===========================================
-// API 2: Lấy 4 sản phẩm ngẫu nhiên KHÔNG trùng với sản phẩm đang xem
 app.get("/api/best-sellers", async (req, res) => {
   try {
     const excludeId = req.query.excludeId;
@@ -191,9 +172,7 @@ app.get("/api/best-sellers", async (req, res) => {
       .json({ message: "Lỗi Server khi truy vấn danh sách ngẫu nhiên." });
   }
 });
-// ===========================================
 
-// API 1: Lấy chi tiết một sản phẩm theo ID
 app.get("/api/product/:productId", async (req, res) => {
   try {
     const productId = req.params.productId;
@@ -210,7 +189,6 @@ app.get("/api/product/:productId", async (req, res) => {
   }
 });
 
-// API 3: Thêm sản phẩm mới
 app.post("/api/add-product", async (req, res) => {
   try {
     const newProductId = uuidv4();
@@ -230,28 +208,34 @@ app.post("/api/add-product", async (req, res) => {
   }
 });
 
-// API 4: Thêm vào giỏ hàng
 app.post("/api/cart", async (req, res) => {
   try {
-    const { productId, productName, size, quantity } = req.body;
-    if (!productId || !size || !quantity || quantity < 1)
-      return res.status(400).json({ message: "Dữ liệu không hợp lệ." });
+    const { productId, productName, size, quantity, color } = req.body;
+
+    if (!productId || !size || !quantity || quantity < 1 || !color)
+      return res
+        .status(400)
+        .json({
+          message: "Dữ liệu không hợp lệ (Thiếu size, quantity, hoặc color).",
+        });
+
     const newCartItem = new CartItem({
       productId,
       productName,
       size,
       quantity,
+      color,
     });
     await newCartItem.save();
     res.status(201).json({ message: "Thêm vào giỏ hàng thành công!" });
   } catch (error) {
+    console.error("Lỗi Server khi lưu giỏ hàng:", error);
     res.status(500).json({ message: "Lỗi Server khi lưu giỏ hàng." });
   }
 });
 
 app.get("/api/products", async (req, res) => {
   try {
-    // Find({}) sẽ lấy tất cả các tài liệu trong collection 'Product'
     const products = await Product.find({});
     res.json(products);
   } catch (error) {

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FaShoppingBag } from "react-icons/fa";
-// Import 'BrowserRouter' từ react-router-dom nếu nó cần để giải quyết lỗi trước đó
-// import { BrowserRouter } from 'react-router-dom';
+// Import các component/utility khác nếu cần
 
 function ProductDetail({ productId, onProductSelect }) {
   const [product, setProduct] = useState(null);
@@ -10,34 +9,50 @@ function ProductDetail({ productId, onProductSelect }) {
   const [selectedSize, setSelectedSize] = useState("L");
   const [loading, setLoading] = useState(true);
 
-  // 💡 STATE MỚI: Lưu trữ URL của ảnh chính đang hiển thị
+  // STATE: Màu sắc đang được chọn
+  const [selectedColor, setSelectedColor] = useState("");
+
+  // STATE: Quản lý ảnh chính đang hiển thị (URL)
   const [mainImage, setMainImage] = useState("");
-  // 💡 STATE MỚI: Lưu trữ danh sách ảnh thumbnails
+
+  // STATE: Danh sách thumbnails (URLs) thuộc về màu đang chọn
   const [thumbnails, setThumbnails] = useState([]);
 
-  // Hàm xử lý click vào ảnh nhỏ
-  const handleThumbnailClick = (clickedImageURL) => {
-    // 1. Lấy ảnh chính hiện tại
+  // Hàm xử lý đổi ảnh chính trong gallery khi click thumbnail
+  const handleThumbnailClick = (imageURL) => {
     const currentMainImage = mainImage;
+    setMainImage(imageURL);
 
-    // 2. Cập nhật ảnh chính mới
-    setMainImage(clickedImageURL);
+    // Lọc bỏ ảnh vừa click ra khỏi thumbnails
+    let updatedThumbnails = thumbnails.filter((url) => url !== imageURL);
 
-    // 3. Cập nhật danh sách thumbnails:
-    // - Loại bỏ ảnh vừa click ra khỏi thumbnails
-    // - Thêm ảnh chính cũ (currentMainImage) vào danh sách thumbnails
-
-    // Tạo danh sách thumbnails mới bằng cách lọc bỏ ảnh vừa click
-    let updatedThumbnails = thumbnails.filter((url) => url !== clickedImageURL);
-
-    // Thêm ảnh chính cũ vào danh sách (để nó trở thành thumbnail)
-    updatedThumbnails.push(currentMainImage);
-
-    // Cập nhật state thumbnails
-    setThumbnails(updatedThumbnails);
+    // Nếu ảnh chính cũ chưa có trong list thumbnails, thì thêm vào
+    if (currentMainImage && !updatedThumbnails.includes(currentMainImage)) {
+      updatedThumbnails.push(currentMainImage);
+    }
+    // Lọc lại một lần nữa để đảm bảo ảnh chính mới không bị trùng trong thumbnails
+    setThumbnails(updatedThumbnails.filter((url) => url !== imageURL));
   };
 
-  // Fetch dữ liệu khi productId thay đổi
+  // Hàm xử lý khi click chọn màu sắc
+  const handleColorSelect = (colorName) => {
+    setSelectedColor(colorName);
+
+    // Lấy tất cả ảnh của màu mới này từ mảng product.images
+    const newImages = product.images.filter((img) => img.color === colorName);
+
+    if (newImages.length > 0) {
+      // Đặt ảnh đầu tiên của màu mới làm ảnh chính
+      setMainImage(newImages[0].url);
+      // Đặt các ảnh còn lại làm thumbnails
+      setThumbnails(newImages.slice(1).map((img) => img.url));
+    } else {
+      setMainImage("");
+      setThumbnails([]);
+    }
+  };
+
+  // Fetch dữ liệu và khởi tạo State
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -45,7 +60,6 @@ function ProductDetail({ productId, onProductSelect }) {
         const prodRes = await fetch(
           `http://localhost:5000/api/product/${productId}`
         );
-        // Gửi kèm ID sản phẩm đang xem để Server loại trừ trong list gợi ý
         const bestRes = await fetch(
           `http://localhost:5000/api/best-sellers?excludeId=${productId}`
         );
@@ -56,18 +70,36 @@ function ProductDetail({ productId, onProductSelect }) {
           return;
         }
 
+        // prodData chứa cả product và availableColors (do logic backend đã sửa)
         const prodData = await prodRes.json();
         const bestData = await bestRes.json();
 
         setProduct(prodData);
-        setBestSellers(bestData);
+        setBestSellers(bestData); // LOGIC KHỞI TẠO ẢNH & MÀU
+        const images = prodData.images || []; // Đảm bảo images là một mảng
+        const availableColors = prodData.availableColors || []; // Đảm bảo colors là một mảng
 
-        // 💡 LOGIC KHỞI TẠO ẢNH: Tách ảnh chính và ảnh thumbnails
-        if (prodData.images && prodData.images.length > 0) {
-          setMainImage(prodData.images[0]); // Ảnh đầu tiên làm ảnh chính
-          setThumbnails(prodData.images.slice(1)); // Ảnh còn lại làm thumbnails
+        if (images.length > 0) {
+          // Lấy màu sắc mặc định (Ưu tiên màu từ availableColors nếu có)
+          const defaultColor =
+            availableColors.length > 0
+              ? availableColors[0].name
+              : images[0].color; // Lấy từ images nếu availableColors rỗng
+
+          setSelectedColor(defaultColor); // Lọc các ảnh thuộc màu mặc định
+          const defaultImages = images
+            .filter((img) => img.color === defaultColor)
+            .map((img) => img.url);
+          if (defaultImages.length > 0) {
+            setMainImage(defaultImages[0]); // Ảnh đầu tiên của màu đó làm ảnh chính
+            setThumbnails(defaultImages.slice(1)); // Ảnh còn lại làm thumbnails
+          } else {
+            setMainImage(null);
+            setThumbnails([]);
+          }
         } else {
-          setMainImage("");
+          setSelectedColor("");
+          setMainImage(null);
           setThumbnails([]);
         }
 
@@ -80,10 +112,14 @@ function ProductDetail({ productId, onProductSelect }) {
     fetchData();
   }, [productId]);
 
-  // Hàm Thêm vào giỏ hàng
+  // Hàm Thêm vào giỏ hàng (Gửi thêm 'color' lên server)
   const handleAddToCart = async () => {
     if (!selectedSize) {
       alert("Vui lòng chọn cỡ sản phẩm!");
+      return;
+    }
+    if (!selectedColor) {
+      alert("Vui lòng chọn màu sắc sản phẩm!");
       return;
     }
 
@@ -96,13 +132,14 @@ function ProductDetail({ productId, onProductSelect }) {
           productName: product.name,
           size: selectedSize,
           quantity: quantity,
+          color: selectedColor, // GỬI THÔNG TIN MÀU SẮC
         }),
       });
 
       const data = await response.json();
       if (response.ok) {
         alert(
-          `✅ Đã thêm ${quantity} sản phẩm ${product.name} (Size ${selectedSize}) vào CSDL.`
+          `✅ Đã thêm ${quantity} sản phẩm ${product.name} (Màu: ${selectedColor}, Size ${selectedSize}) vào giỏ hàng.`
         );
       } else {
         alert(`❌ Lỗi: ${data.message}`);
@@ -116,52 +153,61 @@ function ProductDetail({ productId, onProductSelect }) {
   if (!product)
     return <div className="error-state">Không tìm thấy sản phẩm này.</div>;
 
+  // Lấy danh sách màu sắc duy nhất từ phản hồi của Server
+  const availableColors = product.availableColors || [];
+
   return (
     <main className="container">
       <div className="breadcrumb">Trang chủ / Sản phẩm / {product.name}</div>
+
       <div className="product-detail-section">
-        {/* Gallery */}
+        {/* GALLERY */}
         <div className="product-gallery">
-          {/* ẢNH THUMBNAILS (ĐƯỢC HIỂN THỊ CÁC ẢNH PHỤ VÀ ẢNH CHÍNH CŨ) */}
+          {/* ẢNH THUMBNAILS */}
           <div className="thumbnails">
             {thumbnails.map((imgURL, idx) => (
               <img
                 key={idx}
                 src={imgURL}
                 alt={`thumb ${idx + 1}`}
-                // 💡 Gán sự kiện onClick để đổi ảnh
                 onClick={() => handleThumbnailClick(imgURL)}
-                // Nếu muốn thêm hiệu ứng active cho ảnh nhỏ, hãy thêm class 'active' tại đây.
+                className={imgURL === mainImage ? "active" : ""}
               />
             ))}
           </div>
 
-          {/* ẢNH CHÍNH (LUÔN HIỂN THỊ mainImage) */}
+          {/* ẢNH CHÍNH */}
           <div className="main-image">
             <img src={mainImage} alt={product.name} />
           </div>
         </div>
 
-        {/* Info */}
+        {/* INFO */}
         <div className="product-info">
           <h1>{product.name}</h1>
           <div className="price">{product.price.toLocaleString()}đ</div>
           <hr />
 
+          {/* HIỂN THỊ CHỌN MÀU SẮC */}
           <div className="selector-row">
-            <span>Màu Sắc</span>
+            <span>Màu Sắc: {selectedColor}</span>
             <div className="color-options">
-              {product.colors.map((c) => (
+              {availableColors.map((colorOption) => (
                 <div
-                  key={c.id}
-                  className="color-swatch"
-                  title={c.name}
-                  style={{ backgroundImage: `url(${c.image})` }}
+                  key={colorOption.name}
+                  title={colorOption.name}
+                  onClick={() => handleColorSelect(colorOption.name)}
+                  className={`color-swatch ${
+                    selectedColor === colorOption.name ? "active" : ""
+                  }`}
+                  // Dùng ảnh đại diện của màu đó làm nền cho ô chọn
+                  style={{ backgroundImage: `url(${colorOption.image})` }}
                 ></div>
               ))}
             </div>
           </div>
 
+          {/* CHỌN SIZE */}
           <div className="selector-row">
             <span>Cỡ</span>
             <div className="size-options">
@@ -177,6 +223,7 @@ function ProductDetail({ productId, onProductSelect }) {
             </div>
           </div>
 
+          {/* HÀNH ĐỘNG */}
           <div className="actions-row">
             <div className="quantity-control">
               <button onClick={() => setQuantity((q) => Math.max(1, q - 1))}>
@@ -190,6 +237,7 @@ function ProductDetail({ productId, onProductSelect }) {
             </button>
           </div>
 
+          {/* MÔ TẢ */}
           <div className="product-description">
             <h3>Mô tả</h3>
             <ul>
@@ -202,7 +250,6 @@ function ProductDetail({ productId, onProductSelect }) {
         </div>
       </div>
 
-      {/* SẢN PHẨM GỢI Ý */}
       <section className="best-sellers">
         <h2 className="section-title">CÓ THỂ BẠN CŨNG THÍCH</h2>
         <div className="product-grid">
@@ -212,7 +259,15 @@ function ProductDetail({ productId, onProductSelect }) {
               className="product-card"
               onClick={() => onProductSelect(item.productId)}
             >
-              <img src={item.images[0]} alt={item.name} />
+              {/* 💡 SỬA ĐỔI DƯỚI ĐÂY: Lấy URL từ đối tượng đầu tiên trong mảng images */}
+              <img
+                src={
+                  item.images && item.images.length > 0
+                    ? item.images[0].url
+                    : ""
+                }
+                alt={item.name}
+              />
               <div className="card-info">
                 <p className="p-name">{item.name}</p>
                 <p className="p-price">{item.price.toLocaleString()}đ</p>

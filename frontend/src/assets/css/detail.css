@@ -284,7 +284,51 @@ hr {
   }
 }
 
+/* Trong detail.css */
+
+/* Cải thiện tổng thể cho ảnh thumbnail */
+.thumbnails img {
+  /* Đã có: transition: 0.2s; */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Thêm đổ bóng nhẹ */
+}
+
+/* Hiệu ứng khi di chuột (hover) */
+.thumbnails img:hover {
+  border-color: var(--primary-color); /* Màu đỏ */
+  transform: scale(1.05); /* Phóng to nhẹ khi di chuột */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Hiệu ứng cho ảnh thumbnail đang được chọn */
 .thumbnails img.active {
   border-color: var(--primary-color);
-  /* Có thể thêm hiệu ứng đổ bóng hoặc khác biệt rõ rệt hơn */
+  box-shadow: 0 0 0 4px rgba(201, 37, 44, 0.3); /* Vòng sáng xung quanh */
+}
+
+/* Trong detail.css */
+.color-options {
+  display: flex;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.color-swatch {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%; /* Hình tròn */
+  border: 2px solid #ccc;
+  cursor: pointer;
+  background-size: cover; /* Hiển thị ảnh đại diện */
+  background-position: center;
+  transition: all 0.2s;
+}
+
+.color-swatch:hover {
+  border-color: #000;
+}
+
+.color-swatch.active {
+  border-color: #e63946; /* Màu chủ đạo */
+  box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.4); /* Hiệu ứng vòng sáng */
+  transform: scale(1.1);
 }
