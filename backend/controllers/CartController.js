@@ -180,7 +180,7 @@ const updateCart = async (req, res) => {
     }
 };
 
-// DELETE /api/cart/items/:itemId
+// DELETE /api/cart/:itemId
 const removeCartItem = async (req, res) => {
     const userId = req.user.id;
     const { itemId } = req.params; 

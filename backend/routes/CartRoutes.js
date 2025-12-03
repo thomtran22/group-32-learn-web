@@ -11,13 +11,13 @@ const { validate, addToCartRules, updateCartRules } = require('../middleware/car
 router.use(verifyToken);
 
 // Thêm sản phẩm vào giỏ hàng
-router.post('/',addToCartRules(),validate, addToCart);
+router.post('/',addToCartRules(), validate, addToCart);
 
 // Xem giỏ hàng
 router.get('/', viewCart);
 
 // Xoa mot san pham trong gio hang
-router.delete('/items/:itemId', removeCartItem);
+router.delete('/:itemId', removeCartItem);
 
 // Xóa toàn bộ sản phẩm trong giỏ hàng
 // DELETE /api/cart
