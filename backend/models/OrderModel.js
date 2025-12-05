@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const { timestamps } = require('node:console');
 
 const orderSchema = new mongoose.Schema({
     user: {
@@ -7,6 +6,7 @@ const orderSchema = new mongoose.Schema({
         ref: 'User',
         required: false
     },
+    
     orderItems: [
         {
             name: { type: String, required: true },
@@ -22,6 +22,7 @@ const orderSchema = new mongoose.Schema({
             }
         }
     ],
+
     shippingAddress: {
         fullName: { type: String, required: true },
         phone: { type: String, required: true },
@@ -39,6 +40,7 @@ const orderSchema = new mongoose.Schema({
     paymentMethod: {
         type: String,
         required: true,
+        enum: ['COD', 'VNPAY'],
         default: 'COD' // 'COD', 'BANKING', 'VNPAY'
     },
 
@@ -64,7 +66,7 @@ const orderSchema = new mongoose.Schema({
         type: String, 
         required: true,
         default: 'Pending', 
-        enum: ['Pending', 'Confirmed', 'Processing', 'Shipping', 'Delivered', 'Cancelled']
+        enum: ['Pending', 'Processing', 'Shipping', 'Delivered', 'Cancelled']
     }
 }, {
     timestamps: true

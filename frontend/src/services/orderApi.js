@@ -21,7 +21,7 @@ export const apiCreateOrder = async (orderData) => {
     }
 };
 
-export const apiCreatPaymentUrl = async (data) => {
+export const apiCreatePaymentUrl = async (data) => {
     try {
         const config = getAuthConfig();
         const response = await axios.post(`${API_URL}/create-payment-url`, data, config);
@@ -50,4 +50,18 @@ export const apiVerifyVnpayReturn = async (queryString) => {
     } catch (error) {
         throw error.response ? error.response.data : error;
     }
+};
+
+// Hủy đơn
+export const apiCancelOrder = async (orderId) => {
+    // Bạn cần viết route Backend: PUT /api/orders/:id/cancel
+    // const response = await axios.put(`${API_URL}/${orderId}/cancel`);
+    // return response.data;
+};
+
+// Xác nhận đã nhận hàng
+export const apiReceiveOrder = async (orderId) => {
+    // Backend: PUT /api/orders/:id/deliver (Hoặc endpoint riêng cho user confirm)
+    // const response = await axios.put(`${API_URL}/${orderId}/receive`); 
+    // return response.data;
 };

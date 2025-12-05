@@ -5,26 +5,25 @@ export const formatMoney = (amount) => {
 export const getStatusInfo = (status) => {
     switch (status) {
         case 'Pending':
-            return { text: 'CHỜ XÁC NHẬN', color: '#ee4d2d', icon: '⏳' };
-        case 'Confirmed':
-            return { text: 'ĐÃ XÁC NHẬN', color: '#4caf50', icon: '📝' };
+            return { text: 'Chờ xác nhận', color: '#ffad0d' }; // Vàng cam
         case 'Processing':
-            return { text: 'ĐANG CHUẨN BỊ HÀNG', color: '#2196f3', icon: '📦' };
+            return { text: 'Đang chuẩn bị hàng', color: '#2196f3' }; // Xanh dương
         case 'Shipping':
-            return { text: 'ĐANG GIAO HÀNG', color: '#26aa99', icon: '🚚' };
+            return { text: 'Đang giao hàng', color: '#00bcd4' }; // Cyan
         case 'Delivered':
-            return { text: 'HOÀN THÀNH', color: '#26aa99', icon: '✅' };
+            return { text: 'Giao thành công', color: '#4caf50' }; // Xanh lá
         case 'Cancelled':
-            return { text: 'ĐÃ HỦY', color: '#757575', icon: '❌' };
+            return { text: 'Đã hủy', color: '#f44336' }; // Đỏ
         default:
-            return { text: status, color: '#000', icon: '' };
+            return { text: status, color: '#333' };
     }
 };
 
 export const ORDER_TABS = [
-    { id: 'All', label: 'Tất cả' },
-    { id: 'Pending', label: 'Chờ xác nhận' }, 
-    { id: 'Shipping', label: 'Đang giao' },   
-    { id: 'Delivered', label: 'Hoàn thành' },
-    { id: 'Cancelled', label: 'Đã hủy' },
+    { id: 'ALL', label: 'Tất cả' },
+    { id: 'PENDING', label: 'Chờ thanh toán' }, // Map với status Pending
+    { id: 'PROCESSING', label: 'Vận chuyển' }, // Gom Processing + Shipping vào 1 tab cho gọn (hoặc tách ra tùy bạn)
+    { id: 'DELIVERED', label: 'Hoàn thành' },
+    { id: 'CANCELLED', label: 'Đã hủy' },
 ];
+

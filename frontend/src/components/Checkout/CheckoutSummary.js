@@ -39,7 +39,7 @@ const CheckoutSummary = ({ items=[] ,totalAmount, totalAmountFormatted, onSubmit
       <div className="payment-methods-container">
         <h3 className="payment-title">Phương thức thanh toán</h3>
         
-        {/* 1. Thanh toán khi nhận hàng (COD) */}
+        {/* Thanh toán khi nhận hàng (COD) */}
         <div 
           className={`payment-option ${paymentMethod === 'COD' ? 'active' : ''}`}
           onClick={() => setPaymentMethod('COD')}
@@ -56,57 +56,7 @@ const CheckoutSummary = ({ items=[] ,totalAmount, totalAmountFormatted, onSubmit
           </label>
         </div>
 
-        {/* 2. Chuyển khoản ngân hàng (QR Code) */}
-        <div className={`payment-option ${paymentMethod === 'BANKING' ? 'active' : ''}`}
-          onClick={() => setPaymentMethod('BANKING')}>
-          
-          <input type="radio" name="payment" checked={paymentMethod === 'BANKING'} onChange={() => {}} />
-          <label>
-            <i className="fas fa-qrcode"></i>
-            Chuyển khoản ngân hàng (QR Code)
-          </label>
-          
-          {/* Hiện QR Code khi chọn Banking */}
-          {paymentMethod === 'BANKING' && (
-            <div className="qr-code-box">
-              <p className="qr-title">
-                <i className="fas fa-mobile-alt"></i> 
-                Quét mã QR để thanh toán
-              </p>
-              <div className="qr-image-wrapper">
-                <img 
-                  src={`https://img.vietqr.io/image/MB-0987654321-compact2.png?amount=${totalAmount}&addInfo=Thanh toan don hang&accountName=CONG TY ABC`}
-                  alt="QR Code Thanh Toán" 
-                  className="qr-image"
-                />
-              </div>
-              <div className="bank-info">
-                <div className="bank-row">
-                  <span className="bank-label">Ngân hàng:</span>
-                  <span className="bank-value">MB Bank (Quân đội)</span>
-                </div>
-                <div className="bank-row">
-                  <span className="bank-label">Số tài khoản:</span>
-                  <span className="bank-value">0987654321</span>
-                </div>
-                <div className="bank-row">
-                  <span className="bank-label">Chủ tài khoản:</span>
-                  <span className="bank-value">CONG TY ABC</span>
-                </div>
-                <div className="bank-row">
-                  <span className="bank-label">Số tiền:</span>
-                  <span className="bank-value total-amount">{totalAmountFormatted} VND</span>
-                </div>
-                <div className="bank-note">
-                  <i className="fas fa-info-circle"></i>
-                  Nội dung: <strong>Thanh toan don hang</strong>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* 3. Thanh toán qua VNPay */}
+        {/* Thanh toán qua VNPay */}
         <div 
           className={`payment-option ${paymentMethod === 'VNPAY' ? 'active' : ''}`}
           onClick={() => setPaymentMethod('VNPAY')}

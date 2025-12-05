@@ -200,7 +200,7 @@ const createPaymentUrl = (req, res) => {
     var signData = querystring.stringify(vnp_Params, { encode: false });
 
     var hmac = crypto.createHmac("sha512", secretKey);
-    var signed = hmac.update(new Buffer(signData, 'utf-8')).digest("hex"); 
+    var signed = hmac.update(Buffer.from(signData, 'utf-8')).digest("hex"); 
 
     vnp_Params['vnp_SecureHash'] = signed;
 
@@ -248,7 +248,7 @@ const vnpayReturn = async (req, res) => {
 
         // Tính lại checksum để kiểm tra xem dữ liệu có bị giả mạo không
         const hmac = crypto.createHmac("sha512", secretKey);
-        const signed = hmac.update(new Buffer.from(signData, 'utf-8')).digest("hex");   
+        const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest("hex");
 
         if(secureHash === signed){
 
@@ -265,6 +265,10 @@ const vnpayReturn = async (req, res) => {
                 if (!order.isPaid) {
                     order.isPaid = true;
                     order.paidAt = Date.now();
+
+                    // Thanh toán xong thì chờ Shipper nhận đơn
+                    order.status = 'Processing';
+
                     order.paymentResult = {
                         id: vnp_Params['vnp_TransactionNo'],
                         status: 'Success',
@@ -281,11 +285,20 @@ const vnpayReturn = async (req, res) => {
                 });
             } else {
                 // Giao dịch thất bại (Khách hủy, sai thẻ, hết tiền...)
-                // Không update isPaid, nhưng trả về message để frontend hiển thị
-                res.json({ 
+                if (!order.isPaid) {
+                    order.status = 'Cancelled';
+                    order.paymentResult = {
+                        id: vnp_Params['vnp_TransactionNo'],
+                        status: 'Failed',
+                        update_time: vnp_Params['vnp_PayDate']
+                    };
+                    await order.save();
+                }
+
+                return res.json({ 
                     success: false, 
-                    message: 'Giao dịch không thành công',
-                    code: vnp_Params['vnp_ResponseCode'] // Gửi mã về để Frontend map ra tiếng Việt
+                    message: 'Giao dịch thất bại hoặc bị hủy',
+                    code: rspCode 
                 });
             }
         } else {

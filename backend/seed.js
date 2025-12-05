@@ -1,113 +1,139 @@
-// backend/seed.js
-const mongoose = require('mongoose');
-const Product = require('./models/ProductModel');
-const User = require('./models/UserModel');
-const Cart = require('./models/CartModel');
-const Order = require('./models/OrderModel');
-require('dotenv').config();
+const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MmYzMmJhODkyYjEwMzQ1Y2ZlNGUzYyIsImlhdCI6MTc2NDcwMDkzMCwiZXhwIjoxNzY3MjkyOTMwfQ.6yXBpmYf1CQWMSE8NqSp4DJGUCdr_TKVw_Rlx1GxE44";
+const BASE_URL = "http://localhost:5000/api";
 
-// Kết nối DB
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('🌱 MongoDB connected for seeding...'))
-    .catch(err => {
-        console.log('❌ Connection Error:', err);
-        process.exit(1);
+// ID sản phẩm đã tạo ở Bước 1
+const PRODUCT_1_ID = "656e12345678901234567890"; // Áo Thun
+const PRODUCT_2_ID = "656e12345678901234567891"; // Quần Jean
+
+// Hàm gọi API
+async function callApi(endpoint, method, body = null) {
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${TOKEN}`
+    };
+
+    const options = {
+        method,
+        headers,
+    };
+
+    if (body) {
+        options.body = JSON.stringify(body);
+    }
+
+    try {
+        const response = await fetch(`${BASE_URL}${endpoint}`, options);
+        const data = await response.json();
+        console.log(`[${method}] ${endpoint}:`, response.status);
+        if(!response.ok) console.error("Error:", data);
+        return data;
+    } catch (error) {
+        console.error(`Request failed: ${endpoint}`, error);
+    }
+}
+
+async function runSeed() {
+    console.log("=== BẮT ĐẦU TEST DỮ LIỆU ===");
+
+    // 1. Thêm sản phẩm vào GIỎ HÀNG (Cart)
+    console.log("\n--- 1. Thêm vào giỏ hàng ---");
+    
+    // Thêm Áo thun (Màu Trắng, Size M, SL: 2)
+    await callApi('/cart', 'POST', {
+        productId: PRODUCT_1_ID,
+        quantity: 2,
+        color: "Trắng",
+        size: "M"
     });
 
-const seedData = async () => {
-    try {
-        // 1. Xóa sạch dữ liệu cũ
-        console.log('🧹 Đang dọn dẹp dữ liệu cũ...');
-        await Product.deleteMany({});
-        await User.deleteMany({});
-        await Cart.deleteMany({});
-        await Order.deleteMany({}); // Xóa luôn đơn hàng cũ cho sạch
+    // Thêm Quần Jean (Màu Xanh Đậm, Size 30, SL: 1)
+    await callApi('/cart', 'POST', {
+        productId: PRODUCT_2_ID,
+        quantity: 1,
+        color: "Xanh Đậm",
+        size: "30"
+    });
 
-        // 2. Tạo User mẫu
-        // Lưu ý: Nếu User Model của bạn có hook 'pre save' để hash password, 
-        // thì password này sẽ được hash tự động.
-        const user = await User.create({
-            username: "khachhang",
-            email: "test@gmail.com"
-            //password: "123456", // Password mẫu
-            //phone: "0987654321",
-            //isAdmin: false
-        });
-        
-        console.log(`👤 User created: ${user.email} (Pass: 123456)`);
+    // Xem giỏ hàng để kiểm tra
+    const cartData = await callApi('/cart', 'GET');
+    console.log("Giỏ hàng hiện tại:", cartData?.items?.length || 0, "sản phẩm");
 
-        // 3. Tạo danh sách sản phẩm với cấu trúc Variants
-        const sampleProducts = [
+
+    // 2. Tạo Đơn hàng COD (Thanh toán khi nhận hàng)
+    console.log("\n--- 2. Tạo đơn hàng COD ---");
+    const codOrder = {
+        orderItems: [
             {
-                name: "Áo Thun Cotton Basic",
-                price: 150000,
-                image: "https://down-vn.img.susercontent.com/file/vn-11134207-7r98o-lmucn5j1x68b98", // Ảnh mẫu shopee/mạng
-                description: "Áo thun chất liệu 100% Cotton, thấm hút mồ hôi tốt.",
-                variants: [
-                    { color: "Trắng", size: "M", quantity: 50 },
-                    { color: "Trắng", size: "L", quantity: 30 },
-                    { color: "Đen", size: "M", quantity: 40 },
-                    { color: "Đen", size: "L", quantity: 0 } // Test case: Hết hàng màu Đen L
-                ]
-            },
-            {
-                name: "Quần Jean Slim Fit Rách Gối",
-                price: 450000,
-                image: "https://down-vn.img.susercontent.com/file/sg-11134201-22100-2p77j9j5hivvb8",
-                description: "Quần Jean phong cách bụi bặm, form ôm vừa vặn.",
-                variants: [
-                    { color: "Xanh Nhạt", size: "29", quantity: 15 },
-                    { color: "Xanh Nhạt", size: "30", quantity: 10 },
-                    { color: "Xanh Đậm", size: "29", quantity: 20 },
-                    { color: "Xanh Đậm", size: "30", quantity: 5 },
-                    { color: "Xanh Đậm", size: "31", quantity: 10 }
-                ]
-            },
-            {
-                name: "Áo Khoác Hoodie Unisex",
-                price: 320000,
-                image: "https://down-vn.img.susercontent.com/file/cn-11134207-7r98o-lowqp5j2y9a212",
-                description: "Áo Hoodie form rộng, nỉ bông dày dặn.",
-                variants: [
-                    { color: "Xám", size: "Freesize", quantity: 100 },
-                    { color: "Đen", size: "Freesize", quantity: 50 }
-                ]
-            },
-            {
-                name: "Giày Sneaker Thể Thao",
-                price: 850000,
-                image: "https://down-vn.img.susercontent.com/file/vn-11134207-7qukw-ljz6j5h1y68b98",
-                description: "Giày êm chân, phù hợp chạy bộ và đi chơi.",
-                variants: [
-                    { color: "Trắng/Đỏ", size: "40", quantity: 10 },
-                    { color: "Trắng/Đỏ", size: "41", quantity: 8 },
-                    { color: "Trắng/Đỏ", size: "42", quantity: 12 },
-                    { color: "Full Đen", size: "40", quantity: 5 },
-                    { color: "Full Đen", size: "41", quantity: 5 }
-                ]
-            },
-            {
-                name: "Mũ Lưỡi Trai Nón Sơn",
-                price: 120000,
-                image: "https://down-vn.img.susercontent.com/file/vn-11134207-7qukw-lkfj5j1x68b98", 
-                description: "Mũ lưỡi trai thời trang, che nắng cực tốt.",
-                variants: [
-                    { color: "Đen", size: "OneSize", quantity: 200 },
-                    { color: "Hồng", size: "OneSize", quantity: 50 }
-                ]
+                product: PRODUCT_1_ID,
+                name: "Áo Thun Basic Cotton",
+                quantity: 2,
+                image: "https://via.placeholder.com/150",
+                price: 250000,
+                color: "Trắng",
+                size: "M"
             }
-        ];
+        ],
+        shippingAddress: {
+            fullName: "Nguyễn Văn Test",
+            phone: "0987654321",
+            email: "test@example.com",
+            city: "Hà Nội",
+            district: "Cầu Giấy",
+            ward: "Dịch Vọng",
+            streetAddress: "123 Đường Test"
+        },
+        paymentMethod: "COD",
+        itemsPrice: 500000,
+        shippingPrice: 30000,
+        totalPrice: 530000
+    };
 
-        const createdProducts = await Product.insertMany(sampleProducts);
-        
-        console.log(`📦 Đã tạo thành công ${createdProducts.length} sản phẩm mới.`);
-        console.log("✅ SEED DATA HOÀN TẤT!");
-        
-        process.exit();
-    } catch (error) {
-        console.error("❌ Lỗi khi seed data:", error);
-        process.exit(1);
+    const orderRes = await callApi('/orders', 'POST', codOrder);
+    if(orderRes?.success || orderRes?._id) {
+        console.log("✅ Tạo đơn COD thành công! ID:", orderRes.order?._id || orderRes._id);
     }
-};
 
-seedData();
+
+    // 3. Tạo Đơn hàng VNPAY (Thanh toán online)
+    console.log("\n--- 3. Tạo đơn hàng VNPAY ---");
+    const vnpayOrder = {
+        orderItems: [
+            {
+                product: PRODUCT_2_ID,
+                name: "Quần Jean Slim Fit",
+                quantity: 1,
+                image: "https://via.placeholder.com/150",
+                price: 500000,
+                color: "Xanh Đậm",
+                size: "30"
+            }
+        ],
+        shippingAddress: {
+            fullName: "Trần Thị Online",
+            phone: "0909090909",
+            email: "online@example.com",
+            city: "TP. Hồ Chí Minh",
+            district: "Quận 1",
+            ward: "Bến Nghé",
+            streetAddress: "456 Đường Payment"
+        },
+        paymentMethod: "VNPAY",
+        itemsPrice: 500000,
+        shippingPrice: 30000,
+        totalPrice: 530000
+    };
+
+    const vnpOrderRes = await callApi('/orders', 'POST', vnpayOrder);
+    
+    if (vnpOrderRes?.paymentUrl) {
+        console.log("✅ Tạo đơn VNPAY thành công!");
+        console.log("👉 Link thanh toán:", vnpOrderRes.paymentUrl);
+    } else {
+        console.log("Kết quả tạo đơn VNPAY:", vnpOrderRes);
+    }
+
+    console.log("\n=== KẾT THÚC TEST ===");
+}
+
+// Chạy hàm
+runSeed();

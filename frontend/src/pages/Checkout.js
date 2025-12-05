@@ -5,7 +5,7 @@ import CheckoutForm from '../components/Checkout/CheckoutForm';
 import CheckoutSummary from '../components/Checkout/CheckoutSummary';
 
 
-import { apiCreateOrder, apiCreatPaymentUrl } from '../services/orderApi';
+import { apiCreateOrder, apiCreatePaymentUrl } from '../services/orderApi';
 
 const Checkout = () => {
 
@@ -121,7 +121,7 @@ const Checkout = () => {
                         language: 'vn'
                     };
 
-                    const vnpayResponse = await apiCreatPaymentUrl(vnpayData);
+                    const vnpayResponse = await apiCreatePaymentUrl(vnpayData);
 
                     if (vnpayResponse.success) {
                         // Chuyển hướng người dùng sang VNPay Gateway

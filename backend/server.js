@@ -38,7 +38,7 @@ app.get('/api/test/get-token/:userId', (req, res) => {
     // Tạo token hạn 30 ngày
     const token = jwt.sign(
         { id: userId }, 
-        process.env.JWT_SECRET || 'secret_key_tam_thoi', 
+        process.env.JWT_SECRET, 
         { expiresIn: '30d' }
     );
     
