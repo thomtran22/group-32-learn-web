@@ -22,7 +22,7 @@ export const getStatusInfo = (status) => {
 export const ORDER_TABS = [
     { id: 'ALL', label: 'Tất cả' },
     { id: 'PENDING', label: 'Chờ thanh toán' }, // Map với status Pending
-    { id: 'PROCESSING', label: 'Vận chuyển' }, // Gom Processing + Shipping vào 1 tab cho gọn (hoặc tách ra tùy bạn)
+    { id: 'PROCESSING', label: 'Vận chuyển' }, 
     { id: 'DELIVERED', label: 'Hoàn thành' },
     { id: 'CANCELLED', label: 'Đã hủy' },
 ];

@@ -1,21 +1,51 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&display=swap');
 
 :root {
-    --color-text-dark: #000;
-    --color-text-light: #EE1010;
-
-    --primary-color: #c9252c; /* Màu đỏ nút bấm, link */
-    --secondary-color: #212529; /* Màu đen xám */
-    --border-color: #e5e5e5;
-    --background-color: #f8f9fa;
-    
+    /* --- 1. TYPOGRAPHY (FONT CHỮ) --- */
     --font: "Inter Tight", sans-serif;
-
     --fs-xxl: 36px;
     --fs-xl: 22px;
     --fs-lg: 20px;
     --fs-md: 16px;
     --fs-sm: 14px;
+
+    /* --- 2. PALETTE MÀU CHỦ ĐẠO (PRIMARY) --- */
+    /* Đang dùng bộ màu Cam (kiểu Shopee) để giao diện tươi sáng hơn */
+    --primary-color: #ee4d2d;       /* Màu chính */
+    --primary-dark: #d73211;        /* Màu khi hover */
+    --primary-light: #fff5f3;       /* Màu nền nhạt (dùng cho background nút phụ) */
+    
+    /* Màu phụ (Secondary) */
+    --secondary-color: #212529;
+
+    /* --- 3. MÀU TEXT (VĂN BẢN) --- */
+    --text-color: #333333;          /* Màu chữ chính (dễ đọc hơn đen tuyền) */
+    --text-muted: #757575;          /* Màu chữ phụ, mô tả */
+    
+    /* Giữ lại biến cũ để tránh lỗi code cũ (nhưng nên quy về dùng --text-color) */
+    --color-text-dark: #000;      
+    --color-text-light: #EE1010;
+
+    /* --- 4. BACKGROUND & BORDER --- */
+    --bg-body: #f5f5f5;             /* Màu nền web xám nhẹ (từ orders.css) */
+    --background-color: #f8f9fa;    /* Màu nền phụ (giữ lại từ style.css cũ) */
+    --white: #ffffff;
+    --border-color: #e5e5e5;
+
+    /* --- 5. TRẠNG THÁI (STATUS COLORS) --- */
+    --success: #4caf50;   /* Thành công (Xanh lá) */
+    --warning: #ff9800;   /* Cảnh báo (Cam vàng) */
+    --danger: #f44336;    /* Lỗi/Hủy (Đỏ) */
+    --info: #2196f3;      /* Thông tin (Xanh dương) */
+
+    /* --- 6. HIỆU ỨNG (EFFECTS) --- */
+    /* Đổ bóng (Shadow) - Giúp giao diện nổi khối đẹp hơn */
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+    --shadow-md: 0 2px 8px rgba(0,0,0,.08);
+    --shadow-lg: 0 4px 12px rgba(0,0,0,.12);
+    
+    /* Chuyển động mượt (Transition) */
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * {
@@ -24,8 +54,16 @@
 
 body {
     margin: 0;
-    font-family: var(--font);
-    line-height: 1.4;
+    font-family: var(--font); /* Dùng font Inter Tight đã khai báo ở :root */
+    line-height: 1.6; /* Chọn 1.6 để chữ thoáng, dễ đọc hơn 1.4 */
+    
+    /* Thêm 2 dòng này từ orders.css sang để nhận màu nền toàn web */
+    background-color: var(--bg-body);
+    color: var(--text-color);
+    
+    /* Làm mượt font chữ trên Mac/Windows */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 a {
@@ -61,7 +99,7 @@ a {
 
 .header .inner-top {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     gap: 8%;
     padding-bottom: 25px;
     border-bottom: 1px solid #E6D7D7;
@@ -78,11 +116,20 @@ a {
 
 .header .inner-form input {
     width: 100%;
-    border: none;
+    border: 1px solid #d1d1d1; /* Thêm viền xám để định hình khung */
     outline: none;
-    padding: 10px 15px 10px 100px;
-    background: #F5F5F5;
-    font-size: var(--fs-lg);
+    padding: 10px 20px; /* Căn lề chuẩn, bỏ số 100px đi nếu không có icon to */
+    background: #ffffff; /* Nền trắng để nổi bật trên nền xám của web */
+    font-size: var(--fs-md); /* Chữ nhỏ lại xíu cho tinh tế */
+    border-radius: 4px; /* Bo góc nhẹ */
+    color: var(--text-color);
+    transition: var(--transition);
+}
+
+/* Thêm hiệu ứng khi click vào ô tìm kiếm */
+.header .inner-form input:focus {
+    border-color: var(--primary-color); /* Đổi màu viền sang màu chủ đạo khi nhập */
+    box-shadow: 0 0 0 3px var(--primary-light); /* Hiệu ứng sáng viền */
 }
 
 .header .inner-bottom ul {

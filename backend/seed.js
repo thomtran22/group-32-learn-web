@@ -1,139 +1,104 @@
-const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MmYzMmJhODkyYjEwMzQ1Y2ZlNGUzYyIsImlhdCI6MTc2NDcwMDkzMCwiZXhwIjoxNzY3MjkyOTMwfQ.6yXBpmYf1CQWMSE8NqSp4DJGUCdr_TKVw_Rlx1GxE44";
+const mongoose = require('mongoose');
+const Product = require('./models/ProductModel'); // Đảm bảo đường dẫn trỏ đúng file Model
+require('dotenv').config();
+
+// 1. CẤU HÌNH
+const MONGO_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ten_database_cua_ong';
 const BASE_URL = "http://localhost:5000/api";
+const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MmYzMmJhODkyYjEwMzQ1Y2ZlNGUzYyIsImlhdCI6MTc2NDcwMDkzMCwiZXhwIjoxNzY3MjkyOTMwfQ.6yXBpmYf1CQWMSE8NqSp4DJGUCdr_TKVw_Rlx1GxE44";
 
-// ID sản phẩm đã tạo ở Bước 1
-const PRODUCT_1_ID = "656e12345678901234567890"; // Áo Thun
-const PRODUCT_2_ID = "656e12345678901234567891"; // Quần Jean
-
-// Hàm gọi API
+// Hàm gọi API (Giữ nguyên của ông)
 async function callApi(endpoint, method, body = null) {
     const headers = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${TOKEN}`
     };
 
-    const options = {
-        method,
-        headers,
-    };
-
-    if (body) {
-        options.body = JSON.stringify(body);
-    }
+    const options = { method, headers };
+    if (body) options.body = JSON.stringify(body);
 
     try {
         const response = await fetch(`${BASE_URL}${endpoint}`, options);
         const data = await response.json();
-        console.log(`[${method}] ${endpoint}:`, response.status);
-        if(!response.ok) console.error("Error:", data);
+        if(!response.ok) {
+            console.error(`❌ API Lỗi [${endpoint}]:`, data.message || data);
+            return null;
+        }
         return data;
     } catch (error) {
-        console.error(`Request failed: ${endpoint}`, error);
+        console.error(`❌ Lỗi mạng: ${endpoint}`, error.message);
+        return null;
     }
 }
 
-async function runSeed() {
-    console.log("=== BẮT ĐẦU TEST DỮ LIỆU ===");
-
-    // 1. Thêm sản phẩm vào GIỎ HÀNG (Cart)
-    console.log("\n--- 1. Thêm vào giỏ hàng ---");
-    
-    // Thêm Áo thun (Màu Trắng, Size M, SL: 2)
-    await callApi('/cart', 'POST', {
-        productId: PRODUCT_1_ID,
-        quantity: 2,
-        color: "Trắng",
-        size: "M"
-    });
-
-    // Thêm Quần Jean (Màu Xanh Đậm, Size 30, SL: 1)
-    await callApi('/cart', 'POST', {
-        productId: PRODUCT_2_ID,
-        quantity: 1,
-        color: "Xanh Đậm",
-        size: "30"
-    });
-
-    // Xem giỏ hàng để kiểm tra
-    const cartData = await callApi('/cart', 'GET');
-    console.log("Giỏ hàng hiện tại:", cartData?.items?.length || 0, "sản phẩm");
-
-
-    // 2. Tạo Đơn hàng COD (Thanh toán khi nhận hàng)
-    console.log("\n--- 2. Tạo đơn hàng COD ---");
-    const codOrder = {
-        orderItems: [
-            {
-                product: PRODUCT_1_ID,
-                name: "Áo Thun Basic Cotton",
-                quantity: 2,
-                image: "https://via.placeholder.com/150",
-                price: 250000,
-                color: "Trắng",
-                size: "M"
-            }
-        ],
-        shippingAddress: {
-            fullName: "Nguyễn Văn Test",
-            phone: "0987654321",
-            email: "test@example.com",
-            city: "Hà Nội",
-            district: "Cầu Giấy",
-            ward: "Dịch Vọng",
-            streetAddress: "123 Đường Test"
-        },
-        paymentMethod: "COD",
-        itemsPrice: 500000,
-        shippingPrice: 30000,
-        totalPrice: 530000
-    };
-
-    const orderRes = await callApi('/orders', 'POST', codOrder);
-    if(orderRes?.success || orderRes?._id) {
-        console.log("✅ Tạo đơn COD thành công! ID:", orderRes.order?._id || orderRes._id);
+async function main() {
+    // BƯỚC 1: KẾT NỐI MONGODB ĐỂ LẤY SẢN PHẨM
+    console.log("⏳ Đang kết nối MongoDB...");
+    try {
+        await mongoose.connect(MONGO_URI);
+        console.log("✅ Đã kết nối DB.");
+    } catch (err) {
+        console.error("❌ Lỗi kết nối DB:", err);
+        process.exit(1);
     }
 
+    // BƯỚC 2: TRUY VẤN LẤY 20 SẢN PHẨM
+    console.log("⏳ Đang lấy 20 sản phẩm từ Collection 'products'...");
+    // Lấy 20 thằng, chỉ cần lấy trường _id, name và variants để nhẹ
+    const products = await Product.find({}, '_id name variants').limit(20);
 
-    // 3. Tạo Đơn hàng VNPAY (Thanh toán online)
-    console.log("\n--- 3. Tạo đơn hàng VNPAY ---");
-    const vnpayOrder = {
-        orderItems: [
-            {
-                product: PRODUCT_2_ID,
-                name: "Quần Jean Slim Fit",
-                quantity: 1,
-                image: "https://via.placeholder.com/150",
-                price: 500000,
-                color: "Xanh Đậm",
-                size: "30"
-            }
-        ],
-        shippingAddress: {
-            fullName: "Trần Thị Online",
-            phone: "0909090909",
-            email: "online@example.com",
-            city: "TP. Hồ Chí Minh",
-            district: "Quận 1",
-            ward: "Bến Nghé",
-            streetAddress: "456 Đường Payment"
-        },
-        paymentMethod: "VNPAY",
-        itemsPrice: 500000,
-        shippingPrice: 30000,
-        totalPrice: 530000
-    };
+    if (products.length === 0) {
+        console.log("⚠️ Database rỗng! Ông chạy file seeder.js chưa?");
+        process.exit();
+    }
+    console.log(`✅ Đã lấy được ${products.length} sản phẩm.`);
 
-    const vnpOrderRes = await callApi('/orders', 'POST', vnpayOrder);
-    
-    if (vnpOrderRes?.paymentUrl) {
-        console.log("✅ Tạo đơn VNPAY thành công!");
-        console.log("👉 Link thanh toán:", vnpOrderRes.paymentUrl);
-    } else {
-        console.log("Kết quả tạo đơn VNPAY:", vnpOrderRes);
+    // BƯỚC 3: SPAM API GIỎ HÀNG
+    console.log("\n🚀 BẮT ĐẦU SPAM GIỎ HÀNG...");
+    let successCount = 0;
+
+    for (let i = 0; i < products.length; i++) {
+        const product = products[i];
+
+        // Logic chọn biến thể để không bị lỗi
+        let color = "Mặc định";
+        let size = "F";
+
+        // Nếu sản phẩm có biến thể, lấy cái đầu tiên
+        if (product.variants && product.variants.length > 0) {
+            color = product.variants[0].color;
+            size = product.variants[0].size;
+        }
+
+        const payload = {
+            productId: product._id, // ID lấy trực tiếp từ MongoDB
+            quantity: 1,
+            color: color,
+            size: size
+        };
+
+        // Gọi API
+        const res = await callApi('/cart', 'POST', payload);
+
+        if (res) {
+            console.log(`[${i+1}/${products.length}] ✅ Thêm xong: ${product.name} (${color}, ${size})`);
+            successCount++;
+        }
+
+        // Nghỉ 1 xíu (100ms) để server thở, không bị quá tải
+        await new Promise(r => setTimeout(r, 100));
     }
 
-    console.log("\n=== KẾT THÚC TEST ===");
+    // BƯỚC 4: ĐÓNG KẾT NỐI VÀ CHECK LẠI
+    console.log("\n-----------------------------------");
+    console.log(`🎉 Đã thêm thành công ${successCount} món vào giỏ.`);
+    
+    // Check lại giỏ hàng lần cuối
+    const cartRes = await callApi('/cart', 'GET');
+    console.log(`🛒 Tổng item trong giỏ hiện tại: ${cartRes?.items?.length || 0}`);
+    
+    await mongoose.connection.close();
+    console.log("🔌 Đã đóng kết nối DB.");
 }
 
-// Chạy hàm
-runSeed();
+main();

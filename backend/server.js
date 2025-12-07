@@ -52,7 +52,7 @@ app.get('/api/test/get-token/:userId', (req, res) => {
 
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI) // Bỏ cái localhost fallback đi để bắt buộc dùng .env cho chuẩn
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.log('❌ MongoDB connection error:', err));
 

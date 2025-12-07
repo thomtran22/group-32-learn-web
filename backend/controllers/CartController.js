@@ -66,7 +66,7 @@ const addToCart = async (req, res) => {
         }
 
         await cart.save();
-        await cart.populate("items.productId", "name price image variants");
+        await cart.populate("items.productId", "name price images variants");
 
         cart.totalAmount = cart.items.reduce(
             (sum, i) => sum + i.productId.price * i.quantity,
@@ -93,7 +93,7 @@ const viewCart = async (req, res) => {
     const userId = req.user.id;
 
     try {
-        const cart = await Cart.findOne({ userId }).populate('items.productId', 'name price image variants');
+        const cart = await Cart.findOne({ userId }).populate('items.productId', 'name price images variants');
 
         if (!cart || cart.items.length === 0) {
             return res.status(200).json({
@@ -153,7 +153,7 @@ const updateCart = async (req, res) => {
                 productId: product._id,
                 name: product.name,
                 price: product.price,
-                image: product.image,
+                images: product.images,
                 color: item.color || '',
                 size: item.size || '',
                 quantity: item.quantity
@@ -165,7 +165,7 @@ const updateCart = async (req, res) => {
 
         await cart.save();
 
-        const populatedCart = await Cart.findOne({ userId }).populate('items.productId', 'name price image variants');
+        const populatedCart = await Cart.findOne({ userId }).populate('items.productId', 'name price images variants');
         return res.status(200).json({
             success: true,
             message: "Đồng bộ giỏ hàng thành công",
@@ -191,7 +191,7 @@ const removeCartItem = async (req, res) => {
             { $pull: { items: { _id: itemId } } } 
         );
 
-        const updatedCart = await Cart.findOne({ userId }).populate('items.productId', 'name price image variants');
+        const updatedCart = await Cart.findOne({ userId }).populate('items.productId', 'name price images variants');
 
         // Tính lại tổng tiền sau khi xóa
         if(updatedCart) {
