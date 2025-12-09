@@ -4,11 +4,12 @@ import { formatMoney } from '../../utils/orderHelpers';
 const OrderItem = ({ item }) => {
     return (
         <div className="order-item">
-            <img 
-                src={item.image || "https://via.placeholder.com/80"} 
-                alt={item.name} 
-                className="item-image"
-            />
+            <div className="item-image-wrapper">
+                <img 
+                    src={item.image || "https://via.placeholder.com/150"} 
+                    alt={item.name} 
+                />
+            </div>
             
             <div className="item-details">
                 <h6 className="item-name">{item.name}</h6>

@@ -57,11 +57,13 @@ const createOrder = async (req, res) => {
             }
 
             const itemPrice = dbProduct.price; 
+            const productImage = dbProduct.image || (dbProduct.images && dbProduct.images[0]) || 'https://via.placeholder.com/150';
+
             calculatedItemsPrice += itemPrice * item.quantity;
             dbOrderItems.push({
                 name: dbProduct.name,
                 quantity: item.quantity,
-                image: dbProduct.image, 
+                image: productImage, 
                 price: itemPrice,
                 color: item.color,
                 size: item.size,
@@ -116,30 +118,25 @@ const createOrder = async (req, res) => {
 
         if(userId) {
             const boughtProductIds = orderItems.map(item => item.itemId);
-
-            const userCart = await Cart.findOne({ userId });
+            const userCart = await Cart.findOne({ userId }).populate('items.productId');
 
             if(userCart) {
-                userCart.items = userCart.items.filter(cartItem =>
+                const remainingItems = userCart.items.filter(cartItem =>
                     !boughtProductIds.includes(cartItem._id.toString())
                 );
 
-                if (userCart.items.length > 0) {
-                    await userCart.populate('items.productId');
+                let newTotal = 0;
+                remainingItems.forEach(item => {
+                    // Nếu productId populate có giá, dùng giá hiện tại; fallback về item.price nếu có
+                    const price = item?.productId?.price ?? item.price ?? 0;
+                    newTotal += price * item.quantity;
+                });
 
-                    let newTotal = 0;
-
-                    userCart.items.forEach(item => {
-                        if (item.productId) { // Kiểm tra null phòng trường hợp sản phẩm bị xóa khỏi DB
-                            newTotal += item.productId.price * item.quantity;
-                        }
-                    });
-
-                    userCart.totalAmount = newTotal;
-                } else {
-                    userCart.totalAmount = 0;
-                }
-                await userCart.save();
+                // Tránh VersionError bằng updateOne thay vì save (bỏ qua versionKey)
+                await Cart.updateOne(
+                    { _id: userCart._id },
+                    { $set: { items: remainingItems, totalAmount: newTotal } }
+                );
             }
         }
 
