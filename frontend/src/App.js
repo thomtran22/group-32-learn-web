@@ -1,32 +1,59 @@
-import React, { useState } from "react";
-// 💡 THÊM IMPORT BrowserRouter
-import { BrowserRouter } from "react-router-dom";
+import React, { lazy, Suspense } from "react";
+// ❌ KHÔNG IMPORT 'BrowserRouter as Router' Ở ĐÂY NỮA
+import { Routes, Route } from "react-router-dom";
+
+// --- Components dùng chung / Layout ---
 import Header from "./components/Header";
-import ProductDetail from "./components/ProductDetail";
 import Footer from "./components/Footer";
-import "./assets/css/detail.css";
-import "./assets/css/style.css";
+
+// --- Lazy Loading cho các Trang chính ---
+const UserProfile = lazy(() => import("./pages/UserProfile"));
+const ShipperMainLayout = lazy(() => import("./pages/ShipperMainLayout"));
+const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 
 function App() {
-  const [selectedProductId, setSelectedProductId] = useState("POHTK404");
-
-  const handleProductSelect = (id) => {
-    setSelectedProductId(id);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
+  // 💡 LƯU Ý: Đã xóa <Router> bao quanh
   return (
-    // 💡 BỌC TOÀN BỘ ỨNG DỤNG TRONG <BrowserRouter>
-    <BrowserRouter>
-      <div className="style">
-        <Header />
-        <ProductDetail
-          productId={selectedProductId}
-          onProductSelect={handleProductSelect}
+    <Suspense fallback={<div>Đang tải giao diện...</div>}>
+      <Routes>
+        {/* -------------------------------------------------- */}
+        {/* 1. ROUTE DÀNH CHO SHIPPER */}
+        {/* -------------------------------------------------- */}
+        <Route path="/shipper" element={<ShipperMainLayout />} />
+        <Route path="/shipper/stats" element={<ShipperMainLayout />} />
+        <Route path="/shipper/profile" element={<ShipperMainLayout />} />
+
+        {/* -------------------------------------------------- */}
+        {/* 2. ROUTE DÀNH CHO USER PROFILE (Khách hàng) */}
+        {/* -------------------------------------------------- */}
+        <Route
+          // path="/profile"
+          path="/"
+          element={
+            <>
+              <Header />
+              <UserProfile />
+              <Footer />
+            </>
+          }
         />
-        <Footer />
-      </div>
-    </BrowserRouter>
+
+        {/* <Route
+          path="/"
+          element={
+            <div style={{ padding: "50px", textAlign: "center" }}>
+              <h1>Chào mừng!</h1>
+              <p>
+                Vui lòng truy cập <a href="/profile">/profile</a> hoặc{" "}
+                <a href="/shipper">/shipper</a>
+              </p>
+            </div>
+          }
+        /> */}
+
+        {<Route path="/product/:id" element={<ProductDetail />} />}
+      </Routes>
+    </Suspense>
   );
 }
 

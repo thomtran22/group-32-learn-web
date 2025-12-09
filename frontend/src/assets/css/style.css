@@ -71,18 +71,50 @@ a {
   max-height: 50px;
 }
 
+/* -------------------------------------- */
+/* 1. CONTAINER FORM (THAY CHO .inner-search-wrapper) */
+/* -------------------------------------- */
 .header .inner-form {
-  flex: 1;
-  height: 40px;
+  flex: 1; /* Chiếm không gian còn lại */
+  height: 50px; /* Chiều cao tổng thể của thanh tìm kiếm (Điều chỉnh từ 40px lên 50px để khớp hình ảnh) */
+  display: flex; /* Bật Flexbox để xếp button và input cạnh nhau */
+  align-items: center; /* Căn giữa theo chiều dọc */
+  background: #f5f5f5; /* Màu nền xám nhạt */
 }
 
+/* -------------------------------------- */
+/* 2. NÚT KÍNH LÚP (BUTTON) */
+/* -------------------------------------- */
+.header .inner-form .btn-search {
+  /* Loại bỏ viền và nền để hòa hợp với input */
+  border: none;
+  background: transparent;
+  padding: 0 15px; /* Đệm trái phải để cách xa mép form */
+  height: 100%; /* Chiếm toàn bộ chiều cao form */
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  /* Định dạng icon */
+  color: #333;
+  font-size: 1.2em; /* Kích thước kính lúp */
+}
+
+/* -------------------------------------- */
+/* 3. Ô NHẬP LIỆU (INPUT) */
+/* -------------------------------------- */
 .header .inner-form input {
-  width: 100%;
+  flex: 1; /* Cho phép input chiếm hết không gian còn lại */
+  height: 100%;
   border: none;
   outline: none;
-  padding: 10px 15px 10px 100px;
+  /* Chỉ cần padding phải, padding trái đã được nút kính lúp chiếm chỗ */
+  padding: 0 15px 0 0;
   background: #f5f5f5;
   font-size: var(--fs-lg);
+}
+
+.header .inner-form input::placeholder {
+  color: #a0a0a0; /* Màu chữ placeholder mờ hơn */
 }
 
 .header .inner-bottom ul {
