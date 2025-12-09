@@ -1,29 +1,63 @@
-require('dotenv').config(); 
-
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const helmet = require('helmet');
+//const xss = require('xss-clean');
+const hpp = require('hpp');
+const jwt = require('jsonwebtoken'); // <--- 1. NHỚ THÊM DÒNG NÀY
+require('dotenv').config();
+
 const app = express();
 
-const PORT = process.env.PORT || 5000; 
+// Middleware
 app.use(cors());
 app.use(express.json());
-const productRoutes = require('./routes/productRoutes');
-app.use('/api/products', productRoutes);
-// 3. Kết nối MongoDB
-console.log('Đang cố gắng kết nối MongoDB...');
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => {
-        console.log('MongoDB đã kết nối thành công!');
-        app.listen(PORT, () => {
-            console.log(`Server đang chạy trên http://localhost:${PORT}`);
-        });
-    })
-    .catch(err => {
-        console.error('Lỗi kết nối MongoDB:', err.message);
-        console.log('Vui lòng kiểm tra lại chuỗi MONGO_URI và Network Access trên Atlas.');
-        process.exit(1);
-    });
+app.use(express.urlencoded({extended: true}));
+app.use(helmet());
+//app.use(xss()); // Sanitize data
+app.use(hpp()); // Chống HTTP Parameter Pollution
+
+const orderRoutes = require('./routes/OrderRoutes');
+const cartRoutes = require('./routes/CartRoutes');
+
+// Routes chính
+app.use('/api/orders', orderRoutes);
+app.use('/api/cart', cartRoutes);
+
+
+// ==========================================
+// KHU VỰC TEST (CỬA HẬU) - SAU NÀY XÓA
+// ==========================================
 app.get('/', (req, res) => {
-    res.json({ message: 'API đang hoạt động tốt!' });
+  res.json({ message: 'Backend API đang chạy!' });
+});
+
+// Route lấy Token nhanh (Fake Login)
+app.get('/api/test/get-token/:userId', (req, res) => {
+    const { userId } = req.params;
+    // Tạo token hạn 30 ngày
+    const token = jwt.sign(
+        { id: userId }, 
+        process.env.JWT_SECRET, 
+        { expiresIn: '30d' }
+    );
+    
+    res.json({ 
+        message: "Tạo token thành công! Copy token bên dưới ném vào LocalStorage",
+        userId: userId,
+        token: token 
+    });
+});
+// ==========================================
+
+
+// MongoDB Connection
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('✅ MongoDB connected'))
+  .catch(err => console.log('❌ MongoDB connection error:', err));
+
+// Server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });

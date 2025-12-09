@@ -1,0 +1,7 @@
+node_modules/
+*.badass_clean.json
+*.badass_import_ready.json
+.env
+dist/
+build/
+*.log
