@@ -3,42 +3,44 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const apiBaseUrl = "/api/shipper";
+// Đường dẫn cơ sở (Axios Interceptor sẽ lo việc thêm http://localhost:5000)
+const apiBaseUrl = "/api/shipper"; 
 
 const ShipperProfileContent = () => {
-  const [profile, setProfile] = useState({});
+  // Lưu trữ dữ liệu profile gốc: { user: {...}, shipperDetails: {...} }
+  const [profile, setProfile] = useState({}); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({});
-
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem("authToken");
-    return {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-  };
+  // Dữ liệu form dùng để chỉnh sửa
+  const [formData, setFormData] = useState({}); 
 
   // 🚀 TẢI DỮ LIỆU BAN ĐẦU
   const fetchProfileData = async () => {
     setLoading(true);
+    setError(null);
     try {
-      // GET /api/shipper/info
-      const response = await axios.get(`${apiBaseUrl}/info`, {
-        headers: getAuthHeaders(),
-      });
-      const data = response.data;
-      setProfile(data);
-      // Gộp dữ liệu cho form chỉnh sửa
+      // ❌ LOẠI BỎ: Không cần lấy Token và truyền Header thủ công
+      
+      // Axios Interceptor sẽ tự động đính kèm Token
+      const response = await axios.get(`${apiBaseUrl}/info`); 
+      
+      const { user, shipperDetails } = response.data;
+      
+      // Lưu trữ toàn bộ dữ liệu gốc
+      setProfile({ user, shipperDetails }); 
+      
+      // Gán dữ liệu cho form chỉnh sửa
       setFormData({
-        firstName: data.firstName,
-        phoneNumber: data.phoneNumber,
-        vehicleType: data.shipperDetails.vehicleType,
-        licensePlate: data.shipperDetails.licensePlate,
+        firstName: user.firstName || "",
+        phoneNumber: user.phoneNumber || "",
+        // Đảm bảo truy cập an toàn shipperDetails
+        vehicleType: shipperDetails?.vehicleType || "", 
+        licensePlate: shipperDetails?.licensePlate || "",
       });
     } catch (err) {
-      console.error("Lỗi tải hồ sơ:", err);
+      // Interceptor sẽ xử lý lỗi 401/403 (chuyển hướng đăng nhập)
+      console.error("Lỗi tải hồ sơ:", err.response?.data?.message || err.message);
       setError("Không thể tải hồ sơ Shipper.");
     } finally {
       setLoading(false);
@@ -62,10 +64,8 @@ const ShipperProfileContent = () => {
     setLoading(true);
     setError(null);
     try {
-      // PUT /api/shipper/info
-      await axios.put(`${apiBaseUrl}/info`, formData, {
-        headers: getAuthHeaders(),
-      });
+      // Axios Interceptor đã lo việc gửi Token Header
+      await axios.put(`${apiBaseUrl}/info`, formData); 
 
       setIsEditing(false);
       fetchProfileData(); // Tải lại dữ liệu mới nhất
@@ -84,7 +84,9 @@ const ShipperProfileContent = () => {
   if (loading) return <div>Đang tải thông tin tài khoản...</div>;
   if (error) return <div style={{ color: "red" }}>Lỗi: {error}</div>;
 
-  const details = profile.shipperDetails;
+  // Lấy dữ liệu an toàn từ state
+  const user = profile.user || {};
+  const details = profile.shipperDetails || {};
 
   return (
     <div>
@@ -99,7 +101,7 @@ const ShipperProfileContent = () => {
             gap: "20px",
           }}
         >
-          {/* Thông tin User */}
+          {/* Thông tin Cá nhân (User) */}
           <div>
             <h3>Thông tin Cá nhân</h3>
             <label>Tên:</label>{" "}
@@ -117,11 +119,11 @@ const ShipperProfileContent = () => {
               disabled={loading}
             />
             <p>
-              Email: <strong>{profile.email}</strong>
+              Email: <strong>{user.email}</strong>
             </p>
           </div>
 
-          {/* Thông tin Shipper */}
+          {/* Thông tin Vận chuyển (Shipper Details) */}
           <div>
             <h3>Thông tin Vận chuyển</h3>
             <label>Loại xe:</label>
@@ -141,7 +143,8 @@ const ShipperProfileContent = () => {
               onChange={handleChange}
               disabled={loading}
             />
-            <p>Khu vực hoạt động: {details.workingArea.join(", ") || "N/A"}</p>
+            {/* Sử dụng optional chaining (?.) an toàn */}
+            <p>Khu vực hoạt động: {details.workingArea?.join(", ") || "N/A"}</p>
           </div>
 
           <div style={{ gridColumn: "1 / 3", marginTop: "20px" }}>
@@ -169,16 +172,16 @@ const ShipperProfileContent = () => {
           <div>
             <h3>Thông tin Cá nhân</h3>
             <p>
-              <strong>Họ và Tên:</strong> {profile.firstName}
+              <strong>Họ và Tên:</strong> {user.firstName}
             </p>
             <p>
-              <strong>Email:</strong> {profile.email}
+              <strong>Email:</strong> {user.email}
             </p>
             <p>
-              <strong>Điện thoại:</strong> {profile.phoneNumber}
+              <strong>Điện thoại:</strong> {user.phoneNumber}
             </p>
             <p>
-              <strong>Rating TB:</strong> {details.rating} / 5
+              <strong>Rating TB:</strong> {details.rating || "N/A"} / 5
             </p>
           </div>
           <div>
@@ -200,7 +203,6 @@ const ShipperProfileContent = () => {
 
           <div style={{ gridColumn: "1 / 3", marginTop: "20px" }}>
             <button onClick={() => setIsEditing(true)}>Chỉnh sửa Hồ sơ</button>
-            {/* Bạn có thể thêm nút Cập nhật Vị trí ở đây, gọi API PUT /location */}
           </div>
         </div>
       )}

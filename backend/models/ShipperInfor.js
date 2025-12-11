@@ -1,5 +1,4 @@
-// src/models/ShipperInfo.js
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const ShipperInfoSchema = new mongoose.Schema(
   {
@@ -8,28 +7,29 @@ const ShipperInfoSchema = new mongoose.Schema(
       ref: "User",
       required: true,
       unique: true,
-      index: true,
     },
     status: {
       type: String,
-      enum: ["ACTIVE", "INACTIVE", "ON_DELIVERY", "PENDING_APPROVAL"],
+      enum: ["ACTIVE", "INACTIVE", "BUSY"],
       default: "ACTIVE",
     },
     currentLocation: {
       type: { type: String, default: "Point" },
-      coordinates: [{ type: Number }], // [longitude, latitude]
+      coordinates: { type: [Number], default: [0, 0] }, // [longitude, latitude]
     },
     vehicleType: {
       type: String,
-      enum: ["Motorbike", "Car", "Bicycle"],
-      required: true,
+      enum: ["Motorbike", "Car", "Truck"],
+      default: "Motorbike",
     },
-    licensePlate: { type: String, unique: true, sparse: true },
-    workingArea: [{ type: String }],
-    rating: { type: Number, default: 5, min: 1, max: 5 },
+    licensePlate: { type: String, default: "" },
+    workingArea: [{ type: String }], // Ví dụ: ["Hà Nội", "Đống Đa"]
+    rating: { type: Number, default: 5 },
   },
   { timestamps: true }
 );
 
-const ShipperInfo = mongoose.model("ShipperInfo", ShipperInfoSchema);
-export default ShipperInfo;
+// Tạo index cho location để hỗ trợ tìm kiếm theo vị trí sau này
+ShipperInfoSchema.index({ currentLocation: "2dsphere" });
+
+module.exports = mongoose.model("ShipperInfo", ShipperInfoSchema);

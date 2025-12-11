@@ -1,11 +1,10 @@
-// src/models/ShipperPerformance.js
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const ShipperPerformanceSchema = new mongoose.Schema(
   {
-    shipperId: {
+    userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "ShipperInfo",
+      ref: "User",
       required: true,
       unique: true,
     },
@@ -18,8 +17,4 @@ const ShipperPerformanceSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const ShipperPerformance = mongoose.model(
-  "ShipperPerformance",
-  ShipperPerformanceSchema
-);
-export default ShipperPerformance;
+module.exports = mongoose.model("ShipperPerformance", ShipperPerformanceSchema);

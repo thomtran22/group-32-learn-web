@@ -71,7 +71,6 @@ const sidebarStyle = {
   borderRight: "1px solid #ddd",
 };
 
-// Đã khắc phục lỗi: 'contentStyle' is not defined
 const contentStyle = {
   flexGrow: 1,
   padding: "20px",

@@ -3,6 +3,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
+const cors = require("cors");
 
 dotenv.config();
 
@@ -11,18 +12,21 @@ const userRoutes = require("./routes/UserRoutes");
 const orderRoutes = require("./routes/OrderRoutes");
 const serviceRoutes = require("./routes/ServiceRoutes");
 // Đổi tên để tránh xung đột với biến cuối cùng
-const ShipperRouterModule = require("./routes/ShipperRoutes");
-
-// 2. XỬ LÝ LỖI DEFAULT EXPORT (Lấy Router Object Hợp lệ)
-// Nếu file router sử dụng export default (ESM), router object sẽ nằm trong .default
-const ShipperRouterObject = ShipperRouterModule.default || ShipperRouterModule;
+const ShipperRoutes = require("./routes/ShipperRoutes");
 
 const app = express();
 app.use(express.json());
 
+const corsOptions = {
+  origin: "http://localhost:3000", // Chỉ cho phép nguồn gốc Frontend của bạn truy cập
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true,
+  optionsSuccessStatus: 204,
+};
+
 // KẾT NỐI MONGO DB
 const MONGO_URI =
-  "mongodb-srv://thuong:27040404@cluster0.kgccigl.mongodb.net/test1";
+  "mongodb+srv://thuong:27040404@cluster0.kgccigl.mongodb.net/test1";
 
 mongoose
   .connect(MONGO_URI, {})
@@ -33,8 +37,7 @@ mongoose
 app.use("/api/user", userRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/services", serviceRoutes);
-// Sử dụng biến Router Object đã được xử lý
-app.use("/api/shipper", ShipperRouterObject);
+app.use("/api/shipper", ShipperRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

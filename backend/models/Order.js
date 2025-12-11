@@ -1,38 +1,16 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const OrderSchema = new mongoose.Schema(
   {
-    // -----------------------------------------------------
-    // 1. Khóa Liên kết & Tổng quan
-    // -----------------------------------------------------
+    // ==========================================
+    // 1. THÔNG TIN NGƯỜI MUA & SẢN PHẨM
+    // ==========================================
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      required: true,
       ref: "User",
-      index: true, // Quan trọng cho việc truy vấn Lịch sử Đơn hàng
-    },
-    orderDate: { type: Date, default: Date.now },
-    totalAmount: { type: Number, required: true },
-
-    // Trạng thái đơn hàng tổng quát (dùng cho User Profile)
-    currentStatus: {
-      type: String,
       required: true,
-      default: "Chờ xác nhận",
-      enum: [
-        "Chờ xác nhận",
-        "Đã xác nhận",
-        "Đang chuẩn bị hàng",
-        "Đang vận chuyển",
-        "Thành công",
-        "Đã hủy",
-        "Hoàn trả",
-      ],
+      index: true, // Giúp tìm kiếm đơn hàng theo user nhanh hơn
     },
-
-    // -----------------------------------------------------
-    // 2. Chi tiết Sản phẩm (Nhúng)
-    // -----------------------------------------------------
     products: [
       {
         productId: {
@@ -40,68 +18,99 @@ const OrderSchema = new mongoose.Schema(
           ref: "Product",
           required: true,
         },
+        name: { type: String }, // Lưu tên SP tại thời điểm mua (đề phòng SP bị xóa sau này)
+        image: { type: String },
         quantity: { type: Number, required: true },
         price: { type: Number, required: true }, // Giá tại thời điểm đặt hàng
       },
     ],
 
-    // -----------------------------------------------------
-    // 3. Thông tin Vận chuyển (Tích hợp từ Schema Shipping)
-    // -----------------------------------------------------
+    // ==========================================
+    // 2. THÔNG TIN THANH TOÁN & GIAO NHẬN
+    // ==========================================
     shippingDetails: {
-      recipientName: { type: String, required: true, trim: true },
-      phone: { type: String, required: true, trim: true },
-      address: { type: String, required: true, trim: true }, // Địa chỉ chi tiết
-      carrier: { type: String, default: "Standard Delivery" },
-      shippingFee: { type: Number, default: 0 },
-      estimatedDeliveryDate: { type: Date, default: null },
-      trackingNumber: { type: String, sparse: true },
-      trackingUrl: { type: String, default: null },
+      recipientName: { type: String, required: true },
+      address: { type: String, required: true },
+      city: { type: String, required: false },
+      phone: { type: String, required: true },
+    },
+    paymentMethod: {
+      type: String,
+      required: true,
+      default: "COD", // Ví dụ: COD, PayPal, VNPAY
+    },
+    paymentResult: {
+      // Dùng cho thanh toán online
+      id: { type: String },
+      status: { type: String },
+      update_time: { type: String },
+      email_address: { type: String },
     },
 
+    // Tổng tiền đơn hàng (bao gồm cả phí ship nếu có)
+    totalAmount: {
+      type: Number,
+      required: true,
+      default: 0.0,
+    },
+
+    // Trạng thái thanh toán
+    isPaid: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+    paidAt: {
+      type: Date,
+    },
+
+    // ==========================================
+    // 3. LOGIC SHIPPER (QUAN TRỌNG)
+    // ==========================================
+
+    // ID của Shipper được phân công đơn này
     shipperId: {
-      // ID của Shipper được phân công
       type: mongoose.Schema.Types.ObjectId,
-      ref: "ShipperInfo",
+      ref: "User", // Liên kết với bảng User (nơi chứa tài khoản Shipper)
       default: null,
       index: true,
     },
 
+    // Trạng thái vận chuyển chi tiết
     deliveryStatus: {
       type: String,
       enum: [
-        "AWAITING_PICKUP",
-        "PICKED_UP",
-        "OUT_FOR_DELIVERY",
-        "DELIVERED",
-        "FAILED_ATTEMPT",
-        "RETURNED",
+        "PENDING", // Đơn mới, chưa xử lý
+        "CONFIRMED", // Shop đã xác nhận
+        "AWAITING_PICKUP", // Đã đóng gói, chờ Shipper đến lấy
+        "PICKED_UP", // Shipper đã lấy hàng
+        "OUT_FOR_DELIVERY", // Đang trên đường giao cho khách
+        "DELIVERED", // Giao thành công
+        "FAILED_ATTEMPT", // Giao thất bại (khách không nghe máy, v.v.)
+        "CANCELLED", // Đã hủy
+        "RETURNED", // Hoàn trả về kho
       ],
-      default: "AWAITING_PICKUP",
+      default: "PENDING",
     },
 
-    // 5. Lịch sử Trạng thái & Theo dõi
-    statusHistory: [
+    // Lịch sử hành trình (Tracking Log)
+    deliveryTracking: [
       {
-        status: { type: String, required: true },
+        status: { type: String }, // Trạng thái tại thời điểm đó (VD: PICKED_UP)
         timestamp: { type: Date, default: Date.now },
-        updatedBy: { type: String, default: "System" },
+        shipperLocation: { type: String }, // Vị trí shipper (VD: "Kho Cầu Giấy")
+        note: { type: String }, // Ghi chú (VD: "Khách hẹn chiều giao lại")
       },
     ],
 
-    deliveryTracking: [
-      {
-        // Lịch sử theo dõi vị trí giao hàng (dùng cho Admin/Shipper)
-        timestamp: { type: Date, default: Date.now },
-        status: { type: String }, // Trạng thái giao hàng tại thời điểm đó
-        shipperLocation: { type: String }, // Vị trí ghi nhận của Shipper
-      },
-    ],
+    // Ngày giao hàng thành công thực tế
+    deliveredAt: {
+      type: Date,
+    },
   },
   {
-    timestamps: true, // Tự động thêm createdAt và updatedAt
+    timestamps: true, // Tự động tạo createdAt và updatedAt
   }
 );
 
-const Order = mongoose.model("Order", OrderSchema);
-export default Order;
+module.exports = mongoose.model("Order", OrderSchema);

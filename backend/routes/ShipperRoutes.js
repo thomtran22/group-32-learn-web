@@ -1,66 +1,70 @@
 const express = require("express");
-const mongoose = require("mongoose");
-const { protect } = require("../middleware/authMiddleware.js");
-const Order = require("../models/Order.js");
-const ShipperInfo = require("../models/ShipperInfor.js");
-const ShipperPerformance = require("../models/ShipperPerformance.js");
+const router = express.Router();
+const jwt = require("jsonwebtoken");
+
+const Order = require("../models/Order");
+const ShipperInfo = require("../models/ShipperInfor"); // Chú ý tên file model của bạn là ShipperInfor hay ShipperInfo
+const ShipperPerformance = require("../models/ShipperPerformance");
 const User = require("../models/User");
 
-const router = express.Router();
+// Import Middleware
+const { protect } = require("../middleware/authMiddleware");
 
-// @route GET /api/shipper/orders/new
-// @desc Lấy các đơn hàng đang chờ Shipper lấy (AWAITING_PICKUP)
+// ==========================================
+// 1. QUẢN LÝ ĐƠN HÀNG
+// ==========================================
+
+// @route   GET /api/shipper/orders/new
+// @desc    Lấy đơn hàng được phân công nhưng chưa lấy (AWAITING_PICKUP)
 router.get("/orders/new", protect, async (req, res) => {
   try {
     const orders = await Order.find({
       shipperId: req.user.id,
       deliveryStatus: "AWAITING_PICKUP",
     })
-      .select("shippingDetails totalAmount orderDate products")
-      .populate("products.productId", "name images");
+      .select("shippingDetails totalAmount createdAt products")
+      .populate("products.productId", "name images")
+      .sort({ createdAt: -1 });
 
     res.json(orders);
   } catch (error) {
-    res.status(500).json({
-      message: "Lỗi server khi lấy đơn hàng mới",
-      error: error.message,
-    });
+    console.error(error);
+    res.status(500).json({ message: "Lỗi server khi tải đơn mới" });
   }
 });
 
-// @route GET /api/shipper/orders/active
-// @desc Lấy các đơn hàng đang giao (PICKED_UP hoặc OUT_FOR_DELIVERY)
+// @route   GET /api/shipper/orders/active
+// @desc    Lấy đơn hàng đang thực hiện (PICKED_UP, OUT_FOR_DELIVERY)
 router.get("/orders/active", protect, async (req, res) => {
   try {
     const orders = await Order.find({
       shipperId: req.user.id,
       deliveryStatus: { $in: ["PICKED_UP", "OUT_FOR_DELIVERY"] },
-    }).select("shippingDetails totalAmount orderDate products deliveryStatus");
+    })
+      .select("shippingDetails totalAmount deliveryStatus products")
+      .populate("products.productId", "name images")
+      .sort({ updatedAt: -1 });
 
     res.json(orders);
   } catch (error) {
-    res.status(500).json({
-      message: "Lỗi server khi lấy đơn hàng đang giao",
-      error: error.message,
-    });
+    console.error(error);
+    res.status(500).json({ message: "Lỗi server khi tải đơn đang giao" });
   }
 });
 
-// @route PUT /api/shipper/orders/:orderId/status
-// @desc Cập nhật trạng thái giao hàng
+// @route   PUT /api/shipper/orders/:orderId/status
+// @desc    Cập nhật trạng thái đơn hàng
 router.put("/orders/:orderId/status", protect, async (req, res) => {
-  const { newStatus, locationDetails } = req.body;
-  const validUpdates = [
+  const { newStatus, note, location } = req.body;
+  const validStatuses = [
     "PICKED_UP",
     "OUT_FOR_DELIVERY",
     "DELIVERED",
     "FAILED_ATTEMPT",
   ];
 
-  if (!validUpdates.includes(newStatus)) {
-    return res
-      .status(400)
-      .json({ message: "Trạng thái cập nhật không hợp lệ." });
+  if (!validStatuses.includes(newStatus)) {
+    return res.status(400).json({ message: "Trạng thái không hợp lệ" });
   }
 
   try {
@@ -70,177 +74,150 @@ router.put("/orders/:orderId/status", protect, async (req, res) => {
     });
 
     if (!order) {
-      return res.status(404).json({
-        message:
-          "Không tìm thấy đơn hàng hoặc bạn không được phân công đơn này.",
-      });
+      return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
     }
 
-    // Cập nhật trạng thái và lịch sử
+    // Cập nhật trạng thái
     order.deliveryStatus = newStatus;
+
+    // Thêm lịch sử tracking
     order.deliveryTracking.push({
-      timestamp: new Date(),
       status: newStatus,
-      shipperLocation: locationDetails || "Vị trí không xác định",
+      timestamp: new Date(),
+      shipperLocation: location || "Không xác định",
+      note: note || "",
     });
 
+    // LOGIC KHI GIAO THÀNH CÔNG: Cập nhật bảng thành tích
     if (newStatus === "DELIVERED") {
-      order.currentStatus = "Thành công";
-      // Cập nhật Performance
+      // Tự động cập nhật stats
       await ShipperPerformance.findOneAndUpdate(
         { userId: req.user.id },
         {
           $inc: {
             totalDeliveries: 1,
             successfulDeliveries: 1,
-            totalEarnings: order.shippingDetails.shippingFee,
+            totalEarnings: order.shippingDetails.shippingFee || 15000, // Ví dụ phí ship cứng nếu không có trong Order
           },
         },
-        { new: true, upsert: true }
+        { upsert: true, new: true }
       );
-    } else if (newStatus === "FAILED_ATTEMPT") {
-      order.currentStatus = "Đang vận chuyển";
     }
 
     await order.save();
-    res.json({
-      message: `Cập nhật trạng thái thành công sang: ${newStatus}`,
-      order,
-    });
+    res.json({ message: "Cập nhật thành công", order });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Lỗi cập nhật trạng thái" });
   }
 });
 
-// ------------------------------------------------------------------
-// 2. Thống kê
-// ------------------------------------------------------------------
+// ==========================================
+// 2. THỐNG KÊ & HỒ SƠ
+// ==========================================
 
-// @route GET /api/shipper/stats
-// @desc Lấy thống kê hiệu suất của Shipper
+// @route   GET /api/shipper/stats
+// @desc    Lấy thống kê hiệu suất
 router.get("/stats", protect, async (req, res) => {
   try {
-    const stats = await ShipperPerformance.findOne({ shipperId: req.user.id });
+    let stats = await ShipperPerformance.findOne({ userId: req.user.id });
 
     if (!stats) {
-      return res.json({
+      // Trả về dữ liệu mặc định nếu chưa có
+      stats = {
         totalDeliveries: 0,
         successfulDeliveries: 0,
         totalEarnings: 0,
-        avgDeliveryTime: 0,
-        cancellationRate: 0,
-      });
+        rating: 5,
+      };
     }
     res.json(stats);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Lỗi server khi lấy thống kê", error: error.message });
+    res.status(500).json({ message: "Lỗi tải thống kê" });
   }
 });
 
-// ------------------------------------------------------------------
-// 3. Hồ sơ Cá nhân
-// ------------------------------------------------------------------
-
-// @route GET /api/shipper/info
-// @desc Lấy hồ sơ (User + ShipperInfo)
+// @route   GET /api/shipper/info
+// @desc    Lấy thông tin profile shipper (User + ShipperInfo)
 router.get("/info", protect, async (req, res) => {
   try {
-    const [user, shipperInfo] = await Promise.all([
-      User.findById(req.user.id).select("-password"),
-      ShipperInfo.findOne({ userId: req.user.id }),
-    ]);
+    const user = await User.findById(req.user.id).select("-password");
+    const shipperInfo = await ShipperInfo.findOne({ userId: req.user.id });
 
-    if (!user || !shipperInfo) {
-      return res
-        .status(404)
-        .json({ message: "Không tìm thấy thông tin tài khoản." });
-    }
+    if (!user) return res.status(404).json({ message: "User không tồn tại" });
 
-    const profile = {
-      ...user.toObject(),
-      shipperDetails: shipperInfo.toObject(),
-    };
-
-    res.json(profile);
+    res.json({
+      user,
+      shipperDetails: shipperInfo || {}, // Trả về rỗng nếu chưa cập nhật info
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Lỗi server khi lấy hồ sơ", error: error.message });
+    res.status(500).json({ message: "Lỗi tải hồ sơ" });
   }
 });
 
-// @route PUT /api/shipper/info
-// @desc Cập nhật hồ sơ (User + ShipperInfo)
+// @route   PUT /api/shipper/info
+// @desc    Cập nhật thông tin profile
 router.put("/info", protect, async (req, res) => {
-  const { firstName, phoneNumber, vehicleType, licensePlate } = req.body;
+  const { firstName, phone, vehicleType, licensePlate } = req.body;
 
   try {
-    const userUpdate = await User.findByIdAndUpdate(
+    // 1. Cập nhật bảng User
+    const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
-      { firstName, phoneNumber },
-      { new: true, runValidators: true }
+      { firstName, phoneNumber: phone },
+      { new: true }
     ).select("-password");
 
-    const shipperUpdate = await ShipperInfo.findOneAndUpdate(
+    // 2. Cập nhật bảng ShipperInfo (Upsert: có thì sửa, chưa có thì tạo)
+    const updatedShipperInfo = await ShipperInfo.findOneAndUpdate(
       { userId: req.user.id },
       { vehicleType, licensePlate },
-      { new: true, runValidators: true }
+      { new: true, upsert: true }
     );
-
-    if (!userUpdate || !shipperUpdate) {
-      return res
-        .status(404)
-        .json({ message: "Không tìm thấy tài khoản để cập nhật." });
-    }
 
     res.json({
       message: "Cập nhật hồ sơ thành công",
-      user: userUpdate,
-      shipper: shipperUpdate,
+      user: updatedUser,
+      shipperDetails: updatedShipperInfo,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Lỗi server khi cập nhật hồ sơ", error: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Lỗi cập nhật hồ sơ" });
   }
 });
 
-// @route PUT /api/shipper/location
-// @desc Cập nhật vị trí GPS
-router.put("/location", protect, async (req, res) => {
-  const { longitude, latitude } = req.body;
+const STATIC_SHIPPER_ID = "693ac1116bd788c8f1a6664a";
+const JWT_SECRET = process.env.JWT_SECRET || "YOUR_JWT_SECRET_KEY"; // <-- ĐẢM BẢO KHÓA BÍ MẬT ĐÚNG
 
-  if (longitude === undefined || latitude === undefined) {
-    return res.status(400).json({ message: "Phải cung cấp kinh độ và vĩ độ." });
-  }
+const generateToken = (id) => {
+  return jwt.sign({ id }, JWT_SECRET, {
+    expiresIn: "30d",
+  });
+};
 
+// @route  GET /api/shipper/test-token
+// @desc   ROUTE ĐỂ TẠO TOKEN CỨNG
+// @access Public (Không cần protect)
+router.get("/test-token", (req, res) => {
   try {
-    const shipper = await ShipperInfo.findOneAndUpdate(
-      { userId: req.user.id },
-      {
-        currentLocation: {
-          type: "Point",
-          coordinates: [longitude, latitude],
-        },
-      },
-      { new: true }
-    );
-
-    if (!shipper) {
-      return res
-        .status(404)
-        .json({ message: "Không tìm thấy thông tin Shipper." });
+    if (STATIC_SHIPPER_ID === "YoUR_STATIC_SHIPPER_ID_HERE") {
+      return res.status(400).json({
+        message:
+          "Lỗi cấu hình: Vui lòng thay STATIC_SHIPPER_ID trong ShipperRoutes.js bằng ID Shipper hợp lệ.",
+      });
     }
 
+    const token = generateToken(STATIC_SHIPPER_ID);
+
     res.json({
-      message: "Cập nhật vị trí thành công",
-      location: shipper.currentLocation.coordinates,
+      message: "Token test thành công! Dùng nó để lưu vào Local Storage.",
+      testShipperId: STATIC_SHIPPER_ID,
+      token: token,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Lỗi tạo test token:", error);
+    res.status(500).json({ message: "Lỗi Server khi tạo token." });
   }
 });
 
-export default router;
+module.exports = router;

@@ -1,8 +1,8 @@
 // src/components/ship/ShipperDashboardContent.js
 
 import React, { useEffect, useState } from "react";
-// import axios from 'axios'; // Giả định bạn dùng axios
-
+import axios from "axios";
+import { FaClipboardList, FaChartLine, FaTruck } from "react-icons/fa";
 const Card = ({ title, value, icon, color }) => (
   <div
     style={{
@@ -46,20 +46,19 @@ const ShipperDashboardContent = () => {
     totalEarnings: "5,000,000 VND",
   };
 
-  // useEffect(() => {
-  //     const fetchNewOrders = async () => {
-  //         try {
-  //             // Thay thế bằng endpoint thực tế
-  //             const response = await axios.get('/api/shipper/orders/new');
-  //             setNewOrders(response.data);
-  //             setIsLoading(false);
-  //         } catch (error) {
-  //             console.error("Lỗi khi tải đơn hàng mới:", error);
-  //             setIsLoading(false);
-  //         }
-  //     };
-  //     fetchNewOrders();
-  // }, []);
+  useEffect(() => {
+    const fetchNewOrders = async () => {
+      try {
+        const response = await axios.get("/api/shipper/orders/new");
+        setNewOrders(response.data);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Lỗi khi tải đơn hàng mới:", error);
+        setIsLoading(false);
+      }
+    };
+    fetchNewOrders();
+  }, []);
 
   // Dữ liệu đơn hàng giả định để hiển thị
   const mockOrders = [
