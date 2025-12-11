@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import Checkout from "./pages/Checkout"
 import PaymentResult from './pages/PaymentResult'; 
 import Orders from './pages/Orders';
+import ProductDetails from "./pages/ProductDetail"
 
 import { CartProvider } from './context/CartContext'; 
 
@@ -17,6 +18,7 @@ import "./assets/css/cart.css";
 import "./assets/css/checkout.css";
 import "./assets/css/orders.css";
 import "./assets/css/payment-result.css";
+import "./assets/css/detail.css"
 
 function App() {
   return (
@@ -30,6 +32,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/payment-result" element={<PaymentResult />} />
+          <Route path="/products/:id" element={<ProductDetails />} />
         </Routes>
         <Footer />
       </CartProvider>

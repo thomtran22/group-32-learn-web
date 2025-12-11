@@ -19,10 +19,16 @@ app.use(hpp()); // Chống HTTP Parameter Pollution
 
 const orderRoutes = require('./routes/OrderRoutes');
 const cartRoutes = require('./routes/CartRoutes');
+const productRoutes = require('./routes/ProductRoutes');
+const { getBestSellers } = require('./controllers/ProductController');
 
 // Routes chính
 app.use('/api/orders', orderRoutes);
 app.use('/api/cart', cartRoutes);
+app.use('/api/product', productRoutes);
+
+// Route riêng cho best-sellers (frontend đang gọi /api/best-sellers)
+app.get('/api/best-sellers', getBestSellers);
 
 
 // ==========================================
