@@ -1,22 +1,20 @@
-// backend/models/UserModel.js
+const mongoose = require("mongoose");
 
-const mongoose = require('mongoose');
+const UserSchema = new mongoose.Schema({
+    fullName: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
 
-const userSchema = new mongoose.Schema({
-    username: {
+    gender: { type: String },
+    birthDay: String,
+    birthMonth: String,
+    birthYear: String,
+
+    role: {
         type: String,
+        enum: ["customer", "shipper"],
         required: true
-    },
-    // password: {
-    //     type: String,
-    //     required: true
-    // },
-    email: {
-        type: String,
-        required: true,
-        unique: true
     }
-    // Password bỏ qua vì đang test giả
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema, 'users');

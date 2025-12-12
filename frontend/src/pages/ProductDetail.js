@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
-import ProductCard from "../components/ProductCard";
+import ProductCard from "../components/Product/ProductCard";
 import { useCart } from "../context/CartContext";
 import { apiGetProduct, apiGetBestSellers } from "../services/productApi";
 

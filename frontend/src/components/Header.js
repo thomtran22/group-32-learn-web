@@ -1,8 +1,27 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/images/logo.svg";
 
 function Header() {
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('user');
+      setUser(raw ? JSON.parse(raw) : null);
+    } catch (e) {
+      setUser(null);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    navigate('/');
+  };
+
   return (
     <>
     <div className="top-header">
@@ -24,7 +43,14 @@ function Header() {
             </form>
             <div className="header-actions">
               <Link to="/cart" className="btn-cart">Giỏ hàng</Link>
-              <Link to="/login" className="btn-login">Đăng nhập/Đăng ký</Link>
+              {!user ? (
+                <Link to="/login" className="btn-login">Đăng nhập/Đăng ký</Link>
+              ) : (
+                <>
+                  <span className="btn-login" style={{ padding: '10px 14px', display: 'inline-block' }}>{user.fullName || 'Tài khoản'}</span>
+                  <button onClick={handleLogout} className="btn-login" style={{ background: 'transparent', color: '#000', border: '1px solid #ddd' }}>Đăng xuất</button>
+                </>
+              )}
             </div>
           </div>
           <nav className="inner-bottom">
