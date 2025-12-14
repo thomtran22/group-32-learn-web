@@ -8,7 +8,9 @@ import Login from "./pages/Login";
 import Checkout from "./pages/Checkout"
 import PaymentResult from './pages/PaymentResult'; 
 import Orders from './pages/Orders';
-import ProductDetails from "./pages/ProductDetail"
+import ProductDetails from "./pages/ProductDetail";
+import ShipperMainLayout from "./pages/ShipperMainLayout";
+import UserProfile from "./pages/UserProfile";
 
 import { CartProvider } from './context/CartContext'; 
 
@@ -30,9 +32,10 @@ function App() {
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />}/>
           <Route path="/login" element={<Login />} />
-          <Route path="/orders" element={<Orders />} />
           <Route path="/payment-result" element={<PaymentResult />} />
           <Route path="/products/:id" element={<ProductDetails />} />
+          <Route path="/profile" element={<UserProfile />} />
+          <Route path="/shipper/*" element={<ShipperMainLayout />} />
         </Routes>
         <Footer />
       </CartProvider>

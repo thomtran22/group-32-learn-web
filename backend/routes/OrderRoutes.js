@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { createOrder, createPaymentUrl , vnpayReturn, viewOrders, getOrderById} = require('../controllers/OrderController');
-const verifyToken = require('../middleware/authMiddleware'); 
+const {verifyToken} = require('../middleware/authMiddleware'); 
 
 // POST /api/orders
-// Nếu bắt buộc đăng nhập mới được mua thì thêm protect, nếu không thì bỏ
+// Nếu bắt buộc đăng nhập mới được mua thì thêm verifyToken, nếu không thì bỏ
 router.post('/', verifyToken, createOrder);
 
 // VNPay redirect về bằng GET (hoặc Frontend gọi xuống bằng GET)

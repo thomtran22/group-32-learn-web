@@ -1,22 +1,31 @@
+// file: src/components/Order/OrderCard.js (hoặc đường dẫn tương ứng của bạn)
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatMoney, getStatusInfo } from '../../utils/orderHelpers';
 import OrderItem from './OrderItem';
 
-const OrderCard = ({ order, onCancelOrder, onConfirmReceived }) => {
+// Thêm prop onOrderClick
+const OrderCard = ({ order, onCancelOrder, onConfirmReceived, onOrderClick }) => {
     const navigate = useNavigate();
     const statusInfo = getStatusInfo(order.status);
 
-    // Xử lý chuyển trang chi tiết mà không reload
     const handleCardClick = (e) => {
-        // Ngăn chặn sự kiện click nếu user click vào các nút button bên trong
+        // Ngăn chặn sự kiện nếu click vào nút hoặc link
         if (e.target.closest('button') || e.target.closest('a')) return;
-        navigate(`/orders/${order._id}`);
+
+        // LOGIC MỚI: Nếu có hàm onOrderClick được truyền vào (từ Profile), thì dùng nó
+        if (onOrderClick) {
+            onOrderClick(order._id);
+        } else {
+            // Nếu không, giữ logic cũ là chuyển trang
+            navigate(`/orders/${order._id}`);
+        }
     };
 
-    // Logic hiển thị nút bấm dựa trên trạng thái phức tạp
     const renderOrderActions = () => {
-        // 1. Đã giao hàng thành công
+        // ... (Giữ nguyên logic renderOrderActions như cũ)
+        // Copy lại đoạn logic renderOrderActions từ file cũ của bạn vào đây
         if (order.status === 'Delivered') {
             return (
                 <>
@@ -25,13 +34,9 @@ const OrderCard = ({ order, onCancelOrder, onConfirmReceived }) => {
                 </>
             );
         }
-
-        // 2. Đơn bị hủy
         if (order.status === 'Cancelled') {
             return <button className="btn btn-secondary">Mua lại</button>;
         }
-
-        // 3. Đang giao hàng (Cho phép khách xác nhận đã nhận hàng sớm)
         if (order.status === 'Shipping') {
             return (
                 <button 
@@ -42,17 +47,13 @@ const OrderCard = ({ order, onCancelOrder, onConfirmReceived }) => {
                 </button>
             );
         }
-
-        // 4. Chờ xác nhận / Chờ thanh toán (Pending)
         if (order.status === 'Pending') {
             return (
                 <>
-                    {/* Nếu là VNPay mà chưa trả tiền thì hiện nút thanh toán lại */}
                     {order.paymentMethod === 'VNPAY' && !order.isPaid && (
                         <button 
                             className="btn btn-primary"
                             onClick={() => window.location.href = `/api/payment/create_payment_url/${order._id}`} 
-                            // Lưu ý: Chỗ này gọi API lấy link rồi redirect, hoặc link trực tiếp
                         >
                             Thanh toán ngay
                         </button>
@@ -66,28 +67,20 @@ const OrderCard = ({ order, onCancelOrder, onConfirmReceived }) => {
                 </>
             );
         }
-
-        // 5. Đang xử lý (Processing) - Thường là không cho hủy hoặc nút hủy bị disable
         if (order.status === 'Processing') {
              return <button className="btn btn-secondary" disabled>Đang chuẩn bị hàng</button>;
         }
-
         return null;
     };
 
     return (
-        <div className="order-card" onClick={handleCardClick}>
-            {/* Header */}
+        <div className="order-card" onClick={handleCardClick} style={{ cursor: 'pointer' }}>
             <div className="order-card__header">
                 <div className="shop-info">
                     <span className="shop-name">SHOP THỜI TRANG</span>
-                    {/* Nút xem shop nên link tới trang Shop chứ không phải trang đơn hàng */}
-                    {/* <Link to="/shop/1" className="btn-view-shop">Xem shop</Link> */}
                 </div>
                 <div className="status-group">
-                    <span className="payment-method-badge">
-                        {order.paymentMethod}
-                    </span>
+                    <span className="payment-method-badge">{order.paymentMethod}</span>
                     <div className="separator">|</div>
                     <span className="status-text" style={{ color: statusInfo.color }}>
                         {statusInfo.text.toUpperCase()}
@@ -95,14 +88,12 @@ const OrderCard = ({ order, onCancelOrder, onConfirmReceived }) => {
                 </div>
             </div>
 
-            {/* Body */}
             <div className="order-card__body">
                 {order.orderItems.map((item) => (
                     <OrderItem key={item._id} item={item} />
                 ))}
             </div>
 
-            {/* Footer */}
             <div className="order-card__footer">
                 <div className="total-section">
                     <span className="label">Thành tiền:</span>
@@ -110,15 +101,12 @@ const OrderCard = ({ order, onCancelOrder, onConfirmReceived }) => {
                 </div>
 
                 <div className="action-buttons">
-                    {/* Dòng trạng thái text (nằm bên trái) */}
                     <span className="shipping-status-text">
                         {order.status === 'Shipping' ? 'Đơn hàng đang trên đường giao đến bạn' : ''}
                     </span>
-                    
-                    {/* Gom các nút bấm vào một nhóm (để nằm bên phải) */}
                     <div className="buttons-wrapper">
                         {renderOrderActions()}
-
+                        {/* Nút Liên hệ */}
                         <Link to={`/contact/${order._id}`} className="btn btn-outline">
                             Liên hệ
                         </Link>

@@ -21,6 +21,17 @@ export const apiCreateOrder = async (orderData) => {
     }
 };
 
+export const apiGetOrderDetail = async (orderId) => {
+    try {
+        const config = getAuthConfig();
+        // Gọi tới endpoint /api/orders/:id
+        const response = await axios.get(`${API_URL}/${orderId}`, config);
+        return response.data;
+    } catch (error) {
+        throw error.response ? error.response.data : error;
+    }
+};
+
 export const apiCreatePaymentUrl = async (data) => {
     try {
         const config = getAuthConfig();

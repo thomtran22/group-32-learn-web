@@ -4,7 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 //const xss = require('xss-clean');
 const hpp = require('hpp');
-const jwt = require('jsonwebtoken'); // <--- 1. NHỚ THÊM DÒNG NÀY
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const app = express();
@@ -19,17 +19,22 @@ app.use(hpp()); // Chống HTTP Parameter Pollution
 
 const orderRoutes = require('./routes/OrderRoutes');
 const cartRoutes = require('./routes/CartRoutes');
-const productRoutes = require('./routes/ProductRoutes');
-const authRoutes = require('./routes/authRoutes');
-const { getBestSellers } = require('./controllers/ProductController');
+const userRoutes = require("./routes/UserRoutes");
+const ShipperRoutes = require("./routes/ShipperRoutes");
+const addressRoutes = require("./routes/addressRoutes");
+const voucherRoutes = require("./routes/voucherRoutes");
+//const { getBestSellers } = require('./controllers/ProductController');
 
 // Routes chính
 app.use('/api/orders', orderRoutes);
 app.use('/api/cart', cartRoutes);
-app.use('/api/product', productRoutes);
-app.use('/api/auth', authRoutes);
+//app.use('/api/product', productRoutes);
+app.use("/api/address", addressRoutes);
+app.use("/api/vouchers", voucherRoutes);
+app.use("/api/shipper", ShipperRoutes);
+app.use("/api/user", userRoutes);
 // Route riêng cho best-sellers (frontend đang gọi /api/best-sellers)
-app.get('/api/best-sellers', getBestSellers);
+//app.get('/api/best-sellers', getBestSellers);
 
 
 // ==========================================
