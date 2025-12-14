@@ -12,15 +12,7 @@ const categorySchema = mongoose.Schema(
             type: String,
             required: true,
             unique: true, // Slug là duy nhất
-        },
-        image: {
-            type: String,
-            required: false,
-        },
-        description: {
-            type: String,
-            required: false,
-        },
+        }
     },
     //Tự động cập nhật thời gian tạo và thời gian cập nhật
     {
