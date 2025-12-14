@@ -8,10 +8,12 @@ const app = express();
 
 // PORT từ .env nếu có, không thì dùng 3000
 const PORT = process.env.PORT || 3000;
+const aiRoutes = require("./routes/aiRoutes");
 
 // Middlewares
 app.use(cors());
 app.use(express.json());
+app.use("/api", aiRoutes);
 
 // Import routes
 const productRoutes = require('./routes/productRoutes');
