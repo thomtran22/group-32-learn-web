@@ -78,37 +78,44 @@ a {
     margin: 0 auto;
 }
 
-/* header */
+/* header - Hotline bar */
 .top-header {
     background: #F5F5F5;
-    padding: 18px 0;
+    padding: 8px 0; /* Giảm từ 18px xuống 8px */
     text-align: center;
-    font-size: var(--fs-lg);
+    font-size: var(--fs-sm); /* Giảm từ lg xuống sm (khoảng 13-14px) cho tinh tế */
+    font-weight: 500; /* Thêm độ đậm nhẹ để chữ nhỏ vẫn dễ đọc */
+    line-height: 1.2; /* Kiểm soát chiều cao dòng */
 }
 
 @media (max-width: 992px) {
     .top-header {
-        font-size: var(--fs-md);
+        font-size: 12px; /* Mobile cho nhỏ hơn chút nữa */
+        padding: 6px 0;
     }
 }
 
-
+/* Header chính */
 .header {
-    padding: 40px 0 25px;
+    padding: 15px 0 0px; 
 }
 
 .header .inner-top {
     display: flex;
     align-items: center;
     gap: 8%;
-    padding-bottom: 25px;
+    padding-bottom: 15px;
     border-bottom: 1px solid #E6D7D7;
 }
 
+/* Logo */
 .header .inner-logo img {
-    max-width: 140px;
+    max-width: 120px;
+    height: auto;
+    display: block;
 }
 
+/* Phần form tìm kiếm */
 .header .inner-form {
     flex: 1;
     height: 40px;
@@ -138,7 +145,7 @@ a {
     align-items: center;
     list-style: none;
     padding: 0;
-    margin-top: 16px;
+    margin-top: 12px;
 }
 
 .header .inner-bottom a {

@@ -1225,74 +1225,6 @@
     ]
   },
   {
-    "name": "BALO THỜI TRANG C1290",
-    "price": 150000,
-    "images": [
-      "/assets/images/C1290-1.jpg",
-      "/assets/images/C1290-2.jpg",
-      "/assets/images/C1290-3.jpg"
-    ],
-    "description": "‘- Chất liệu: Vải cao cấp\n– Thiết kế: đơn giản\n– Màu: Black\n– Kiểu dáng: Thời trang\n– Thích hợp: Sử dụng đi học, đi du lịch\n– Sản phẩm có mặt tại tất cả các shop trên hệ thống.",
-    "variants": [
-      {
-        "color": "Black",
-        "size": "F",
-        "quantity": 100
-      }
-    ]
-  },
-  {
-    "name": "BALO THỜI TRANG C1920",
-    "price": 150000,
-    "images": [
-      "/assets/images/C1920-1.jpg",
-      "/assets/images/C1920-2.jpg",
-      "/assets/images/C1920-3.jpg"
-    ],
-    "description": "‘- Chất liệu: Vải cao cấp\n– Thiết kế: đơn giản\n– Màu: Black\n– Kiểu dáng: Thời trang\n– Thích hợp: Sử dụng đi học, đi du lịch\n– Sản phẩm có mặt tại tất cả các shop trên hệ thống.",
-    "variants": [
-      {
-        "color": "Black",
-        "size": "F",
-        "quantity": 100
-      }
-    ]
-  },
-  {
-    "name": "BALO THỜI TRANG C2379",
-    "price": 150000,
-    "images": [
-      "/assets/images/C2379-1.jpg",
-      "/assets/images/C2379-2.jpg",
-      "/assets/images/C2379-3.jpg"
-    ],
-    "description": "‘- Chất liệu: Vải cao cấp\n– Thiết kế: đơn giản\n– Màu: Black\n– Kiểu dáng: Thời trang\n– Thích hợp: Sử dụng đi học, đi du lịch\n– Sản phẩm có mặt tại tất cả các shop trên hệ thống.",
-    "variants": [
-      {
-        "color": "Black",
-        "size": "F",
-        "quantity": 100
-      }
-    ]
-  },
-  {
-    "name": "BALO THỜI TRANG C3526-2",
-    "price": 150000,
-    "images": [
-      "/assets/images/C3526-2-1.jpg",
-      "/assets/images/C3526-2-2.jpg",
-      "/assets/images/C3526-2-3.jpg"
-    ],
-    "description": "‘- Chất liệu: Vải cao cấp\n– Thiết kế: đơn giản\n– Màu: Black\n– Kiểu dáng: Thời trang\n– Thích hợp: Sử dụng đi học, đi du lịch\n– Sản phẩm có mặt tại tất cả các shop trên hệ thống.",
-    "variants": [
-      {
-        "color": "Black",
-        "size": "F",
-        "quantity": 100
-      }
-    ]
-  },
-  {
     "name": "ÁO KHOÁC AK8838",
     "price": 240000,
     "images": [
@@ -4042,85 +3974,6 @@
     ]
   },
   {
-    "name": "ÁO TANH TOP NAM ATT326#",
-    "price": 360000,
-    "images": [
-      "/assets/images/ATT326-1.jpg",
-      "/assets/images/ATT326-10.jpg",
-      "/assets/images/ATT326-9.jpg",
-      "/assets/images/ATT326-7.jpg",
-      "/assets/images/ATT326-8.jpg",
-      "/assets/images/ATT326-6.jpg",
-      "/assets/images/ATT326-5.jpg",
-      "/assets/images/ATT326-4.jpg",
-      "/assets/images/ATT326-3.jpg",
-      "/assets/images/ATT326-2.jpg"
-    ],
-    "description": "– Chất liệu: Vải cao cấp\n– Màu: Black, White\n– Size: M – L – XL – XXL\n– Sản phẩm đã có mặt ở toàn bộ các cửa hàng trên hệ thống và Shopee.",
-    "variants": [
-      {
-        "color": "Black",
-        "size": "L",
-        "quantity": 100
-      },
-      {
-        "color": "Black",
-        "size": "M",
-        "quantity": 100
-      },
-      {
-        "color": "Black",
-        "size": "XL",
-        "quantity": 100
-      },
-      {
-        "color": "Black",
-        "size": "XXL",
-        "quantity": 100
-      },
-      {
-        "color": "Brown",
-        "size": "L",
-        "quantity": 100
-      },
-      {
-        "color": "Brown",
-        "size": "M",
-        "quantity": 100
-      },
-      {
-        "color": "Brown",
-        "size": "XL",
-        "quantity": 100
-      },
-      {
-        "color": "Brown",
-        "size": "XXL",
-        "quantity": 100
-      },
-      {
-        "color": "Gray",
-        "size": "L",
-        "quantity": 100
-      },
-      {
-        "color": "Gray",
-        "size": "M",
-        "quantity": 100
-      },
-      {
-        "color": "Gray",
-        "size": "XL",
-        "quantity": 100
-      },
-      {
-        "color": "Gray",
-        "size": "XXL",
-        "quantity": 100
-      }
-    ]
-  },
-  {
     "name": "QUẦN ÂU NAM QAUTK321",
     "price": 360000,
     "images": [
@@ -6006,70 +5859,6 @@
     ]
   },
   {
-    "name": "MEN'S T-SHIRT APH2035",
-    "price": 479000,
-    "images": [
-      "/assets/images/APH2035-1.jpg",
-      "/assets/images/APH2035-7.jpg",
-      "/assets/images/APH2035-6.jpg",
-      "/assets/images/APH2035-5.jpg",
-      "/assets/images/APH2035-4.jpg",
-      "/assets/images/APH2035-3.jpg",
-      "/assets/images/APH2035-2.jpg",
-      "/assets/images/APH2035-1-1.jpg",
-      "/assets/images/APH2035-2-1.jpg",
-      "/assets/images/APH2035-3-1.jpg",
-      "/assets/images/APH2035-4-1.jpg",
-      "/assets/images/APH2035-1-2.jpg",
-      "/assets/images/APH2035-2-2.jpg",
-      "/assets/images/APH2035-3-2.jpg",
-      "/assets/images/APH2035-4-2.jpg"
-    ],
-    "description": "– Material: High-quality fabric\n– Color: black, white, yellow, red\n– Size: M – L – XL – XXL\n– The product is available at all stores on the system and Shopee.",
-    "variants": [
-      {
-        "color": "Black",
-        "size": "L",
-        "quantity": 100
-      },
-      {
-        "color": "Black",
-        "size": "XL",
-        "quantity": 100
-      },
-      {
-        "color": "Red",
-        "size": "L",
-        "quantity": 100
-      },
-      {
-        "color": "Red",
-        "size": "XL",
-        "quantity": 100
-      },
-      {
-        "color": "White",
-        "size": "L",
-        "quantity": 100
-      },
-      {
-        "color": "White",
-        "size": "XL",
-        "quantity": 100
-      },
-      {
-        "color": "Yellow",
-        "size": "L",
-        "quantity": 100
-      },
-      {
-        "color": "Yellow",
-        "size": "XL",
-        "quantity": 100
-      }
-    ]
-  },
-  {
     "name": "ÁO PHÔNG NAM APH2013",
     "price": 419000,
     "images": [
@@ -7526,42 +7315,6 @@
       },
       {
         "color": "Yellow",
-        "size": "XL",
-        "quantity": 100
-      }
-    ]
-  },
-  {
-    "name": "ÁO CHỐNG NẮNG NAM NATK001",
-    "price": 549000,
-    "images": [
-      "/assets/images/ACN003-1.jpg",
-      "/assets/images/ACN003-2.jpg",
-      "/assets/images/ACN003-6.jpg",
-      "/assets/images/ACN003-5.jpg",
-      "/assets/images/ACN003-4.jpg",
-      "/assets/images/ACN003-3.jpg",
-      "/assets/images/NATK001-1.jpg",
-      "/assets/images/NATK001-2.jpg",
-      "/assets/images/NATK001-3.jpg",
-      "/assets/images/NATK001-4.jpg",
-      "/assets/images/NATK001-5.jpg",
-      "/assets/images/NATK001-6.jpg"
-    ],
-    "description": "ÁO CHỐNG NẮNG CHỐNG TIA UV 360\nĐiểm danh những tính năng #ưu #việt vượt trội của sản phẩm ÁO CHỐNG NẮNG NGĂN TIA UV – Tác nhân hàng đầu gây Black sạm, lão hóa và các bệnh ngu.y hi.ểm về da:\nThiết kế và màu sắc thời trang, form dáng trẻ trung, 2 túi trước tiện lợi\nVải kim cương chống nắng chuyên dụng, đem lại hiệu quả chống nắng hoàn hảo, ngăn UV 97%.\nThoải mái và thoáng mát bởi chất liệu siêu co giãn, mềm mại, vải dệt thoáng khí.\nMũ trùm đầu sâu, tay dài xỏ ngón bảo vệ toàn diện\nTỉ mỉ đường kim mũi chỉ, khóa kéo trơn tru, bền bỉ",
-    "variants": [
-      {
-        "color": "Blue",
-        "size": "L",
-        "quantity": 100
-      },
-      {
-        "color": "Blue",
-        "size": "M",
-        "quantity": 100
-      },
-      {
-        "color": "Blue",
         "size": "XL",
         "quantity": 100
       }

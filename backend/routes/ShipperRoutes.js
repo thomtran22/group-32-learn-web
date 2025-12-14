@@ -114,19 +114,27 @@ router.get("/stats", verifyToken, async (req, res) => {
       deliveryStatus: { $in: ["PICKED_UP", "OUT_FOR_DELIVERY"] },
     });
 
-    let stats = await ShipperPerformance.findOne({ userId: shipperId });
+    // Tìm thông tin hiệu suất
+    const statsDoc = await ShipperPerformance.findOne({ userId: shipperId });
 
-    if (!stats) {
-      stats = {
+    let statsData;
+
+    if (!statsDoc) {
+      // Trường hợp 1: Chưa có dữ liệu -> Tạo object thuần mặc định
+      statsData = {
         totalDeliveries: 0,
         successfulDeliveries: 0,
         totalEarnings: 0,
         rating: 5,
       };
+    } else {
+      // Trường hợp 2: Có dữ liệu -> Chuyển Mongoose Document sang Object thuần
+      statsData = statsDoc.toObject();
     }
 
+    // Trả về kết quả (lúc này statsData chắc chắn là object thường)
     res.json({
-      ...stats.toObject(),
+      ...statsData, 
       awaitingPickupCount,
       activeDeliveryCount,
     });

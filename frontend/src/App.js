@@ -7,15 +7,14 @@ import Cart from "./pages/Cart";
 import Login from "./pages/Login";
 import Checkout from "./pages/Checkout"
 import PaymentResult from './pages/PaymentResult'; 
-import Orders from './pages/Orders';
 import ProductDetails from "./pages/ProductDetail";
 import ShipperMainLayout from "./pages/ShipperMainLayout";
 import UserProfile from "./pages/UserProfile";
 
 import { CartProvider } from './context/CartContext'; 
 
-import "./assets/css/style.css";
 import "./assets/css/globals.css";
+import "./assets/css/style.css";
 import "./assets/css/cart.css";
 import "./assets/css/checkout.css";
 import "./assets/css/orders.css";
