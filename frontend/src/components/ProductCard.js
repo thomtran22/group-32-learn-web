@@ -1,24 +1,69 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+const cardStyles = {
+  card: {
+    border: "1px solid #ddd",
+    borderRadius: "8px",
+    overflow: "hidden",
+    textAlign: "center",
+    padding: "10px",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+    transition: "transform 0.3s",
+    height: "100%",
+    textDecoration: "none",
+    color: "inherit",
+  },
+  cardHover: {
+    transform: "translateY(-5px)",
+    boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+  },
+  image: {
+    width: "100%",
+    height: "200px",
+    objectFit: "cover",
+    borderRadius: "4px",
+    marginBottom: "10px",
+  },
+  name: {
+    fontSize: "16px",
+    fontWeight: "bold",
+    height: "40px",
+    overflow: "hidden",
+    lineHeight: "1.4",
+    marginBottom: "5px",
+  },
+  price: {
+    fontSize: "18px",
+    fontWeight: "bold",
+    color: "#DC3545",
+    marginTop: "5px",
+  },
+};
 
-function ProductCard({ product }) {
-  if (!product) return null; 
+const ProductCard = ({ product }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  if (!product) return null;
+
+  const imageUrl =
+    product.images?.[0] || product.image || "https://via.placeholder.com/200";
+  const linkTo = `/product/${product._id || product.id}`;
 
   return (
-    <div className="product-item">
-      <div className="inner-image">
-        <Link to={`/products/${product.id}`}>
-          <img src={product.image} alt={product.name} />
-        </Link>
+    <Link
+      to={linkTo}
+      style={{ ...cardStyles.card, ...(isHovered ? cardStyles.cardHover : {}) }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <img src={imageUrl} alt={product.name} style={cardStyles.image} />
+      <div style={cardStyles.name}>{product.name}</div>
+      <div style={cardStyles.price}>
+        {product.price ? product.price.toLocaleString("vi-VN") : "Liên hệ"} VNĐ
       </div>
-      <div className="inner-content">
-        <h3 className="inner-title">
-          <Link to={`/products/${product.id}`}>{product.name}</Link>
-        </h3>
-        <div className="inner-price">{product.price} VNĐ</div>
-      </div>
-    </div>
+    </Link>
   );
-}
+};
 
 export default ProductCard;

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FaCheckCircle, FaTruck, FaBox, FaClock } from "react-icons/fa";
 
-// --- Dữ liệu Mẫu cho Timeline ---
 const MOCK_TIMELINE_DATA = {
   ORD_P420: [
     {

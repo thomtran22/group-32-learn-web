@@ -15,7 +15,7 @@ const ShipperInfoSchema = new mongoose.Schema(
     },
     currentLocation: {
       type: { type: String, default: "Point" },
-      coordinates: { type: [Number], default: [0, 0] }, // [longitude, latitude]
+      coordinates: { type: [Number], default: [0, 0] },
     },
     vehicleType: {
       type: String,
@@ -23,13 +23,12 @@ const ShipperInfoSchema = new mongoose.Schema(
       default: "Motorbike",
     },
     licensePlate: { type: String, default: "" },
-    workingArea: [{ type: String }], // Ví dụ: ["Hà Nội", "Đống Đa"]
+    workingArea: [{ type: String }],
     rating: { type: Number, default: 5 },
   },
   { timestamps: true }
 );
 
-// Tạo index cho location để hỗ trợ tìm kiếm theo vị trí sau này
 ShipperInfoSchema.index({ currentLocation: "2dsphere" });
 
 module.exports = mongoose.model("ShipperInfo", ShipperInfoSchema);

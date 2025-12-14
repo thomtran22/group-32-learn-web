@@ -18,7 +18,7 @@ const ProductReviewSchema = new mongoose.Schema(
       ref: "Order",
       required: true,
       unique: true,
-    }, // Mỗi đơn hàng chỉ có 1 đánh giá
+    },
 
     rating: { type: Number, min: 1, max: 5, required: true },
     comment: { type: String },

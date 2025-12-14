@@ -1,72 +1,69 @@
 import React, { useState, useEffect } from "react";
+import axios from "./../utils/axiosConfig";
 import { FaMapMarkerAlt, FaPhone, FaTruck, FaClock } from "react-icons/fa";
 import OrderTimeline from "./OrderTimeline";
 
-// --- Styles (Giữ nguyên) ---
+const BASE_URL = "http://localhost:3000/api";
+const SHIPPING_INFO_ENDPOINT = "/orders";
+
 const styles = {
   shippingInfoBox: {
-    border: "1px solid #e0e0e0",
     padding: "20px",
+    border: "1px solid #ddd",
     borderRadius: "8px",
     backgroundColor: "#f9f9f9",
-    marginBottom: "20px",
+    marginBottom: "30px",
   },
   shippingInfoTitle: {
-    fontSize: "1.25em",
-    fontWeight: 600,
+    fontSize: "1.3em",
     color: "#333",
     marginBottom: "15px",
-    borderBottom: "2px solid #ddd",
+    borderBottom: "1px solid #eee",
     paddingBottom: "10px",
   },
-  shippingDetailGroup: { display: "flex", flexWrap: "wrap", gap: "15px" },
-  detailItem: { display: "flex", alignItems: "flex-start", width: "48%" },
-  fullWidthItem: { width: "100%" },
+  shippingDetailGroup: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "20px",
+    marginBottom: "15px",
+  },
+  detailItem: {
+    display: "flex",
+    alignItems: "center",
+    flex: "1 1 45%",
+  },
+  fullWidthItem: {
+    flex: "1 1 100%",
+  },
   icon: {
-    color: "#000",
-    marginRight: "10px",
     fontSize: "1.2em",
-    paddingTop: "3px",
-  },
-  detailContent: { lineHeight: 1.4 },
-  detailLabel: { fontWeight: 400, color: "#777", margin: 0, fontSize: "0.9em" },
-  detailValue: { fontWeight: 500, color: "#333", margin: 0 },
-  divider: { border: 0, borderTop: "1px dashed #ccc", margin: "20px 0" },
-  trackingNumberLink: {
     color: "#c90000",
-    textDecoration: "none",
+    marginRight: "10px",
+  },
+  detailContent: {
+    display: "flex",
+    flexDirection: "column",
+  },
+  detailLabel: {
+    margin: 0,
+    fontSize: "0.8em",
+    color: "#777",
+  },
+  detailValue: {
+    margin: 0,
+    fontSize: "1em",
     fontWeight: "bold",
+    color: "#333",
   },
-};
-
-// --- Dữ Liệu Mock API ---
-const mockApiData = {
-  ORD_P420: {
-    recipientName: "Nguyễn Văn A",
-    phone: "0901234567",
-    address: "Số 123, Đường XYZ, Quận 3, TP.HCM",
-    carrier: "Giao Hàng Siêu Tốc (GHS)",
-    trackingNumber: "GHSVN87654321",
-    trackingUrl: "https://mock-tracking-url.com/GHSVN87654321",
-    estimatedDeliveryDate: "2025-12-15T00:00:00.000Z",
+  divider: {
+    border: "none",
+    borderTop: "1px dashed #ccc",
+    margin: "10px 0 20px 0",
   },
-  ORD_P650: {
-    recipientName: "Trần Thị B",
-    phone: "0987654321",
-    address: "Số 456, Đường ABC, Quận 1, TP.HCM",
-    carrier: "Viettel Post",
-    trackingNumber: "VTPOST11223344",
-    trackingUrl: "https://mock-tracking-url.com/VTPOST11223344",
-    estimatedDeliveryDate: "2025-12-10T00:00:00.000Z",
-  },
-  ORD_P990: {
-    recipientName: "Lê Văn C",
-    phone: "0912345678",
-    address: "Số 789, Đường PQR, Quận 5, TP.HCM",
-    carrier: "GHN",
-    trackingNumber: "GHN123456789",
-    trackingUrl: "https://mock-tracking-url.com/GHN123456789",
-    estimatedDeliveryDate: "2025-12-05T00:00:00.000Z",
+  trackingNumberLink: {
+    fontWeight: "bold",
+    color: "#007bff",
+    textDecoration: "none",
   },
 };
 
@@ -80,19 +77,24 @@ const ShippingInformation = ({ orderId }) => {
       setIsLoading(true);
       setError(null);
       try {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        const data = mockApiData[orderId];
+        const token = localStorage.getItem("token");
 
-        if (data) {
-          setShippingData(data);
-        } else {
-          setShippingData(null);
-          throw new Error(
-            "Không tìm thấy thông tin vận chuyển cho đơn hàng này."
-          );
-        }
+        const response = await axios.get(
+          `${BASE_URL}${SHIPPING_INFO_ENDPOINT}/${orderId}/shipping-info`,
+          {
+            headers: {
+              Authorization: token ? `Bearer ${token}` : undefined,
+            },
+          }
+        );
+
+        setShippingData(response.data);
       } catch (err) {
-        setError(err.message || "Đã xảy ra lỗi khi tải thông tin.");
+        console.error("Lỗi khi tải chi tiết vận chuyển:", err);
+        setError(
+          err.response?.data?.message ||
+            "Đã xảy ra lỗi khi tải thông tin vận chuyển."
+        );
       } finally {
         setIsLoading(false);
       }
@@ -137,7 +139,6 @@ const ShippingInformation = ({ orderId }) => {
 
   return (
     <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-      {/* 1. THÔNG TIN CHUNG VẬN CHUYỂN */}
       <div style={styles.shippingInfoBox}>
         <h3 style={styles.shippingInfoTitle}>Thông tin Giao hàng cơ bản</h3>
 
@@ -156,7 +157,6 @@ const ShippingInformation = ({ orderId }) => {
               <p style={styles.detailValue}>{shippingData.phone}</p>
             </div>
           </div>
-
           <div style={{ ...styles.detailItem, ...styles.fullWidthItem }}>
             <FaMapMarkerAlt style={styles.icon} />
             <div style={styles.detailContent}>
@@ -209,7 +209,6 @@ const ShippingInformation = ({ orderId }) => {
         </div>
       </div>
 
-      {/* 2. DÒNG THỜI GIAN VẬN CHUYỂN CHI TIẾT */}
       <OrderTimeline orderId={orderId} />
     </div>
   );

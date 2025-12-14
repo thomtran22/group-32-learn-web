@@ -9,7 +9,6 @@ import {
   FaClipboardList,
 } from "react-icons/fa";
 
-// Lazy Load Content (Giữ nguyên)
 const ShipperDashboardContent = lazy(() =>
   import("../components/Ship/ShipperDashboardContent")
 );
@@ -19,14 +18,12 @@ const ShipperStatisticsContent = lazy(() =>
 const ShipperProfileContent = lazy(() =>
   import("../components/Ship/ShipperProfileContent")
 );
+const ShipperActiveOrdersContent = lazy(() =>
+  import("../components/Ship/ShipperActiveOrdersContent")
+);
 
-// Định nghĩa chiều rộng và chiều cao cố định
 const sidebarWidth = "250px";
-const HEADER_HEIGHT = "100px"; // Chiều cao ước tính của Header
-
-// ==================================================
-// 1. CSS CHO LAYOUT
-// ==================================================
+const HEADER_HEIGHT = "150px";
 
 const containerStyle = {
   maxWidth: "1200px",
@@ -38,14 +35,13 @@ const containerStyle = {
 };
 
 const sidebarWrapperStyle = {
-  // Style cho wrapper chứa Sidebar (nền trắng)
   flex: "0 0 250px",
   padding: "10px",
   backgroundColor: "#fff",
   borderRight: "1px solid #ddd",
   borderRadius: "8px",
   boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
-  minHeight: "calc(100vh - 100px - 80px)", // Chiều cao tối thiểu: 100vh - Header - margin top/bottom (40*2)
+  minHeight: "calc(100vh - 100px - 80px)",
   alignSelf: "flex-start",
 };
 
@@ -56,10 +52,6 @@ const contentStyle = {
   borderRadius: "8px",
   boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
 };
-
-// ==================================================
-// 2. COMPONENT SIDEBAR (ĐÃ GỘP VÀ CHỈNH SỬA CHO NỀN TRẮNG)
-// ==================================================
 
 const ShipperSidebar = () => {
   // --- Styles Inline ---
@@ -103,11 +95,9 @@ const ShipperSidebar = () => {
 
   return (
     <div style={sidebarInnerStyle}>
-      {/* Tiêu đề MENU */}
       <div style={menuHeaderStyle}>MENU</div>
 
       <nav>
-        {/* 1. Dashboard */}
         <NavLink
           to="/shipper"
           end
@@ -119,7 +109,6 @@ const ShipperSidebar = () => {
           <FaTachometerAlt style={{ marginRight: "10px" }} /> Dashboard
         </NavLink>
 
-        {/* 2. Đơn hàng đang giao */}
         <NavLink
           to="/shipper/orders/active"
           style={({ isActive }) => ({
@@ -130,7 +119,6 @@ const ShipperSidebar = () => {
           <FaClipboardList style={{ marginRight: "10px" }} /> Đơn hàng đang giao
         </NavLink>
 
-        {/* 3. Thống kê Hiệu suất */}
         <NavLink
           to="/shipper/stats"
           style={({ isActive }) => ({
@@ -141,7 +129,6 @@ const ShipperSidebar = () => {
           <FaChartLine style={{ marginRight: "10px" }} /> Thống kê Hiệu suất
         </NavLink>
 
-        {/* 4. Hồ sơ Cá nhân */}
         <NavLink
           to="/shipper/profile"
           style={({ isActive }) => ({
@@ -152,9 +139,8 @@ const ShipperSidebar = () => {
           <FaUserCircle style={{ marginRight: "10px" }} /> Hồ sơ Cá nhân
         </NavLink>
 
-        {/* 5. Đăng Xuất */}
         <div style={{ marginTop: "50px" }}>
-          <Link to="/logout" style={linkStyle}>
+          <Link to="/" style={linkStyle}>
             <FaSignOutAlt style={{ marginRight: "10px" }} /> Đăng Xuất
           </Link>
         </div>
@@ -163,20 +149,15 @@ const ShipperSidebar = () => {
   );
 };
 
-// ==================================================
-// 3. MAIN LAYOUT (ÁP DỤNG FIXED HEADER VÀ LAYOUT MỚI)
-// ==================================================
-
 const ShipperMainLayout = () => {
   const location = useLocation();
 
-  // Hàm chọn nội dung (giữ nguyên logic cũ)
   const getActiveContent = (pathname) => {
     if (pathname.includes("/shipper/profile")) return <ShipperProfileContent />;
     if (pathname.includes("/shipper/stats"))
       return <ShipperStatisticsContent />;
     if (pathname.includes("/shipper/orders/active"))
-      return <div>Nội dung Đơn hàng đang giao</div>;
+      return <ShipperActiveOrdersContent />;
     if (pathname === "/shipper" || pathname.endsWith("/shipper/"))
       return <ShipperDashboardContent />;
     return <div>Không tìm thấy trang.</div>;
@@ -185,13 +166,11 @@ const ShipperMainLayout = () => {
   const globalWrapperStyle = {
     backgroundColor: "#f4f7f9",
     minHeight: "100vh",
-    // Thêm padding-top để bù trừ cho Header cố định
     paddingTop: HEADER_HEIGHT,
   };
 
   return (
     <div style={globalWrapperStyle}>
-      {/* 1. HEADER CỐ ĐỊNH (FIXED) */}
       <div
         style={{
           position: "fixed",
@@ -206,14 +185,11 @@ const ShipperMainLayout = () => {
         <Header role="shipper" />
       </div>
 
-      {/* 2. BODY CONTAINER: ÁP DỤNG containerStyle */}
       <div style={containerStyle}>
-        {/* Sidebar Wrapper: ÁP DỤNG sidebarWrapperStyle */}
         <div style={sidebarWrapperStyle}>
           <ShipperSidebar />
         </div>
 
-        {/* Nội dung chính: ÁP DỤNG contentStyle */}
         <div style={contentStyle}>
           <Suspense fallback={<div>Đang tải nội dung...</div>}>
             {getActiveContent(location.pathname)}

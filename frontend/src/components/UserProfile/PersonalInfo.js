@@ -1,38 +1,112 @@
-import React, { useState } from "react";
-import { FaUserEdit, FaLock, FaPhone } from "react-icons/fa";
-
-// --- Dữ liệu Mock ---
-const MOCK_USER_INFO = {
-  name: "Nguyễn Văn A",
-  email: "nguyenvana@example.com",
-  phone: "0901 234 567",
-  dob: "1995-10-20",
-};
+import React, { useState, useEffect } from "react";
+import { FaUserEdit, FaLock } from "react-icons/fa";
+import axiosClient from "../../utils/axiosConfig";
 
 const PersonalInfo = () => {
-  const [userInfo, setUserInfo] = useState(MOCK_USER_INFO);
+  const [userInfo, setUserInfo] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phoneNumber: "",
+    dateOfBirth: "",
+  });
+
+  const [originalUserInfo, setOriginalUserInfo] = useState({});
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
   const [password, setPassword] = useState({
     current: "",
     new: "",
     confirm: "",
   });
 
-  // Xử lý chỉnh sửa thông tin cá nhân
-  const handleInfoChange = (e) => {
-    setUserInfo({ ...userInfo, [e.target.name]: e.target.value });
+  const fetchUserInfo = async () => {
+    setIsLoading(true);
+    try {
+      const res = await axiosClient.get("/user/me");
+      const data = res.data;
+
+      if (data.dateOfBirth) {
+        data.dateOfBirth = data.dateOfBirth.split("T")[0];
+      }
+
+      setUserInfo(data);
+      setOriginalUserInfo(data);
+    } catch (error) {
+      console.error("Lỗi tải thông tin:", error);
+      alert("Không thể tải thông tin cá nhân.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Xử lý đổi mật khẩu
-  const handleChangePassword = () => {
-    if (password.new !== password.confirm) {
-      alert("Mật khẩu mới và xác nhận mật khẩu không khớp.");
+  useEffect(() => {
+    fetchUserInfo();
+  }, []);
+
+  /* ================= UPDATE INFO ================= */
+  const handleSaveInfo = async () => {
+    if (!userInfo.firstName || !userInfo.phoneNumber) {
+      alert("Họ và Tên, Số điện thoại không được để trống.");
       return;
     }
-    // Giả lập API gọi đổi mật khẩu
-    console.log("Đang đổi mật khẩu...");
-    alert("Đổi mật khẩu thành công!");
-    setPassword({ current: "", new: "", confirm: "" });
+
+    setIsLoading(true);
+    try {
+      const payload = {
+        firstName: userInfo.firstName,
+        lastName: userInfo.lastName,
+        phoneNumber: userInfo.phoneNumber,
+        dateOfBirth: userInfo.dateOfBirth,
+      };
+
+      const res = await axiosClient.put("/user/me", payload);
+      const updated = res.data;
+
+      if (updated.dateOfBirth) {
+        updated.dateOfBirth = updated.dateOfBirth.split("T")[0];
+      }
+
+      setUserInfo(updated);
+      setOriginalUserInfo(updated);
+      setIsEditing(false);
+      alert("Cập nhật thông tin thành công!");
+    } catch (error) {
+      console.error("Lỗi cập nhật:", error);
+      alert(error.response?.data?.message || "Cập nhật thất bại.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /* ================= CHANGE PASSWORD ================= */
+  const handleChangePassword = async () => {
+    if (password.new !== password.confirm) {
+      alert("Xác nhận mật khẩu không khớp.");
+      return;
+    }
+
+    if (password.new.length < 6) {
+      alert("Mật khẩu mới phải ≥ 6 ký tự.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await axiosClient.post("/auth/change-password", {
+        currentPassword: password.current,
+        newPassword: password.new,
+      });
+
+      alert("Đổi mật khẩu thành công!");
+      setPassword({ current: "", new: "", confirm: "" });
+    } catch (error) {
+      console.error("Lỗi đổi mật khẩu:", error);
+      alert(error.response?.data?.message || "Mật khẩu hiện tại không đúng.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const inputStyle = {
@@ -41,17 +115,10 @@ const PersonalInfo = () => {
     borderRadius: "4px",
     width: "100%",
   };
-  const buttonStyle = {
-    padding: "10px 20px",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-    fontWeight: "bold",
-  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "40px" }}>
-      {/* 1. THÔNG TIN CƠ BẢN */}
+      {/* ===== THÔNG TIN CÁ NHÂN ===== */}
       <div
         style={{
           border: "1px solid #eee",
@@ -59,17 +126,8 @@ const PersonalInfo = () => {
           borderRadius: "8px",
         }}
       >
-        <h4
-          style={{
-            display: "flex",
-            alignItems: "center",
-            color: "#333",
-            borderBottom: "1px dashed #ddd",
-            paddingBottom: "10px",
-            marginBottom: "20px",
-          }}
-        >
-          <FaUserEdit style={{ marginRight: "10px" }} /> Chi tiết Tài khoản
+        <h4 style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <FaUserEdit /> Thông tin cá nhân
         </h4>
 
         <div
@@ -79,129 +137,71 @@ const PersonalInfo = () => {
             gap: "20px",
           }}
         >
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "5px",
-                fontWeight: "600",
-              }}
-            >
-              Họ và Tên:
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={userInfo.name}
-              onChange={handleInfoChange}
-              disabled={!isEditing}
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "5px",
-                fontWeight: "600",
-              }}
-            >
-              Email:
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={userInfo.email}
-              disabled
-              style={{ ...inputStyle, backgroundColor: "#f5f5f5" }}
-            />
-          </div>
-
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "5px",
-                fontWeight: "600",
-              }}
-            >
-              Số điện thoại:
-            </label>
-            <input
-              type="text"
-              name="phone"
-              value={userInfo.phone}
-              onChange={handleInfoChange}
-              disabled={!isEditing}
-              style={inputStyle}
-            />
-          </div>
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "5px",
-                fontWeight: "600",
-              }}
-            >
-              Ngày sinh:
-            </label>
-            <input
-              type="date"
-              name="dob"
-              value={userInfo.dob}
-              onChange={handleInfoChange}
-              disabled={!isEditing}
-              style={inputStyle}
-            />
-          </div>
+          <input
+            style={inputStyle}
+            placeholder="Họ"
+            value={userInfo.firstName}
+            disabled={!isEditing}
+            onChange={(e) =>
+              setUserInfo({ ...userInfo, firstName: e.target.value })
+            }
+          />
+          <input
+            style={inputStyle}
+            placeholder="Tên"
+            value={userInfo.lastName}
+            disabled={!isEditing}
+            onChange={(e) =>
+              setUserInfo({ ...userInfo, lastName: e.target.value })
+            }
+          />
+          <input
+            style={{ ...inputStyle, background: "#f5f5f5" }}
+            disabled
+            value={userInfo.email}
+          />
+          <input
+            style={inputStyle}
+            placeholder="Số điện thoại"
+            value={userInfo.phoneNumber}
+            disabled={!isEditing}
+            onChange={(e) =>
+              setUserInfo({ ...userInfo, phoneNumber: e.target.value })
+            }
+          />
+          <input
+            type="date"
+            style={inputStyle}
+            value={userInfo.dateOfBirth}
+            disabled={!isEditing}
+            onChange={(e) =>
+              setUserInfo({ ...userInfo, dateOfBirth: e.target.value })
+            }
+          />
         </div>
 
         <div style={{ marginTop: "20px", textAlign: "right" }}>
           {isEditing ? (
             <>
-              <button
-                style={{
-                  ...buttonStyle,
-                  backgroundColor: "#28a745",
-                  color: "white",
-                  marginRight: "10px",
-                }}
-                onClick={() => setIsEditing(false)}
-              >
-                Lưu thay đổi
+              <button onClick={handleSaveInfo} disabled={isLoading}>
+                Lưu
               </button>
               <button
-                style={{
-                  ...buttonStyle,
-                  backgroundColor: "#ccc",
-                  color: "#333",
-                }}
                 onClick={() => {
+                  setUserInfo(originalUserInfo);
                   setIsEditing(false);
-                  setUserInfo(MOCK_USER_INFO);
                 }}
               >
                 Hủy
               </button>
             </>
           ) : (
-            <button
-              style={{
-                ...buttonStyle,
-                backgroundColor: "#007bff",
-                color: "white",
-              }}
-              onClick={() => setIsEditing(true)}
-            >
-              Chỉnh sửa
-            </button>
+            <button onClick={() => setIsEditing(true)}>Chỉnh sửa</button>
           )}
         </div>
       </div>
 
-      {/* 2. QUẢN LÝ MẬT KHẨU */}
+      {/* ===== ĐỔI MẬT KHẨU ===== */}
       <div
         style={{
           border: "1px solid #eee",
@@ -209,94 +209,42 @@ const PersonalInfo = () => {
           borderRadius: "8px",
         }}
       >
-        <h4
-          style={{
-            display: "flex",
-            alignItems: "center",
-            color: "#333",
-            borderBottom: "1px dashed #ddd",
-            paddingBottom: "10px",
-            marginBottom: "20px",
-          }}
-        >
-          <FaLock style={{ marginRight: "10px" }} /> Đổi Mật khẩu
+        <h4 style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <FaLock /> Đổi mật khẩu
         </h4>
 
-        <div
-          style={{ display: "grid", gridTemplateColumns: "1fr", gap: "15px" }}
-        >
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "5px",
-                fontWeight: "600",
-              }}
-            >
-              Mật khẩu hiện tại:
-            </label>
-            <input
-              type="password"
-              value={password.current}
-              onChange={(e) =>
-                setPassword({ ...password, current: e.target.value })
-              }
-              style={inputStyle}
-            />
-          </div>
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "5px",
-                fontWeight: "600",
-              }}
-            >
-              Mật khẩu mới:
-            </label>
-            <input
-              type="password"
-              value={password.new}
-              onChange={(e) =>
-                setPassword({ ...password, new: e.target.value })
-              }
-              style={inputStyle}
-            />
-          </div>
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "5px",
-                fontWeight: "600",
-              }}
-            >
-              Xác nhận mật khẩu mới:
-            </label>
-            <input
-              type="password"
-              value={password.confirm}
-              onChange={(e) =>
-                setPassword({ ...password, confirm: e.target.value })
-              }
-              style={inputStyle}
-            />
-          </div>
-        </div>
+        <input
+          type="password"
+          style={inputStyle}
+          placeholder="Mật khẩu hiện tại"
+          value={password.current}
+          onChange={(e) =>
+            setPassword({ ...password, current: e.target.value })
+          }
+        />
+        <input
+          type="password"
+          style={inputStyle}
+          placeholder="Mật khẩu mới"
+          value={password.new}
+          onChange={(e) => setPassword({ ...password, new: e.target.value })}
+        />
+        <input
+          type="password"
+          style={inputStyle}
+          placeholder="Xác nhận mật khẩu"
+          value={password.confirm}
+          onChange={(e) =>
+            setPassword({ ...password, confirm: e.target.value })
+          }
+        />
 
-        <div style={{ marginTop: "20px", textAlign: "right" }}>
-          <button
-            style={{
-              ...buttonStyle,
-              backgroundColor: "#c90000",
-              color: "white",
-            }}
-            onClick={handleChangePassword}
-            disabled={!password.current || !password.new || !password.confirm}
-          >
-            Đổi Mật khẩu
-          </button>
-        </div>
+        <button
+          onClick={handleChangePassword}
+          disabled={isLoading || !password.current || !password.new}
+        >
+          Đổi mật khẩu
+        </button>
       </div>
     </div>
   );

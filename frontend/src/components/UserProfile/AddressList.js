@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FaPlus,
   FaTrashAlt,
@@ -8,93 +8,116 @@ import {
   FaPhone,
 } from "react-icons/fa";
 
-// --- Dữ liệu Mock ---
-const MOCK_ADDRESSES = [
-  {
-    id: 1,
-    receiver: "Nguyễn Văn A",
-    phone: "0901234567",
-    detail: "Số 123, Đường XYZ",
-    ward: "Phường 1",
-    district: "Quận 3",
-    city: "TP.HCM",
-    isDefault: true,
-    type: "Nhà riêng",
-  },
-  {
-    id: 2,
-    receiver: "Nguyễn Văn A",
-    phone: "0901234567",
-    detail: "Tòa nhà ABC, Tầng 5",
-    ward: "Phường 2",
-    district: "Quận 1",
-    city: "TP.HCM",
-    isDefault: false,
-    type: "Cơ quan",
-  },
-];
+import axiosClient from "../../utils/axiosConfig";
 
 const AddressList = () => {
-  const [addresses, setAddresses] = useState(MOCK_ADDRESSES);
+  const [addresses, setAddresses] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentAddress, setCurrentAddress] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchAddresses = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axiosClient.get("/user/addresses");
+      setAddresses(response.data);
+    } catch (error) {
+      console.error("Lỗi khi tải địa chỉ:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAddresses();
+  }, []);
+
+  const newAddressTemplate = {
+    receiverName: "",
+    phone: "",
+    addressDetail: "",
+    ward: "",
+    district: "",
+    city: "",
+    isDefault: false,
+    type: "Nhà riêng",
+  };
 
   const openModal = (address = null) => {
-    setCurrentAddress(
-      address || {
-        id: Date.now(),
-        receiver: "",
-        phone: "",
-        detail: "",
-        ward: "",
-        district: "",
-        city: "",
-        isDefault: false,
-        type: "Nhà riêng",
-      }
-    );
+    setCurrentAddress(address || newAddressTemplate);
     setIsModalOpen(true);
   };
 
-  const saveAddress = () => {
-    if (currentAddress.id > 1000) {
-      // Thêm mới
-      setAddresses([
-        ...addresses.map((a) => ({ ...a, isDefault: false })),
-        currentAddress,
-      ]);
-    } else {
-      // Cập nhật
-      setAddresses(
-        addresses.map((a) => (a.id === currentAddress.id ? currentAddress : a))
-      );
+  const saveAddress = async () => {
+    if (!currentAddress.receiverName || !currentAddress.phone) {
+      alert("Vui lòng nhập đầy đủ Tên người nhận và Số điện thoại.");
+      return;
     }
-    setIsModalOpen(false);
+    setIsLoading(true);
+
+    const addressToSave = { ...currentAddress };
+    delete addressToSave._id;
+    delete addressToSave.userId;
+
+    try {
+      if (currentAddress._id) {
+        await axiosClient.put(
+          `/user/addresses/${currentAddress._id}`,
+          addressToSave
+        );
+      } else {
+        await axiosClient.post("/user/addresses", addressToSave);
+      }
+      setIsModalOpen(false);
+      fetchAddresses();
+    } catch (error) {
+      console.error("Lỗi khi lưu địa chỉ:", error);
+      setIsLoading(false);
+      alert("Lưu địa chỉ thất bại. Vui lòng kiểm tra lại thông tin.");
+    }
   };
 
-  const deleteAddress = (id) => {
+  const deleteAddress = async (id) => {
     if (window.confirm("Bạn có chắc chắn muốn xóa địa chỉ này?")) {
-      setAddresses(addresses.filter((a) => a.id !== id));
+      setIsLoading(true);
+      try {
+        await axiosClient.delete(`/user/addresses/${id}`);
+        fetchAddresses();
+      } catch (error) {
+        console.error("Lỗi khi xóa địa chỉ:", error);
+        setIsLoading(false);
+        alert("Xóa địa chỉ thất bại.");
+      }
     }
   };
 
-  const setDefault = (id) => {
-    setAddresses(
-      addresses.map((a) => ({
-        ...a,
-        isDefault: a.id === id,
-      }))
-    );
+  const setDefault = async (id) => {
+    setIsLoading(true);
+    try {
+      const addressToUpdate = addresses.find((addr) => addr._id === id);
+
+      await axiosClient.put(`/user/addresses/${id}`, {
+        ...addressToUpdate,
+        isDefault: true,
+      });
+
+      fetchAddresses();
+    } catch (error) {
+      console.error("Lỗi khi đặt mặc định:", error);
+      setIsLoading(false);
+      alert("Đặt mặc định thất bại.");
+    }
   };
 
   const AddressCard = ({ address }) => (
     <div
       style={{
-        border: "1px solid #ddd",
+        border: address.isDefault ? "2px solid #c90000" : "1px solid #ddd",
         padding: "15px",
         borderRadius: "6px",
         marginBottom: "15px",
         position: "relative",
+        backgroundColor: address.isDefault ? "#fff5f5" : "white",
       }}
     >
       {address.isDefault && (
@@ -115,14 +138,16 @@ const AddressList = () => {
       )}
 
       <p style={{ margin: "0 0 5px 0", fontWeight: "bold", fontSize: "1.1em" }}>
-        {address.receiver} ({address.type})
+        {address.receiverName} ({address.type})
       </p>
       <p style={{ margin: "0 0 5px 0", color: "#555" }}>
         <FaPhone style={{ marginRight: "5px" }} /> {address.phone}
       </p>
       <p style={{ margin: "0", color: "#555" }}>
         <FaHome style={{ marginRight: "5px" }} />{" "}
-        {`${address.detail}, ${address.ward}, ${address.district}, ${address.city}`}
+        {`${address.addressDetail}, ${address.ward ? address.ward + ", " : ""}${
+          address.district
+        }, ${address.city}`}
       </p>
 
       <div
@@ -134,7 +159,7 @@ const AddressList = () => {
       >
         {!address.isDefault && (
           <button
-            onClick={() => setDefault(address.id)}
+            onClick={() => setDefault(address._id)}
             style={{
               padding: "5px 10px",
               marginRight: "10px",
@@ -162,24 +187,25 @@ const AddressList = () => {
         >
           <FaEdit /> Chỉnh sửa
         </button>
-        <button
-          onClick={() => deleteAddress(address.id)}
-          style={{
-            padding: "5px 10px",
-            border: "1px solid #dc3545",
-            backgroundColor: "white",
-            color: "#dc3545",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        >
-          <FaTrashAlt /> Xóa
-        </button>
+        {!address.isDefault && (
+          <button
+            onClick={() => deleteAddress(address._id)}
+            style={{
+              padding: "5px 10px",
+              border: "1px solid #dc3545",
+              backgroundColor: "white",
+              color: "#dc3545",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+          >
+            <FaTrashAlt /> Xóa
+          </button>
+        )}
       </div>
     </div>
   );
 
-  // Modal đơn giản (dùng cho mục đích demo)
   const AddressModal = () => {
     if (!isModalOpen || !currentAddress) return null;
 
@@ -190,6 +216,8 @@ const AddressList = () => {
       width: "90%",
       marginBottom: "15px",
     };
+
+    const isEditing = !!currentAddress._id;
 
     return (
       <div
@@ -216,26 +244,25 @@ const AddressList = () => {
             overflowY: "auto",
           }}
         >
-          <h3>
-            {currentAddress.id > 1000
-              ? "Thêm Địa Chỉ Mới"
-              : "Chỉnh Sửa Địa Chỉ"}
-          </h3>
+          <h3>{isEditing ? "Chỉnh Sửa Địa Chỉ" : "Thêm Địa Chỉ Mới"}</h3>
           <hr style={{ marginBottom: "20px" }} />
 
           <label>Tên Người Nhận:</label>
           <input
             style={inputStyle}
-            value={currentAddress.receiver}
+            value={currentAddress.receiverName || ""}
             onChange={(e) =>
-              setCurrentAddress({ ...currentAddress, receiver: e.target.value })
+              setCurrentAddress({
+                ...currentAddress,
+                receiverName: e.target.value,
+              })
             }
           />
 
           <label>Số Điện Thoại:</label>
           <input
             style={inputStyle}
-            value={currentAddress.phone}
+            value={currentAddress.phone || ""}
             onChange={(e) =>
               setCurrentAddress({ ...currentAddress, phone: e.target.value })
             }
@@ -244,28 +271,31 @@ const AddressList = () => {
           <label>Địa Chỉ Chi Tiết (Số nhà, đường...):</label>
           <input
             style={inputStyle}
-            value={currentAddress.detail}
+            value={currentAddress.addressDetail || ""}
             onChange={(e) =>
-              setCurrentAddress({ ...currentAddress, detail: e.target.value })
+              setCurrentAddress({
+                ...currentAddress,
+                addressDetail: e.target.value,
+              })
             }
           />
 
           <div style={{ display: "flex", gap: "10px" }}>
-            <div>
+            <div style={{ flex: 1 }}>
               <label>Phường/Xã:</label>
               <input
                 style={inputStyle}
-                value={currentAddress.ward}
+                value={currentAddress.ward || ""}
                 onChange={(e) =>
                   setCurrentAddress({ ...currentAddress, ward: e.target.value })
                 }
               />
             </div>
-            <div>
+            <div style={{ flex: 1 }}>
               <label>Quận/Huyện:</label>
               <input
                 style={inputStyle}
-                value={currentAddress.district}
+                value={currentAddress.district || ""}
                 onChange={(e) =>
                   setCurrentAddress({
                     ...currentAddress,
@@ -274,6 +304,40 @@ const AddressList = () => {
                 }
               />
             </div>
+          </div>
+
+          <label>Tỉnh/Thành phố:</label>
+          <input
+            style={inputStyle}
+            value={currentAddress.city || ""}
+            onChange={(e) =>
+              setCurrentAddress({
+                ...currentAddress,
+                city: e.target.value,
+              })
+            }
+          />
+
+          <div
+            style={{
+              marginBottom: "15px",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <input
+              type="checkbox"
+              id="isDefault"
+              checked={currentAddress.isDefault || false}
+              onChange={(e) =>
+                setCurrentAddress({
+                  ...currentAddress,
+                  isDefault: e.target.checked,
+                })
+              }
+              style={{ marginRight: "10px" }}
+            />
+            <label htmlFor="isDefault">Đặt làm địa chỉ mặc định</label>
           </div>
 
           <div style={{ marginTop: "20px", textAlign: "right" }}>
@@ -285,21 +349,25 @@ const AddressList = () => {
                 backgroundColor: "#ccc",
                 border: "none",
                 borderRadius: "4px",
+                cursor: "pointer",
               }}
             >
               Hủy
             </button>
             <button
               onClick={saveAddress}
+              disabled={isLoading}
               style={{
                 padding: "10px",
                 backgroundColor: "#c90000",
                 color: "white",
                 border: "none",
                 borderRadius: "4px",
+                cursor: isLoading ? "not-allowed" : "pointer",
+                opacity: isLoading ? 0.7 : 1,
               }}
             >
-              Lưu Địa Chỉ
+              {isLoading ? "Đang xử lý..." : "Lưu Địa Chỉ"}
             </button>
           </div>
         </div>
@@ -312,6 +380,7 @@ const AddressList = () => {
       <div style={{ textAlign: "right", marginBottom: "20px" }}>
         <button
           onClick={() => openModal()}
+          disabled={isLoading}
           style={{
             padding: "10px 15px",
             backgroundColor: "#28a745",
@@ -325,12 +394,16 @@ const AddressList = () => {
         </button>
       </div>
 
-      {addresses.length === 0 ? (
+      {isLoading ? (
+        <p style={{ textAlign: "center", color: "#777" }}>
+          Đang tải địa chỉ...
+        </p>
+      ) : addresses.length === 0 ? (
         <p style={{ textAlign: "center", color: "#777" }}>
           Bạn chưa có địa chỉ nào được lưu.
         </p>
       ) : (
-        addresses.map((addr) => <AddressCard key={addr.id} address={addr} />)
+        addresses.map((addr) => <AddressCard key={addr._id} address={addr} />)
       )}
 
       <AddressModal />

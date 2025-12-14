@@ -13,7 +13,6 @@ import UserStatistics from "../components/UserStatistics";
 import PersonalInfo from "../components/UserProfile/PersonalInfo";
 import AddressList from "../components/UserProfile/AddressList";
 import VoucherWallet from "../components/UserProfile/VoucherWallet";
-import ServiceHistory from "../components/UserProfile/ServiceHistory";
 import OrderHistory from "../components/UserProfile/OrderHistory";
 
 const menuItems = [
@@ -28,7 +27,7 @@ const menuItems = [
     name: "Lịch sử Đơn hàng",
     icon: FaShoppingCart,
     component: OrderHistory,
-  }, // VỊ TRÍ MỚI
+  },
   {
     id: "addresses",
     name: "Sổ Địa chỉ",
@@ -46,12 +45,6 @@ const menuItems = [
     name: "Ví Voucher",
     icon: FaGift,
     component: VoucherWallet,
-  },
-  {
-    id: "history",
-    name: "Lịch sử Hỗ trợ",
-    icon: FaHistory,
-    component: ServiceHistory,
   },
 ];
 
@@ -79,7 +72,6 @@ const contentStyle = {
   boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
 };
 
-// --- Component Sidebar Item (Giữ nguyên) ---
 const SidebarItem = ({ item, isActive, onClick }) => {
   const Icon = item.icon;
   const itemStyle = {
@@ -104,7 +96,6 @@ const SidebarItem = ({ item, isActive, onClick }) => {
   );
 };
 
-// --- Component Chính UserProfile ---
 const UserProfile = () => {
   const [activeTab, setActiveTab] = useState("info");
   const navigate = useNavigate();
@@ -141,10 +132,7 @@ const UserProfile = () => {
 
   return (
     <div style={containerStyle}>
-      {/* Sidebar */}
       <div style={sidebarStyle}>
-        {/* Đã xóa nút "Xem Đơn hàng của tôi" */}
-
         <button style={backButtonStyle} onClick={handleGoBack}>
           <FaArrowLeft style={{ marginRight: "10px" }} />
           Quay lại
@@ -171,7 +159,6 @@ const UserProfile = () => {
         ))}
       </div>
 
-      {/* Content */}
       <div style={contentStyle}>
         <h2 style={{ marginBottom: "20px", color: "#c90000" }}>
           {ActiveTitle}
@@ -183,8 +170,6 @@ const UserProfile = () => {
             marginBottom: "30px",
           }}
         />
-
-        {/* Truyền userId (giả định) cho các component cần thiết */}
         {ActiveComponent && <ActiveComponent />}
       </div>
     </div>

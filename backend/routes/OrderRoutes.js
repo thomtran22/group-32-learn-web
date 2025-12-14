@@ -1,45 +1,48 @@
-// src/routes/orderRoutes.js
-
 const express = require("express");
 const router = express.Router();
+const mongoose = require("mongoose");
 const Order = require("../models/Order");
 const { protect } = require("../middleware/authMiddleware");
 
-// @route GET /api/orders
-// @desc Lấy danh sách tất cả đơn hàng của người dùng (dùng cho StatusProduct)
-router.get("/", protect, async (req, res) => {
+router.get("/my-orders", protect, async (req, res) => {
   try {
     const orders = await Order.find({ userId: req.user.id })
-      .select("orderDate totalAmount currentStatus products") // Chỉ lấy các trường cần cho danh sách
-      .populate("products.productId", "name images") // Join lấy tên và ảnh sản phẩm
-      .sort({ orderDate: -1 }); // Sắp xếp theo ngày mới nhất
+      .sort({ createdAt: -1 })
+      .select("-__v")
+      .populate("orderItems.productId", "name price images");
 
     res.json(orders);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({
+      message: "Lỗi Server khi tải danh sách đơn hàng.",
+      error: error.message,
+    });
   }
 });
 
-// @route GET /api/orders/:orderId
-// @desc Lấy chi tiết đơn hàng (dùng cho ShippingInformation và OrderTimeline)
 router.get("/:orderId", protect, async (req, res) => {
   try {
-    // Đảm bảo chỉ người dùng sở hữu mới được xem
+    if (!mongoose.Types.ObjectId.isValid(req.params.orderId)) {
+      return res.status(400).json({ message: "ID đơn hàng không hợp lệ." });
+    }
+
     const order = await Order.findOne({
       _id: req.params.orderId,
       userId: req.user.id,
-    }).populate("products.productId", "name images colors sizes"); // Lấy chi tiết sản phẩm
+    })
+      .select("-__v")
+      .populate("orderItems.productId", "name price images colors sizes");
 
     if (!order) {
-      return res
-        .status(404)
-        .json({ message: "Order not found or unauthorized" });
+      return res.status(404).json({ message: "Không tìm thấy đơn hàng." });
     }
 
-    // Dữ liệu order đã bao gồm shippingDetails và statusHistory/trackingEvents
     res.json(order);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({
+      message: "Lỗi Server khi tải chi tiết đơn hàng.",
+      error: error.message,
+    });
   }
 });
 

@@ -1,27 +1,23 @@
-import mongoose from "mongoose";
-
+const mongoose = require("mongoose");
 const UserSchema = new mongoose.Schema(
   {
-    // -----------------------------------------------------
-    // 1. Thông tin Xác thực (Authentication)
-    // -----------------------------------------------------
     email: {
       type: String,
       required: true,
-      unique: true, // Email là duy nhất
+      unique: true,
       trim: true,
       lowercase: true,
     },
     password: {
       type: String,
       required: true,
-      select: false, // Quan trọng: Luôn ẩn password khi truy vấn
+      select: false,
     },
     role: {
       type: String,
-      enum: ["user", "admin", "moderator"],
-      default: "user",
-    }, // ----------------------------------------------------- // 2. Thông tin Cá nhân (Phục vụ tab PersonalInfo) // -----------------------------------------------------
+      enum: ["shipper", "admin", "customer"],
+      default: "customer",
+    },
 
     firstName: {
       type: String,
@@ -32,7 +28,6 @@ const UserSchema = new mongoose.Schema(
       trim: true,
     },
     fullName: {
-      // Tên đầy đủ (dùng để hiển thị)
       type: String,
       trim: true,
     },
@@ -40,7 +35,7 @@ const UserSchema = new mongoose.Schema(
       type: String,
       trim: true,
       unique: true,
-      sparse: true, // Cho phép nhiều null/undefined phone number
+      sparse: true,
     },
     dateOfBirth: {
       type: Date,
@@ -54,7 +49,7 @@ const UserSchema = new mongoose.Schema(
     avatarUrl: {
       type: String,
       default: null,
-    }, // ----------------------------------------------------- // 3. Trạng thái Tài khoản & Metadata // -----------------------------------------------------
+    },
 
     isActive: {
       type: Boolean,
@@ -73,16 +68,20 @@ const UserSchema = new mongoose.Schema(
       default: null,
     },
   },
-  { timestamps: true } // Tự động thêm createdAt và updatedAt
+  { timestamps: true }
 );
 
-// Middleware để tạo fullName trước khi lưu
-UserSchema.pre("save", function (next) {
-  if (this.isModified("firstName") || this.isModified("lastName")) {
-    this.fullName = `${this.firstName || ""} ${this.lastName || ""}`.trim();
-  }
-  next();
-});
+// UserSchema.pre("save", function (next) {
+//   if (
+//     (this.isModified("firstName") || this.isModified("lastName")) &&
+//     (this.firstName || this.lastName)
+//   ) {
+//     this.fullName = `${this.firstName || ""} ${this.lastName || ""}`.trim();
+//   } else if (!this.fullName && (this.firstName || this.lastName)) {
+//     this.fullName = `${this.firstName || ""} ${this.lastName || ""}`.trim();
+//   }
+//   next();
+// });
 
 const User = mongoose.model("User", UserSchema);
-export default User;
+module.exports = User;

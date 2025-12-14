@@ -1,76 +1,135 @@
-import React, { useState } from 'react';
-import LoginForm from './LoginForm';      
-import RegisterForm from './RegisterForm'; 
+import React, { useState } from "react";
+import LoginForm from "./LoginForm";
+import RegisterForm from "./RegisterForm";
+import axiosClient from "./../utils/axiosConfig";
+import { useNavigate } from "react-router-dom";
+
+const apiClient = axiosClient;
 
 function LoginModal({ closeModal }) {
-  const [isLogin, setIsLogin] = useState(true); 
+  const navigate = useNavigate();
+  const [isLogin, setIsLogin] = useState(true);
+
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    firstName: '',
-    lastName: '',
-    gender: 'Female', 
-    birthDay: '1',
-    birthMonth: '12',
+    email: "",
+    password: "",
+    fullName: "",
+    gender: "Female",
+    birthDay: "1",
+    birthMonth: "12",
     birthYear: new Date().getFullYear().toString(),
+    role: "customer",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
-    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
-    setFormData({ ...formData, [e.target.name]: value });
+    const value =
+      e.target.type === "checkbox" ? e.target.checked : e.target.value;
+
+    setFormData({
+      ...formData,
+      [e.target.name]: value,
+    });
   };
-  
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isLogin) {
-        // Todo: Logic gọi API để xử lý việc xác thực và lưu trữ dữ liệu người dùng
-      console.log("Đăng nhập:", formData.email, formData.password);
-      alert("Xử lý Đăng nhập...");
-    } else {
-      console.log("Đăng ký chi tiết:", formData);
-      alert("Xử lý Đăng ký...");
+    setIsSubmitting(true);
+
+    try {
+      if (isLogin) {
+        const res = await apiClient.post("/auth/login", {
+          email: formData.email,
+          password: formData.password,
+        });
+
+        const { token, role, user } = res.data;
+
+        localStorage.setItem("token", token);
+        localStorage.setItem("userRole", role);
+        localStorage.setItem("fullName", user?.fullName || "Người dùng");
+
+        alert("Đăng nhập thành công!");
+        console.log("Login result:", res.data);
+
+        if (role === "shipper") {
+          navigate("/shipper");
+        } else if (role === "customer") {
+          navigate("/Profile");
+        } else {
+          navigate("/");
+        }
+        closeModal();
+      } else {
+        const res = await apiClient.post("/auth/register", formData);
+
+        alert("Đăng ký thành công! Vui lòng đăng nhập.");
+        console.log("Register result:", res.data);
+
+        setIsLogin(true);
+        setFormData((prev) => ({
+          ...prev,
+          email: formData.email,
+          password: "",
+        }));
+      }
+    } catch (err) {
+      alert(
+        err.response?.data?.message ||
+          (isLogin ? "Lỗi đăng nhập" : "Lỗi đăng ký")
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
-  
+
   const toggleForm = (shouldBeLogin) => {
     setIsLogin(shouldBeLogin);
-    // Reset data khi chuyển đổi
-    setFormData({ 
-        email: '', 
-        password: '', 
-        firstName: '', 
-        lastName: '',
-        gender: 'Female',
-        birthDay: '1',
-        birthMonth: '12',
-        birthYear: new Date().getFullYear().toString(),
-    }); 
-  }
+
+    setFormData({
+      email: formData.email,
+      password: "",
+      fullName: "",
+      gender: "Female",
+      birthDay: "1",
+      birthMonth: "12",
+      birthYear: new Date().getFullYear().toString(),
+      role: "customer",
+    });
+  };
 
   return (
-    <div className="modal-backdrop" onClick={closeModal}> 
-      <div 
-        className={isLogin ? "login-modal-content login-style" : "login-modal-content register-style"} 
+    <div className="modal-backdrop" onClick={closeModal}>
+           {" "}
+      <div
+        className={
+          isLogin
+            ? "login-modal-content login-style"
+            : "login-modal-content register-style"
+        }
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Hiển thị form tương ứng */}
+               {" "}
         {isLogin ? (
-            <LoginForm 
-                formData={formData} 
-                handleChange={handleChange} 
-                handleSubmit={handleSubmit} 
-                toggleForm={toggleForm}
-            />
+          <LoginForm
+            formData={formData}
+            handleChange={handleChange}
+            handleSubmit={handleSubmit}
+            toggleForm={toggleForm}
+            isSubmitting={isSubmitting}
+          />
         ) : (
-            <RegisterForm
-                formData={formData} 
-                handleChange={handleChange} 
-                handleSubmit={handleSubmit}
-                toggleForm={toggleForm}
-            />
+          <RegisterForm
+            formData={formData}
+            handleChange={handleChange}
+            handleSubmit={handleSubmit}
+            toggleForm={toggleForm}
+            isSubmitting={isSubmitting}
+          />
         )}
-        
+             {" "}
       </div>
+         {" "}
     </div>
   );
 }

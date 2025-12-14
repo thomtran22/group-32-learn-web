@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "../assets/images/logo.svg";
-import LoginModal from "./LoginModal"; // Giả định file này tồn tại
+import LoginModal from "./LoginModal";
 import {
   FaUser,
   FaShoppingCart,
@@ -11,24 +11,27 @@ import {
   FaToggleOn,
   FaToggleOff,
 } from "react-icons/fa";
-import "../assets/css/style.css"; // Giả định file CSS
-import "../assets/css/detail.css"; // Giả định file CSS
+import "../assets/css/style.css";
+import "../assets/css/detail.css";
 
-// Thêm prop 'role' (mặc định là 'user')
-function Header({ role = "user" }) {
+function Header({ role = "customer" }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // State giả lập trạng thái Shipper (chỉ dùng trong chế độ Shipper)
   const [isOnline, setIsOnline] = useState(true);
+
+  const isShipper = role === "shipper";
+  const isCustomer = role === "customer";
 
   const closeModal = () => setIsModalOpen(false);
 
-  // Xử lý chuyển đổi trạng thái (giả lập)
   const handleToggleStatus = () => {
     setIsOnline(!isOnline);
-    // TODO: Gọi API cập nhật trạng thái online/offline của Shipper
+    if (!isOnline) {
+      console.log("Shipper chuyển sang: ONLINE");
+    } else {
+      console.log("Shipper chuyển sang: OFFLINE");
+    }
   };
 
-  // --- Nội dung Hiển thị Trạng thái Shipper (Middle Section) ---
   const renderShipperMiddle = () => (
     <div
       className="shipper-status"
@@ -49,6 +52,9 @@ function Header({ role = "user" }) {
           color: isOnline ? "#28a745" : "#dc3545",
           fontSize: "16px",
         }}
+        title={`Chuyển trạng thái sang ${
+          isOnline ? "NGOẠI TUYẾN" : "HOẠT ĐỘNG"
+        }`}
       >
         <FaTruck style={{ marginRight: "8px", fontSize: "1.2em" }} />
         {isOnline ? (
@@ -68,23 +74,20 @@ function Header({ role = "user" }) {
 
   return (
     <>
-      {/* 1. TOP HEADER (Hotline) */}
       <div className="top-header">
         <div className="container">
           <div className="inner-title">
             Hotline: 0973 285 886 |{" "}
-            {role === "shipper"
+            {isShipper
               ? "Kênh Đối Tác Vận Chuyển"
               : "Hotline CSKH: 1900 886 803"}
           </div>
         </div>
       </div>
 
-      {/* 2. MAIN HEADER */}
       <header className="header">
         <div className="container">
           <div className="inner-wrap">
-            {/* inner-top: Dùng flex để đẩy các khối ra hai bên */}
             <div
               className="inner-top"
               style={{
@@ -94,21 +97,15 @@ function Header({ role = "user" }) {
                 width: "100%",
               }}
             >
-              {/* === VÙNG BÊN TRÁI: Logo + Trạng thái Shipper === */}
               <div style={{ display: "flex", alignItems: "center" }}>
-                <Link
-                  to={role === "shipper" ? "/shipper" : "/"}
-                  className="inner-logo"
-                >
+                <Link to={isShipper ? "/shipper" : "/"} className="inner-logo">
                   <img src={logo} alt="Logo" />
                 </Link>
 
-                {/* Chỉ hiện Trạng thái ngay cạnh Logo khi ở chế độ Shipper */}
-                {role === "shipper" && renderShipperMiddle()}
+                {isShipper && renderShipperMiddle()}
               </div>
 
-              {/* === VÙNG GIỮA: Tìm kiếm (Chỉ hiện cho User) === */}
-              {role === "user" && (
+              {isCustomer && (
                 <form
                   className="inner-form"
                   style={{ flexGrow: 1, maxWidth: "500px", margin: "0 20px" }}
@@ -120,60 +117,56 @@ function Header({ role = "user" }) {
                 </form>
               )}
 
-              {/* === VÙNG BÊN PHẢI: Actions (Giỏ hàng/Thông báo/User) === */}
               <div
                 className="header-actions"
                 style={{ display: "flex", alignItems: "center", gap: "15px" }}
               >
-                {/* 1. Giỏ hàng (Chỉ hiện cho User) */}
-                {role === "user" && (
+                {isCustomer && (
                   <Link to="/cart" className="btn-cart" title="Giỏ hàng">
                     <FaShoppingCart className="btn-cart-1" />
                   </Link>
                 )}
 
-                {/* 2. Thông báo (Chỉ hiện cho Shipper) */}
-                {role === "shipper" && (
-                  <div
+                {isShipper && (
+                  <Link
+                    to="/shipper/notifications"
                     className="btn-cart"
                     style={{ cursor: "pointer", padding: "10px" }}
                   >
                     <FaBell className="btn-cart-1" title="Thông báo" />
-                  </div>
+                  </Link>
                 )}
 
-                {/* 3. Icon User / Đăng nhập (Chung) */}
                 <div
                   className="btn-login"
                   onClick={() => setIsModalOpen(true)}
-                  title={role === "shipper" ? "Hồ sơ cá nhân" : "Đăng nhập"}
+                  title={isShipper ? "Hồ sơ đối tác" : "Đăng nhập / Tài khoản"}
                 >
                   <FaUser className="btn-user" />
                 </div>
               </div>
             </div>
 
-            {/* 3. MENU DƯỚI: Chỉ hiện cho User */}
-            {role === "user" && (
+            {isCustomer && (
               <nav className="inner-bottom">
                 <ul>
                   <li>
                     <Link to="/">Trang chủ</Link>
                   </li>
                   <li>
-                    <Link to="/">Sản phẩm</Link>
+                    <Link to="/products">Sản phẩm</Link>
                   </li>
                   <li>
-                    <Link to="/">Khuyến mại</Link>
+                    <Link to="/promotions">Khuyến mại</Link>{" "}
                   </li>
                   <li>
-                    <Link to="/">Tin tức</Link>
+                    <Link to="/news">Tin tức</Link>
                   </li>
                   <li>
-                    <Link to="/">Tuyển dụng</Link>
+                    <Link to="/careers">Tuyển dụng</Link>
                   </li>
                   <li>
-                    <Link to="/">Hệ thống cửa hàng</Link>
+                    <Link to="/stores">Hệ thống cửa hàng</Link>{" "}
                   </li>
                 </ul>
               </nav>

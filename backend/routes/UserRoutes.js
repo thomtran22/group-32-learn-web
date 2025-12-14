@@ -1,18 +1,14 @@
-// src/routes/userRoutes.js
-
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
 const UserAddress = require("../models/UserAddress");
 const Order = require("../models/Order");
 const ProductReview = require("../models/ProductReview");
-const { protect } = require("../middleware/authMiddleware"); // Middleware xác thực
+const { protect } = require("../middleware/authMiddleware");
+const mongoose = require("mongoose");
 
-// @route GET /api/user/me
-// @desc Lấy thông tin người dùng hiện tại
 router.get("/me", protect, async (req, res) => {
   try {
-    // Lấy thông tin user (chỉ lấy các trường cần thiết)
     const user = await User.findById(req.user.id).select(
       "-password -role -__v"
     );
@@ -25,8 +21,6 @@ router.get("/me", protect, async (req, res) => {
   }
 });
 
-// @route PUT /api/user/me
-// @desc Cập nhật thông tin cá nhân
 router.put("/me", protect, async (req, res) => {
   const { firstName, lastName, phoneNumber, dateOfBirth, gender } = req.body;
   try {
@@ -49,12 +43,6 @@ router.put("/me", protect, async (req, res) => {
   }
 });
 
-// ********************************************
-// B. SỔ ĐỊA CHỈ (AddressList)
-// ********************************************
-
-// @route GET /api/user/addresses
-// @desc Lấy tất cả địa chỉ của người dùng
 router.get("/addresses", protect, async (req, res) => {
   try {
     const addresses = await UserAddress.find({ userId: req.user.id }).sort({
@@ -67,8 +55,6 @@ router.get("/addresses", protect, async (req, res) => {
   }
 });
 
-// @route POST /api/user/addresses
-// @desc Thêm địa chỉ mới
 router.post("/addresses", protect, async (req, res) => {
   const {
     receiverName,
@@ -91,7 +77,6 @@ router.post("/addresses", protect, async (req, res) => {
       type,
     });
 
-    // Xử lý logic đặt mặc định (nếu địa chỉ mới là mặc định, các địa chỉ cũ phải chuyển thành không mặc định)
     if (isDefault) {
       await UserAddress.updateMany(
         { userId: req.user.id, isDefault: true },
@@ -106,8 +91,6 @@ router.post("/addresses", protect, async (req, res) => {
   }
 });
 
-// @route DELETE /api/user/addresses/:addressId
-// @desc Xóa địa chỉ
 router.delete("/addresses/:addressId", protect, async (req, res) => {
   try {
     const result = await UserAddress.findOneAndDelete({
@@ -126,51 +109,75 @@ router.delete("/addresses/:addressId", protect, async (req, res) => {
   }
 });
 
-// ********************************************
-// C. THỐNG KÊ MUA SẮM (UserStatistics)
-// ********************************************
-
-// @route GET /api/user/stats
-// @desc Lấy tổng quan thống kê cho UserProfile
 router.get("/stats", protect, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = new mongoose.Types.ObjectId(req.user.id);
 
-    // 1. Tổng chi tiêu và số lượng đơn hàng
     const orderStats = await Order.aggregate([
       {
         $match: {
-          userId: mongoose.Types.ObjectId(userId),
-          currentStatus: "Thành công",
+          userId,
         },
       },
       {
         $group: {
           _id: null,
           totalOrders: { $sum: 1 },
-          totalSpent: { $sum: "$totalAmount" },
+          totalSpent: {
+            $sum: {
+              $cond: [
+                { $eq: ["$currentStatus", "Thành công"] },
+                "$totalAmount",
+                0,
+              ],
+            },
+          },
+          pendingOrders: {
+            $sum: {
+              $cond: [
+                { $in: ["$currentStatus", ["Đang xử lý", "Chờ xác nhận"]] },
+                1,
+                0,
+              ],
+            },
+          },
         },
       },
     ]);
 
-    // 2. Số lượng đánh giá (ví dụ: đánh giá 5 sao)
     const reviewStats = await ProductReview.aggregate([
-      { $match: { userId: mongoose.Types.ObjectId(userId), rating: 5 } },
-      { $group: { _id: null, totalFiveStarReviews: { $sum: 1 } } },
+      {
+        $match: {
+          userId,
+          rating: 5,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalFiveStarReviews: { $sum: 1 },
+        },
+      },
     ]);
 
-    const stats = {
-      totalOrders: orderStats[0]?.totalOrders || 0,
-      totalSpent: orderStats[0]?.totalSpent || 0,
-      totalFiveStarReviews: reviewStats[0]?.totalFiveStarReviews || 0,
-      // (Thêm các thống kê khác như số voucher, điểm tích lũy...)
-    };
+    const totalSpent = orderStats[0]?.totalSpent || 0;
 
-    res.json(stats);
+    const NEXT_TIER_REQUIREMENT = 5000000;
+    const NEXT_TIER_DISCOUNT = 10;
+
+    res.json({
+      totalOrders: orderStats[0]?.totalOrders || 0,
+      totalSpent,
+      pendingOrders: orderStats[0]?.pendingOrders || 0,
+      totalFiveStarReviews: reviewStats[0]?.totalFiveStarReviews || 0,
+      nextTierDiscount: NEXT_TIER_DISCOUNT,
+      pointsToNextTier: Math.max(0, NEXT_TIER_REQUIREMENT - totalSpent),
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error fetching statistics", error: error.message });
+    res.status(500).json({
+      message: "Error fetching statistics",
+      error: error.message,
+    });
   }
 });
 

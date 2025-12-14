@@ -1,46 +1,36 @@
-// src/components/ship/ShipperProfileContent.js
-
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import axios from "../../utils/axiosConfig";
 
-// Đường dẫn cơ sở (Axios Interceptor sẽ lo việc thêm http://localhost:5000)
-const apiBaseUrl = "/api/shipper"; 
+const apiBaseUrl = "/shipper";
 
 const ShipperProfileContent = () => {
-  // Lưu trữ dữ liệu profile gốc: { user: {...}, shipperDetails: {...} }
-  const [profile, setProfile] = useState({}); 
+  const [profile, setProfile] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  // Dữ liệu form dùng để chỉnh sửa
-  const [formData, setFormData] = useState({}); 
+  const [formData, setFormData] = useState({});
 
-  // 🚀 TẢI DỮ LIỆU BAN ĐẦU
   const fetchProfileData = async () => {
     setLoading(true);
     setError(null);
     try {
-      // ❌ LOẠI BỎ: Không cần lấy Token và truyền Header thủ công
-      
-      // Axios Interceptor sẽ tự động đính kèm Token
-      const response = await axios.get(`${apiBaseUrl}/info`); 
-      
+      const response = await axios.get(`${apiBaseUrl}/info`);
+
       const { user, shipperDetails } = response.data;
-      
-      // Lưu trữ toàn bộ dữ liệu gốc
-      setProfile({ user, shipperDetails }); 
-      
-      // Gán dữ liệu cho form chỉnh sửa
+
+      setProfile({ user, shipperDetails });
+
       setFormData({
-        firstName: user.firstName || "",
+        fullName: user.fullName || "",
         phoneNumber: user.phoneNumber || "",
-        // Đảm bảo truy cập an toàn shipperDetails
-        vehicleType: shipperDetails?.vehicleType || "", 
+        vehicleType: shipperDetails?.vehicleType || "",
         licensePlate: shipperDetails?.licensePlate || "",
       });
     } catch (err) {
-      // Interceptor sẽ xử lý lỗi 401/403 (chuyển hướng đăng nhập)
-      console.error("Lỗi tải hồ sơ:", err.response?.data?.message || err.message);
+      console.error(
+        "Lỗi tải hồ sơ:",
+        err.response?.data?.message || err.message
+      );
       setError("Không thể tải hồ sơ Shipper.");
     } finally {
       setLoading(false);
@@ -58,17 +48,20 @@ const ShipperProfileContent = () => {
     });
   };
 
-  // 🔄 CẬP NHẬT DỮ LIỆU
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      // Axios Interceptor đã lo việc gửi Token Header
-      await axios.put(`${apiBaseUrl}/info`, formData); 
+      await axios.put(`${apiBaseUrl}/info`, {
+        fullName: formData.fullName,
+        phone: formData.phoneNumber,
+        vehicleType: formData.vehicleType,
+        licensePlate: formData.licensePlate,
+      });
 
       setIsEditing(false);
-      fetchProfileData(); // Tải lại dữ liệu mới nhất
+      fetchProfileData();
       alert("Cập nhật thông tin thành công!");
     } catch (err) {
       console.error(
@@ -84,7 +77,6 @@ const ShipperProfileContent = () => {
   if (loading) return <div>Đang tải thông tin tài khoản...</div>;
   if (error) return <div style={{ color: "red" }}>Lỗi: {error}</div>;
 
-  // Lấy dữ liệu an toàn từ state
   const user = profile.user || {};
   const details = profile.shipperDetails || {};
 
@@ -101,13 +93,12 @@ const ShipperProfileContent = () => {
             gap: "20px",
           }}
         >
-          {/* Thông tin Cá nhân (User) */}
           <div>
             <h3>Thông tin Cá nhân</h3>
             <label>Tên:</label>{" "}
             <input
-              name="firstName"
-              value={formData.firstName || ""}
+              name="fullName"
+              value={formData.fullName || ""}
               onChange={handleChange}
               disabled={loading}
             />
@@ -123,7 +114,6 @@ const ShipperProfileContent = () => {
             </p>
           </div>
 
-          {/* Thông tin Vận chuyển (Shipper Details) */}
           <div>
             <h3>Thông tin Vận chuyển</h3>
             <label>Loại xe:</label>
@@ -143,7 +133,6 @@ const ShipperProfileContent = () => {
               onChange={handleChange}
               disabled={loading}
             />
-            {/* Sử dụng optional chaining (?.) an toàn */}
             <p>Khu vực hoạt động: {details.workingArea?.join(", ") || "N/A"}</p>
           </div>
 
@@ -172,7 +161,7 @@ const ShipperProfileContent = () => {
           <div>
             <h3>Thông tin Cá nhân</h3>
             <p>
-              <strong>Họ và Tên:</strong> {user.firstName}
+              <strong>Họ và Tên:</strong> {user.fullName}{" "}
             </p>
             <p>
               <strong>Email:</strong> {user.email}

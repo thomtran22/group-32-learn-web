@@ -1,7 +1,5 @@
-// src/components/CheckoutSummary.jsx
-import React from 'react';
+import React from "react";
 
-// Nhận props 'items' và 'total'
 const CheckoutSummary = ({ items, total, onSubmit }) => {
   return (
     <aside className="your-order">
@@ -11,21 +9,23 @@ const CheckoutSummary = ({ items, total, onSubmit }) => {
           <span>SẢN PHẨM</span>
           <span>TỔNG TIỀN HÀNG</span>
         </div>
-        
-        {/* DÙNG .map() ĐỂ HIỂN THỊ DANH SÁCH SẢN PHẨM */}
-        {items.map(item => (
+
+        {items.map((item) => (
           <div className="summary-item" key={item.id}>
             <div>
-              <p className="product-name">{item.name} × {item.quantity}</p>
-              <p className="product-meta">Màu sắc: {item.color}, Cỡ: {item.size}</p>
+              <p className="product-name">
+                {item.name} × {item.quantity}
+              </p>
+              <p className="product-meta">
+                Màu sắc: {item.color}, Cỡ: {item.size}
+              </p>
             </div>
             <span className="product-price">
-              {(item.price * item.quantity).toLocaleString('vi-VN')} VND
+              {(item.price * item.quantity).toLocaleString("vi-VN")} VND
             </span>
           </div>
         ))}
 
-        {/* HIỂN THỊ TỔNG TIỀN */}
         <div className="summary-row">
           <span>Subtotal</span>
           <span>{total} VND</span>
@@ -39,7 +39,9 @@ const CheckoutSummary = ({ items, total, onSubmit }) => {
         <p>Trả tiền mặt khi nhận hàng</p>
         <span>Trả tiền mặt khi giao hàng</span>
       </div>
-      <button type="submit" className="btn-place-order" onClick={onSubmit}>ĐẶT HÀNG</button>
+      <button type="submit" className="btn-place-order" onClick={onSubmit}>
+        ĐẶT HÀNG
+      </button>
     </aside>
   );
 };

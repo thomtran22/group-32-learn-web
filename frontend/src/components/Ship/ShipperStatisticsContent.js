@@ -1,33 +1,22 @@
-// src/components/ship/ShipperStatisticsContent.js
-
 import React, { useState, useEffect } from "react";
-import axios from "axios"; // Sử dụng Axios đã được cấu hình Interceptor
+import axios from "../../utils/axiosConfig";
 
-const apiBaseUrl = "/api/shipper";
+const apiBaseUrl = "/shipper";
 
 const ShipperStatisticsContent = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // ❌ XÓA HÀM getAuthHeaders: Logic này đã được chuyển sang Axios Interceptor.
-  // const getAuthHeaders = () => { ... };
-
-  // 🚀 TẢI DỮ LIỆU THỐNG KÊ
   useEffect(() => {
     const fetchStats = async () => {
       setLoading(true);
       setError(null);
       try {
-        // ❌ LOẠI BỎ: Không cần lấy Token và truyền Header thủ công
-
-        // GỌI API BÌNH THƯỜNG: Interceptor sẽ tự động đính kèm Token
         const response = await axios.get(`${apiBaseUrl}/stats`);
 
-        // Backend đã đảm bảo trả về dữ liệu mặc định nếu chưa có stats
         setStats(response.data);
       } catch (err) {
-        // Interceptor sẽ xử lý lỗi 401/403 (chuyển hướng đăng nhập)
         console.error(
           "Lỗi tải thống kê:",
           err.response?.data?.message || err.message
@@ -43,7 +32,6 @@ const ShipperStatisticsContent = () => {
   if (loading) return <div>Đang tải thống kê hiệu suất...</div>;
   if (error) return <div style={{ color: "red" }}>Lỗi: {error}</div>;
 
-  // Xử lý dữ liệu không tồn tại an toàn
   const displayStats = stats || {
     successfulDeliveries: 0,
     totalEarnings: 0,
@@ -61,7 +49,9 @@ const ShipperStatisticsContent = () => {
         />
         <StatCard
           title="Tổng Thu Nhập (Ship Fee)"
-          value={`${displayStats.totalEarnings.toLocaleString()} VND`}
+          value={`${(displayStats.totalEarnings || 0).toLocaleString(
+            "vi-VN"
+          )} VND`}
           isCurrency={true}
         />
         <StatCard
@@ -70,16 +60,13 @@ const ShipperStatisticsContent = () => {
         />
         <StatCard
           title="Tỷ Lệ Hủy"
-          // Đảm bảo cancellationRate là số trước khi tính toán
           value={`${((displayStats.cancellationRate || 0) * 100).toFixed(2)}%`}
         />
       </div>
-      {/*  - Thêm biểu đồ khi cần */}
     </div>
   );
 };
 
-// Component con hiển thị thẻ thống kê
 const StatCard = ({ title, value, isCurrency }) => (
   <div
     style={{

@@ -2,12 +2,12 @@ const express = require("express");
 const router = express.Router();
 const ServiceRequest = require("../models/ServiceRequest");
 const { protect } = require("../middleware/authMiddleware");
+const mongoose = require("mongoose");
 
-// lịch sử yêu cầu hỗ trợ của người dùng
 router.get("/", protect, async (req, res) => {
   try {
     const requests = await ServiceRequest.find({ userId: req.user.id })
-      .populate("orderId", "orderId") // Lấy ID hiển thị của đơn hàng liên quan (nếu có)
+      .populate("orderId", "orderId")
       .sort({ requestDate: -1 });
 
     res.json(requests);
