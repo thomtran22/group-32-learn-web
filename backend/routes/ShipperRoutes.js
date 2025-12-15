@@ -1,24 +1,19 @@
 const express = require("express");
 const router = express.Router();
-const { generateToken } = require("./authRoutes");
-
 const Order = require("../models/OrderModel");
 const ShipperInfo = require("../models/ShipperInfo");
 const ShipperPerformance = require("../models/ShipperPerformance");
 const User = require("../models/UserModel");
-const Product = require("../models/ProductModel");
-const mongoose = require("mongoose");
+const { verifyToken, isShipper } = require("../middleware/authMiddleware");
 
-const { verifyToken } = require("../middleware/authMiddleware");
-
-router.get("/orders/new", verifyToken, async (req, res) => {
+router.get("/orders/new", verifyToken, isShipper, async (req, res) => {
   try {
     const orders = await Order.find({
       shipperId: req.user.id,
-      deliveryStatus: { $in: ["Pending", "Processing"] },
+      status: { $in: ["Pending", "Processing"] },
     })
-      .select("shippingDetails totalAmount createdAt products")
-      .populate("products.productId", "name images")
+      .select("shippingAddress totalPrice createdAt orderItems")
+      .populate("orderItems.product", "name images")
       .sort({ createdAt: -1 });
 
     res.json(orders);
@@ -28,14 +23,14 @@ router.get("/orders/new", verifyToken, async (req, res) => {
   }
 });
 
-router.get("/orders/active", verifyToken, async (req, res) => {
+router.get("/orders/active", verifyToken, isShipper, async (req, res) => {
   try {
     const orders = await Order.find({
       shipperId: req.user.id,
-      deliveryStatus: "Shipping",
+      status: "Shipping",
     })
-      .select("shippingDetails totalAmount deliveryStatus products")
-      .populate("products.productId", "name images")
+      .select("shippingAddress totalPrice status orderItems")
+      .populate("orderItems.product", "name images")
       .sort({ updatedAt: -1 });
 
     res.json(orders);
@@ -45,98 +40,109 @@ router.get("/orders/active", verifyToken, async (req, res) => {
   }
 });
 
-router.put("/orders/:orderId/status", verifyToken, async (req, res) => {
-  const { newStatus, note, location } = req.body;
-  const allowedStatuses = ["Delivered", "Cancelled"];
+router.put(
+  "/orders/:orderId/status",
+  verifyToken,
+  isShipper,
+  async (req, res) => {
+    const { newStatus, note, location } = req.body;
+    const allowedStatuses = ["Delivered", "Cancelled"];
 
-  if (!allowedStatuses.includes(newStatus)) {
-    return res.status(400).json({
-      message:
-        "Shipper chỉ có thể cập nhật trạng thái thành 'Delivered' hoặc 'Cancelled'",
-    });
-  }
-
-  try {
-    const order = await Order.findOne({
-      _id: req.params.orderId,
-      shipperId: req.user.id,
-    });
-
-    if (!order) {
-      return res.status(404).json({
-        message:
-          "Không tìm thấy đơn hàng hoặc bạn không phải shipper của đơn này",
-      });
-    }
-
-    if (["Delivered", "Cancelled"].includes(order.deliveryStatus)) {
+    if (!allowedStatuses.includes(newStatus)) {
       return res.status(400).json({
-        message: "Đơn hàng này đã hoàn tất, không thể cập nhật thêm.",
+        message:
+          "Shipper chỉ có thể cập nhật trạng thái thành 'Delivered' hoặc 'Cancelled'",
       });
     }
 
-    order.deliveryStatus = newStatus;
+    try {
+      const order = await Order.findOne({
+        _id: req.params.orderId,
+        shipperId: req.user.id,
+      });
 
-    order.deliveryTracking.push({
-      status: newStatus,
-      timestamp: new Date(),
-      shipperLocation: location || "Không xác định",
-      note: note || "",
-    });
+      if (!order) {
+        return res.status(404).json({
+          message:
+            "Không tìm thấy đơn hàng hoặc bạn không phải shipper của đơn này",
+        });
+      }
 
-    if (newStatus === "Delivered") {
-      const earnedAmount = order.shippingDetails?.shippingFee || 15000;
+      if (["Delivered", "Cancelled"].includes(order.status)) {
+        return res.status(400).json({
+          message: "Đơn hàng này đã hoàn tất, không thể cập nhật thêm.",
+        });
+      }
 
-      await ShipperPerformance.findOneAndUpdate(
-        { userId: req.user.id },
-        {
-          $inc: {
-            totalDeliveries: 1,
-            successfulDeliveries: 1,
-            totalEarnings: earnedAmount,
+      order.status = newStatus;
+      if (newStatus === "Delivered") {
+        order.isDelivered = true;
+        order.deliveredAt = Date.now();
+        if (order.paymentMethod === "COD") {
+          order.isPaid = true;
+          order.paidAt = Date.now();
+        }
+      }
+
+      if (newStatus === "Delivered") {
+        const earnedAmount =
+          order.shippingPrice > 0 ? order.shippingPrice : 15000;
+
+        await ShipperPerformance.findOneAndUpdate(
+          { userId: req.user.id },
+          {
+            $inc: {
+              totalDeliveries: 1,
+              successfulDeliveries: 1,
+              totalEarnings: earnedAmount,
+            },
+            $set: { lastActive: new Date() },
           },
-          $set: { lastActive: new Date() },
-        },
-        { upsert: true, new: true }
-      );
+          { upsert: true, new: true }
+        );
+      }
+
+      await order.save();
+      res.json({ message: "Cập nhật trạng thái thành công", order });
+    } catch (error) {
+      console.error("Lỗi cập nhật trạng thái:", error);
+      res.status(500).json({ message: "Lỗi hệ thống khi cập nhật trạng thái" });
     }
-
-    await order.save();
-    res.json({ message: "Cập nhật trạng thái thành công", order });
-  } catch (error) {
-    console.error("Lỗi cập nhật trạng thái:", error); // Log rõ hơn để debug
-    res.status(500).json({ message: "Lỗi hệ thống khi cập nhật trạng thái" });
   }
-});
+);
 
-router.get("/stats", verifyToken, async (req, res) => {
+router.get("/stats", verifyToken, isShipper, async (req, res) => {
   try {
     const shipperId = req.user.id;
 
-    const [activeDeliveryCount, statsData] = await Promise.all([
-      Order.countDocuments({
-        shipperId: shipperId,
-        deliveryStatus: "Shipping",
-      }),
-      ShipperPerformance.findOne({ userId: shipperId }).lean(),
-    ]);
+    const activeDeliveryCount = await Order.countDocuments({
+      shipperId: shipperId,
+      status: "Shipping",
+    });
 
-    const defaultStats = {
-      successfulDeliveries: 0,
-      totalEarnings: 0,
-      cancellationRate: 0,
-    };
+    const deliveredOrders = await Order.find({
+      shipperId: shipperId,
+      status: "Delivered",
+    });
 
-    const finalStats = statsData
-      ? { ...defaultStats, ...statsData }
-      : defaultStats;
+    const totalEarnings = deliveredOrders.reduce((acc, order) => {
+      const shippingFee = order.shippingPrice > 0 ? order.shippingPrice : 15000;
+      return acc + shippingFee;
+    }, 0);
 
-    // Trả về kết quả
+    const cancelledCount = await Order.countDocuments({
+      shipperId: shipperId,
+      status: "Cancelled",
+    });
+    const totalAssigned = deliveredOrders.length + cancelledCount;
+    const cancellationRate =
+      totalAssigned > 0 ? cancelledCount / totalAssigned : 0;
+
     res.json({
-      successfulDeliveries: finalStats.successfulDeliveries,
-      totalEarnings: finalStats.totalEarnings,
-      cancellationRate: finalStats.cancellationRate,
-      activeDeliveryCount: activeDeliveryCount,
+      activeDeliveryCount,
+      successfulDeliveries: deliveredOrders.length,
+      totalEarnings,
+      cancellationRate,
     });
   } catch (error) {
     console.error("Lỗi tải thống kê:", error);
@@ -144,7 +150,7 @@ router.get("/stats", verifyToken, async (req, res) => {
   }
 });
 
-router.get("/info", verifyToken, async (req, res) => {
+router.get("/info", verifyToken, isShipper, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
     const shipperInfo = await ShipperInfo.findOne({ userId: req.user.id });
@@ -160,13 +166,13 @@ router.get("/info", verifyToken, async (req, res) => {
   }
 });
 
-router.put("/info", verifyToken, async (req, res) => {
-  const { firstName, phone, vehicleType, licensePlate } = req.body;
+router.put("/info", verifyToken, isShipper, async (req, res) => {
+  const { fullName, phone, vehicleType, licensePlate } = req.body;
 
   try {
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
-      { firstName, phoneNumber: phone },
+      { fullName, phoneNumber: phone },
       { new: true }
     ).select("-password");
 
@@ -186,32 +192,5 @@ router.put("/info", verifyToken, async (req, res) => {
     res.status(500).json({ message: "Lỗi cập nhật hồ sơ" });
   }
 });
-
-// const STATIC_SHIPPER_ID = "693ac1116bd788c8f1a6664a";
-
-// router.get("/test-token", (req, res) => {
-//   try {
-//     if (
-//       STATIC_SHIPPER_ID === "YoUR_STATIC_SHIPPER_ID_HERE" ||
-//       STATIC_SHIPPER_ID.length < 20
-//     ) {
-//       return res.status(400).json({
-//         message:
-//           "chưa thay ID",
-//       });
-//     }
-
-//     const token = generateToken(STATIC_SHIPPER_ID);
-
-//     res.json({
-//       message: "Token test thành công! Dùng nó để lưu vào Local Storage.",
-//       testShipperId: STATIC_SHIPPER_ID,
-//       token: token,
-//     });
-//   } catch (error) {
-//     console.error("Lỗi tạo test token:", error);
-//     res.status(500).json({ message: "Lỗi Server khi tạo token." });
-//   }
-// });
 
 module.exports = router;

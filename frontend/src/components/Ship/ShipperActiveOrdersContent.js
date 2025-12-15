@@ -233,8 +233,8 @@ const ShipperActiveOrdersContent = () => {
                 </div>
                                {" "}
                 <div style={{ minWidth: 100 }}>
-                                    {getStatusDisplay(order.deliveryStatus)}   
-                             {" "}
+                                    {getStatusDisplay(order.status)}           
+                     {" "}
                 </div>
                                 {" "}
                 <div

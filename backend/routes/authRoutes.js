@@ -7,8 +7,8 @@ const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET;
 
 //token
-const generateToken = (id) => {
-  return jwt.sign({ id }, JWT_SECRET, {
+const generateToken = (id, role) => {
+  return jwt.sign({ id, role }, JWT_SECRET, {
     expiresIn: "360d",
   });
 };
@@ -48,7 +48,7 @@ router.post("/register", async (req, res) => {
       password: hashedPassword,
       gender,
       dateOfBirth: dateOfBirth,
-      role: role || "customer",
+      role: "customer",
     });
 
     await newUser.save();
@@ -103,7 +103,62 @@ router.post("/isadmin", async (req, res) => {
       password: hashedPassword,
       gender,
       dateOfBirth: dateOfBirth,
-      role: role || "admin",
+      role: "admin",
+    });
+
+    await newUser.save();
+
+    res.status(201).json({
+      message: "Đăng ký thành công!",
+      user: {
+        id: newUser._id,
+        fullName: newUser.fullName,
+        email: newUser.email,
+        role: newUser.role,
+      },
+    });
+  } catch (error) {
+    console.error("Lỗi đăng ký:", error.message);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.post("/isshipper", async (req, res) => {
+  try {
+    const {
+      fullName,
+      firstName,
+      lastName,
+      email,
+      password,
+      gender,
+      birthDay,
+      birthMonth,
+      birthYear,
+      role,
+    } = req.body;
+
+    let dateOfBirth = null;
+    if (birthDay && birthMonth && birthYear) {
+      dateOfBirth = new Date(birthYear, birthMonth - 1, birthDay);
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email đã tồn tại!" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = new User({
+      fullName,
+      firstName,
+      lastName,
+      email,
+      password: hashedPassword,
+      gender,
+      dateOfBirth: dateOfBirth,
+      role: "shipper",
     });
 
     await newUser.save();
@@ -137,7 +192,7 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Sai mật khẩu!" });
     }
 
-    const token = generateToken(user._id);
+    const token = generateToken(user._id, user.role);
 
     user.password = undefined;
 
@@ -156,5 +211,7 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+// router.post("/change-password", async (req, res) => {});
 
 module.exports = { router, generateToken };
