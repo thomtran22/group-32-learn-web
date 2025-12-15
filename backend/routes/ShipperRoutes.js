@@ -2,20 +2,20 @@ const express = require("express");
 const router = express.Router();
 const { generateToken } = require("./authRoutes");
 
-const Order = require("../models/Order");
-const ShipperInfo = require("../models/ShipperInfor");
+const Order = require("../models/OrderModel");
+const ShipperInfo = require("../models/ShipperInfo");
 const ShipperPerformance = require("../models/ShipperPerformance");
-const User = require("../models/User");
-const Product = require("../models/Product");
+const User = require("../models/UserModel");
+const Product = require("../models/ProductModel");
 const mongoose = require("mongoose");
 
-const { protect } = require("../middleware/authMiddleware");
+const { verifyToken } = require("../middleware/authMiddleware");
 
-router.get("/orders/new", protect, async (req, res) => {
+router.get("/orders/new", verifyToken, async (req, res) => {
   try {
     const orders = await Order.find({
       shipperId: req.user.id,
-      deliveryStatus: "AWAITING_PICKUP",
+      deliveryStatus: { $in: ["Pending", "Processing"] },
     })
       .select("shippingDetails totalAmount createdAt products")
       .populate("products.productId", "name images")
@@ -28,11 +28,11 @@ router.get("/orders/new", protect, async (req, res) => {
   }
 });
 
-router.get("/orders/active", protect, async (req, res) => {
+router.get("/orders/active", verifyToken, async (req, res) => {
   try {
     const orders = await Order.find({
       shipperId: req.user.id,
-      deliveryStatus: { $in: ["PICKED_UP", "OUT_FOR_DELIVERY"] },
+      deliveryStatus: "Shipping",
     })
       .select("shippingDetails totalAmount deliveryStatus products")
       .populate("products.productId", "name images")
@@ -45,18 +45,15 @@ router.get("/orders/active", protect, async (req, res) => {
   }
 });
 
-router.put("/orders/:orderId/status", protect, async (req, res) => {
+router.put("/orders/:orderId/status", verifyToken, async (req, res) => {
   const { newStatus, note, location } = req.body;
-  const validStatuses = [
-    "PICKED_UP",
-    "OUT_FOR_DELIVERY",
-    "DELIVERED",
-    "FAILED_ATTEMPT",
-    "CANCELED",
-  ];
+  const allowedStatuses = ["Delivered", "Cancelled"];
 
-  if (!validStatuses.includes(newStatus)) {
-    return res.status(400).json({ message: "Trạng thái không hợp lệ" });
+  if (!allowedStatuses.includes(newStatus)) {
+    return res.status(400).json({
+      message:
+        "Shipper chỉ có thể cập nhật trạng thái thành 'Delivered' hoặc 'Cancelled'",
+    });
   }
 
   try {
@@ -66,7 +63,16 @@ router.put("/orders/:orderId/status", protect, async (req, res) => {
     });
 
     if (!order) {
-      return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+      return res.status(404).json({
+        message:
+          "Không tìm thấy đơn hàng hoặc bạn không phải shipper của đơn này",
+      });
+    }
+
+    if (["Delivered", "Cancelled"].includes(order.deliveryStatus)) {
+      return res.status(400).json({
+        message: "Đơn hàng này đã hoàn tất, không thể cập nhật thêm.",
+      });
     }
 
     order.deliveryStatus = newStatus;
@@ -78,57 +84,59 @@ router.put("/orders/:orderId/status", protect, async (req, res) => {
       note: note || "",
     });
 
-    if (newStatus === "DELIVERED") {
+    if (newStatus === "Delivered") {
+      const earnedAmount = order.shippingDetails?.shippingFee || 15000;
+
       await ShipperPerformance.findOneAndUpdate(
         { userId: req.user.id },
         {
           $inc: {
             totalDeliveries: 1,
             successfulDeliveries: 1,
-            totalEarnings: order.shippingDetails.shippingFee || 15000,
+            totalEarnings: earnedAmount,
           },
+          $set: { lastActive: new Date() },
         },
         { upsert: true, new: true }
       );
     }
 
     await order.save();
-    res.json({ message: "Cập nhật thành công", order });
+    res.json({ message: "Cập nhật trạng thái thành công", order });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Lỗi cập nhật trạng thái" });
+    console.error("Lỗi cập nhật trạng thái:", error); // Log rõ hơn để debug
+    res.status(500).json({ message: "Lỗi hệ thống khi cập nhật trạng thái" });
   }
 });
 
-router.get("/stats", protect, async (req, res) => {
+router.get("/stats", verifyToken, async (req, res) => {
   try {
     const shipperId = req.user.id;
 
-    const awaitingPickupCount = await Order.countDocuments({
-      shipperId: shipperId,
-      deliveryStatus: "AWAITING_PICKUP",
-    });
+    const [activeDeliveryCount, statsData] = await Promise.all([
+      Order.countDocuments({
+        shipperId: shipperId,
+        deliveryStatus: "Shipping",
+      }),
+      ShipperPerformance.findOne({ userId: shipperId }).lean(),
+    ]);
 
-    const activeDeliveryCount = await Order.countDocuments({
-      shipperId: shipperId,
-      deliveryStatus: { $in: ["PICKED_UP", "OUT_FOR_DELIVERY"] },
-    });
+    const defaultStats = {
+      successfulDeliveries: 0,
+      totalEarnings: 0,
+      cancellationRate: 0,
+    };
 
-    let stats = await ShipperPerformance.findOne({ userId: shipperId });
+    const finalStats = statsData
+      ? { ...defaultStats, ...statsData }
+      : defaultStats;
 
-    if (!stats) {
-      stats = {
-        totalDeliveries: 0,
-        successfulDeliveries: 0,
-        totalEarnings: 0,
-        rating: 5,
-      };
-    }
-
+    // Trả về kết quả
     res.json({
-      ...stats.toObject(),
-      awaitingPickupCount,
-      activeDeliveryCount,
+      successfulDeliveries: finalStats.successfulDeliveries,
+      totalEarnings: finalStats.totalEarnings,
+      cancellationRate: finalStats.cancellationRate,
+      activeDeliveryCount: activeDeliveryCount,
     });
   } catch (error) {
     console.error("Lỗi tải thống kê:", error);
@@ -136,7 +144,7 @@ router.get("/stats", protect, async (req, res) => {
   }
 });
 
-router.get("/info", protect, async (req, res) => {
+router.get("/info", verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
     const shipperInfo = await ShipperInfo.findOne({ userId: req.user.id });
@@ -152,7 +160,7 @@ router.get("/info", protect, async (req, res) => {
   }
 });
 
-router.put("/info", protect, async (req, res) => {
+router.put("/info", verifyToken, async (req, res) => {
   const { firstName, phone, vehicleType, licensePlate } = req.body;
 
   try {

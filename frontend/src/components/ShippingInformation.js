@@ -3,7 +3,7 @@ import axios from "./../utils/axiosConfig";
 import { FaMapMarkerAlt, FaPhone, FaTruck, FaClock } from "react-icons/fa";
 import OrderTimeline from "./OrderTimeline";
 
-const BASE_URL = "http://localhost:3000/api";
+const BASE_URL = "http://localhost:5000/api";
 const SHIPPING_INFO_ENDPOINT = "/orders";
 
 const styles = {

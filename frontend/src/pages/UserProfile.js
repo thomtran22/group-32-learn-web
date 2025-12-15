@@ -11,7 +11,6 @@ import {
 } from "react-icons/fa";
 import UserStatistics from "../components/UserStatistics";
 import PersonalInfo from "../components/UserProfile/PersonalInfo";
-import AddressList from "../components/UserProfile/AddressList";
 import VoucherWallet from "../components/UserProfile/VoucherWallet";
 import OrderHistory from "../components/UserProfile/OrderHistory";
 
@@ -27,12 +26,6 @@ const menuItems = [
     name: "Lịch sử Đơn hàng",
     icon: FaShoppingCart,
     component: OrderHistory,
-  },
-  {
-    id: "addresses",
-    name: "Sổ Địa chỉ",
-    icon: FaMapMarkedAlt,
-    component: AddressList,
   },
   {
     id: "stats",

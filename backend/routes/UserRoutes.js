@@ -1,13 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const User = require("../models/User");
-const UserAddress = require("../models/UserAddress");
-const Order = require("../models/Order");
+const User = require("../models/UserModel");
+const Order = require("../models/OrderModel");
 const ProductReview = require("../models/ProductReview");
-const { protect } = require("../middleware/authMiddleware");
+const { verifyToken } = require("../middleware/authMiddleware");
 const mongoose = require("mongoose");
 
-router.get("/me", protect, async (req, res) => {
+router.get("/me", verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select(
       "-password -role -__v"
@@ -21,7 +20,7 @@ router.get("/me", protect, async (req, res) => {
   }
 });
 
-router.put("/me", protect, async (req, res) => {
+router.put("/me", verifyToken, async (req, res) => {
   const { firstName, lastName, phoneNumber, dateOfBirth, gender } = req.body;
   try {
     const user = await User.findById(req.user.id);
@@ -43,73 +42,7 @@ router.put("/me", protect, async (req, res) => {
   }
 });
 
-router.get("/addresses", protect, async (req, res) => {
-  try {
-    const addresses = await UserAddress.find({ userId: req.user.id }).sort({
-      isDefault: -1,
-      createdAt: 1,
-    });
-    res.json(addresses);
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-router.post("/addresses", protect, async (req, res) => {
-  const {
-    receiverName,
-    phone,
-    addressDetail,
-    district,
-    city,
-    isDefault,
-    type,
-  } = req.body;
-  try {
-    const newAddress = new UserAddress({
-      userId: req.user.id,
-      receiverName,
-      phone,
-      addressDetail,
-      district,
-      city,
-      isDefault,
-      type,
-    });
-
-    if (isDefault) {
-      await UserAddress.updateMany(
-        { userId: req.user.id, isDefault: true },
-        { $set: { isDefault: false } }
-      );
-    }
-
-    const savedAddress = await newAddress.save();
-    res.status(201).json(savedAddress);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-router.delete("/addresses/:addressId", protect, async (req, res) => {
-  try {
-    const result = await UserAddress.findOneAndDelete({
-      _id: req.params.addressId,
-      userId: req.user.id,
-    });
-
-    if (!result) {
-      return res
-        .status(404)
-        .json({ message: "Address not found or unauthorized" });
-    }
-    res.json({ message: "Address deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-router.get("/stats", protect, async (req, res) => {
+router.get("/stats", verifyToken, async (req, res) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.user.id);
 

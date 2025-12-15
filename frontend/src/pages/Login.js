@@ -1,157 +1,104 @@
+// src/pages/Login.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "../utils/axiosConfig";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
 import LoginForm from "../components/LoginForm";
+import RegisterForm from "../components/RegisterForm";
+import * as authApi from "../services/authApi";
 
-const BASE_URL = "http://localhost:3000/api";
-const LOGIN_ENDPOINT = "/auth/login";
-
-const TempLoginForm = ({ onLoginSuccess }) => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+function Login() {
+  const navigate = useNavigate();
+  const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [message, setMessage] = useState(null);
 
-  const handleSubmit = async (e) => {
+  const [loginData, setLoginData] = useState({ email: "", password: "" });
+  const [regData, setRegData] = useState({ fullName: "", email: "", password: "", role: "user" });
+
+  const toggleForm = (showLogin) => {
+    setMessage(null);
+    setIsLogin(showLogin);
+  };
+
+  const handleLoginChange = (e) => {
+    const { name, value } = e.target;
+    setLoginData((s) => ({ ...s, [name]: value }));
+  };
+
+  const handleRegisterChange = (e) => {
+    const { name, value } = e.target;
+    setRegData((s) => ({ ...s, [name]: value }));
+  };
+
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-
+    setMessage(null);
     try {
-      const response = await axios.post(`${BASE_URL}${LOGIN_ENDPOINT}`, {
-        email,
-        password,
-      });
-      localStorage.setItem("token", response.data.token);
-      onLoginSuccess();
+      const res = await authApi.login(loginData);
+      // store token (fake or real) and basic user info
+      if (res.token) localStorage.setItem('token', res.token);
+      if (res.user) localStorage.setItem('user', JSON.stringify(res.user));
+      setMessage(res.message || 'Đăng nhập thành công');
+      setTimeout(() => navigate('/'), 700);
     } catch (err) {
-      setError(
-        err.response?.data?.message || "Email hoặc mật khẩu không đúng."
-      );
+      setMessage(err.message || 'Đăng nhập thất bại');
     } finally {
       setLoading(false);
     }
   };
 
-  const formStyle = { display: "flex", flexDirection: "column", gap: "15px" };
-  const inputStyle = {
-    padding: "10px",
-    borderRadius: "5px",
-    border: "1px solid #ccc",
-  };
-  const buttonStyle = {
-    padding: "10px",
-    backgroundColor: "#c90000",
-    color: "white",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-  };
-
-  return (
-    <form onSubmit={handleSubmit} style={formStyle}>
-      {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        style={inputStyle}
-      />
-      <input
-        type="password"
-        placeholder="Mật khẩu"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-        style={inputStyle}
-      />
-      <button type="submit" disabled={loading} style={buttonStyle}>
-        {loading ? "Đang xử lý..." : "Đăng nhập"}
-      </button>
-    </form>
-  );
-};
-// ----------------------------------------------------
-
-const Login = () => {
-  const navigate = useNavigate();
-
-  const containerStyle = {
-    minHeight: "100vh",
-    backgroundColor: "#f8f8f8",
-    display: "flex",
-    flexDirection: "column",
-  };
-
-  const loginContainerStyle = {
-    maxWidth: "400px",
-    margin: "50px auto",
-    padding: "30px",
-    backgroundColor: "#fff",
-    borderRadius: "10px",
-    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-    flexGrow: 1,
-    height: "fit-content",
+  const handleRegisterSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage(null);
+    try {
+      const res = await authApi.register(regData);
+      setMessage(res.message || 'Đăng ký thành công');
+      // after register, switch to login
+      setIsLogin(true);
+      setLoginData({ email: regData.email, password: '' });
+    } catch (err) {
+      setMessage(err.message || 'Đăng ký thất bại');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div style={containerStyle}>
-      <Header />
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <div style={loginContainerStyle}>
-          <h2
-            style={{
-              textAlign: "center",
-              color: "#c90000",
-              marginBottom: "25px",
-            }}
-          >
-            Đăng nhập
-          </h2>
+    <div className="container" style={{ padding: 40 }}>
+      <div style={{ maxWidth: 560, margin: '0 auto' }}>
+        <h1 style={{ textAlign: 'center' }}>{isLogin ? 'Đăng nhập' : 'Đăng ký'}</h1>
 
-          <TempLoginForm onLoginSuccess={() => navigate("/")} />
+        {message && <div className="alert">{message}</div>}
 
-          <div
-            style={{
-              textAlign: "center",
-              marginTop: "20px",
-              fontSize: "0.9em",
-            }}
-          >
-            <p style={{ margin: "5px 0" }}>
-              Chưa có tài khoản?{" "}
-              <a
-                href="/register"
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate("/register");
-                }}
-                style={{
-                  color: "#007bff",
-                  textDecoration: "none",
-                  fontWeight: "bold",
-                }}
-              >
-                Đăng ký ngay
-              </a>
-            </p>
+        <div className="login-modal-content">
+          {isLogin ? (
+            <LoginForm
+              formData={loginData}
+              handleChange={handleLoginChange}
+              handleSubmit={handleLoginSubmit}
+              toggleForm={toggleForm}
+            />
+          ) : (
+            <RegisterForm
+              formData={regData}
+              handleChange={handleRegisterChange}
+              handleSubmit={handleRegisterSubmit}
+              toggleForm={toggleForm}
+            />
+          )}
+
+          <div style={{ marginTop: 12 }}>
+            <button className="link-btn" onClick={() => toggleForm(!isLogin)}>
+              {isLogin ? 'Chưa có tài khoản? Đăng ký' : 'Đã có tài khoản? Đăng nhập'}
+            </button>
           </div>
+
+          {loading && <div style={{ marginTop: 12 }}>Đang xử lý…</div>}
         </div>
       </div>
-      <Footer />
     </div>
   );
-};
+}
 
 export default Login;

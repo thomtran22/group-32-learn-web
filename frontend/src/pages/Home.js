@@ -1,43 +1,21 @@
+// src/pages/Home.js
 import React from "react";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
+import Section1 from "../components/Section1";
+import Section2 from "../components/Section2";
+import Section3 from "../components/Section3";
+import Section4 from "../components/Section4";
+import Contact from "../components/Contact";
 
-const Home = () => {
-  const containerStyle = {
-    minHeight: "100vh",
-    display: "flex",
-    flexDirection: "column",
-  };
-
-  const heroSectionStyle = {
-    padding: "100px 20px",
-    textAlign: "center",
-    backgroundColor: "#f0f8ff",
-    fontSize: "1.2em",
-    flexShrink: 0,
-  };
-
-  const mainContentStyle = {
-    flex: 1,
-    padding: "20px",
-    textAlign: "center",
-  };
-
+function Home() {
   return (
-    <div style={containerStyle}>
-      <main style={mainContentStyle}>
-        <section style={heroSectionStyle}>
-          <h2>Chào mừng đến với Trang Chủ!</h2>
-          <p>Đây là nội dung chính của trang web.</p>
-        </section>
-
-        <div style={{ padding: "20px" }}>
-          <h3>Sản phẩm Nổi bật</h3>
-          <p>Nội dung trang chủ sẽ được tải ở đây...</p>
-        </div>
-      </main>
+    <div>
+      <Section1 />
+      <Section2 />
+      <Section3 />
+      <Section4 />
+      <Contact />
     </div>
   );
-};
+}
 
 export default Home;

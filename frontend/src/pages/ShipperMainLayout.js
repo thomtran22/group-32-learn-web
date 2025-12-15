@@ -23,7 +23,7 @@ const ShipperActiveOrdersContent = lazy(() =>
 );
 
 const sidebarWidth = "250px";
-const HEADER_HEIGHT = "150px";
+const HEADER_HEIGHT = "00px";
 
 const containerStyle = {
   maxWidth: "1200px",
@@ -173,7 +173,7 @@ const ShipperMainLayout = () => {
     <div style={globalWrapperStyle}>
       <div
         style={{
-          position: "fixed",
+          position: "static",
           top: 0,
           left: 0,
           right: 0,
@@ -181,9 +181,7 @@ const ShipperMainLayout = () => {
           backgroundColor: "white",
           boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
         }}
-      >
-        <Header role="shipper" />
-      </div>
+      ></div>
 
       <div style={containerStyle}>
         <div style={sidebarWrapperStyle}>

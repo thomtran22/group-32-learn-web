@@ -1,46 +1,27 @@
-const jwt = require("jsonwebtoken");
-const JWT_SECRET = process.env.JWT_SECRET;
+const jwt = require('jsonwebtoken');
 
-const User = require("../models/User");
+const verifyToken = (req, res, next) => {
+    // Lấy token từ header: "Authorization: Bearer <token>"
+    const authHeader = req.header('Authorization');
+    const token = authHeader && authHeader.split(' ')[1];
 
-if (!JWT_SECRET) {
-  throw new Error("Cần định nghĩa JWT_SECRET trong file .env!");
-}
-
-const protect = async (req, res, next) => {
-  let token;
-
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    try {
-      token = req.headers.authorization.split(" ")[1];
-
-      const decoded = jwt.verify(token, JWT_SECRET);
-
-      const user = await User.findById(decoded.id);
-
-      if (user) {
-        req.user = user;
-        next();
-        return;
-      } else {
-        return res.status(401).json({ message: "Token không tìm thấy User" });
-      }
-    } catch (error) {
-      console.error("Lỗi xác thực Token:", error.message);
-      return res
-        .status(401)
-        .json({ message: "Token không hợp lệ hoặc đã hết hạn" });
+    if (!token) {
+        return res.status(401).json({
+            success: false,
+            message: "Truy cập bị từ chối. Thiếu Token."
+        });
     }
-  }
 
-  if (!token) {
-    return res
-      .status(401)
-      .json({ message: "Không có Token, không được ủy quyền" });
-  }
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        req.user = decoded;
+        next();
+    } catch (e) {
+        return res.status(403).json({
+            success: false,
+            message: "Token không hợp lệ." });
+    }
 };
 
 const isAdmin = (req, res, next) => {
@@ -53,4 +34,4 @@ const isAdmin = (req, res, next) => {
   }
 };
 
-module.exports = { protect, isAdmin };
+module.exports = {verifyToken, isAdmin};

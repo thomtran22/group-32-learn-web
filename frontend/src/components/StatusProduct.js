@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "./../utils/axiosConfig";
 import { FaTruck, FaTimes, FaCheck, FaShoppingCart } from "react-icons/fa";
 
-const BASE_URL = "http://localhost:3000/api";
+const BASE_URL = "http://localhost:5000/api";
 const ORDERS_ENDPOINT = "/user/orders";
 
 const OrderProductCard = ({ product, orderStatus, onViewDetail, orderId }) => {

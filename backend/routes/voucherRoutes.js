@@ -2,9 +2,9 @@ const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
 const Voucher = require("../models/Voucher");
-const { protect, isAdmin } = require("../middleware/authMiddleware");
+const { verifyToken, isAdmin } = require("../middleware/authMiddleware");
 
-router.get("/my-wallet", protect, async (req, res) => {
+router.get("/my-wallet", verifyToken, async (req, res) => {
   try {
     const now = new Date();
 
@@ -27,7 +27,7 @@ router.get("/my-wallet", protect, async (req, res) => {
   }
 });
 
-router.post("/add", protect, async (req, res) => {
+router.post("/add", verifyToken, async (req, res) => {
   const { code } = req.body;
 
   try {
@@ -61,7 +61,7 @@ router.post("/add", protect, async (req, res) => {
   }
 });
 
-router.post("/apply", protect, async (req, res) => {
+router.post("/apply", verifyToken, async (req, res) => {
   const { voucherCode, currentCartTotal } = req.body;
 
   try {
@@ -121,7 +121,7 @@ router.post("/apply", protect, async (req, res) => {
   }
 });
 
-router.get("/", protect, isAdmin, async (req, res) => {
+router.get("/", verifyToken, isAdmin, async (req, res) => {
   try {
     const vouchers = await Voucher.find().sort({ createdAt: -1 });
     res.json(vouchers);
@@ -130,7 +130,7 @@ router.get("/", protect, isAdmin, async (req, res) => {
   }
 });
 
-router.post("/", protect, isAdmin, async (req, res) => {
+router.post("/", verifyToken, isAdmin, async (req, res) => {
   try {
     const voucher = new Voucher(req.body);
     const saved = await voucher.save();
@@ -143,7 +143,7 @@ router.post("/", protect, isAdmin, async (req, res) => {
   }
 });
 
-router.put("/:id", protect, isAdmin, async (req, res) => {
+router.put("/:id", verifyToken, isAdmin, async (req, res) => {
   try {
     const updated = await Voucher.findByIdAndUpdate(
       req.params.id,
@@ -164,7 +164,7 @@ router.put("/:id", protect, isAdmin, async (req, res) => {
   }
 });
 
-router.delete("/:id", protect, isAdmin, async (req, res) => {
+router.delete("/:id", verifyToken, isAdmin, async (req, res) => {
   try {
     const deleted = await Voucher.findByIdAndDelete(req.params.id);
 

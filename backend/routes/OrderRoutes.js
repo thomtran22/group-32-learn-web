@@ -1,49 +1,37 @@
 const express = require("express");
 const router = express.Router();
-const mongoose = require("mongoose");
-const Order = require("../models/Order");
-const { protect } = require("../middleware/authMiddleware");
+const {
+  createOrder,
+  createPaymentUrl,
+  vnpayReturn,
+  viewOrders,
+  getOrderById,
+  getAvailableOrders,
+  acceptOrder,
+  getShipperStats,
+} = require("../controllers/OrderController");
+const { verifyToken } = require("../middleware/authMiddleware");
 
-router.get("/my-orders", protect, async (req, res) => {
-  try {
-    const orders = await Order.find({ userId: req.user.id })
-      .sort({ createdAt: -1 })
-      .select("-__v")
-      .populate("orderItems.productId", "name price images");
+// POST /api/orders
+// Nếu bắt buộc đăng nhập mới được mua thì thêm verifyToken, nếu không thì bỏ
+router.post("/", verifyToken, createOrder);
 
-    res.json(orders);
-  } catch (error) {
-    res.status(500).json({
-      message: "Lỗi Server khi tải danh sách đơn hàng.",
-      error: error.message,
-    });
-  }
-});
+// VNPay redirect về bằng GET (hoặc Frontend gọi xuống bằng GET)
+router.get("/vnpay-return", vnpayReturn);
 
-router.get("/:orderId", protect, async (req, res) => {
-  try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.orderId)) {
-      return res.status(400).json({ message: "ID đơn hàng không hợp lệ." });
-    }
+router.post("/create-payment-url", createPaymentUrl);
 
-    const order = await Order.findOne({
-      _id: req.params.orderId,
-      userId: req.user.id,
-    })
-      .select("-__v")
-      .populate("orderItems.productId", "name price images colors sizes");
+router.get("/", verifyToken, viewOrders);
 
-    if (!order) {
-      return res.status(404).json({ message: "Không tìm thấy đơn hàng." });
-    }
+// Route lấy danh sách đơn chưa ai nhận
+router.get("/available", verifyToken, getAvailableOrders);
 
-    res.json(order);
-  } catch (error) {
-    res.status(500).json({
-      message: "Lỗi Server khi tải chi tiết đơn hàng.",
-      error: error.message,
-    });
-  }
-});
+// Route Shipper xác nhận nhận đơn
+router.put("/:orderId/accept", verifyToken, acceptOrder);
+
+// Route lấy thống kê cho Shipper
+router.get("/stats", verifyToken, getShipperStats);
+
+router.get("/:id", verifyToken, getOrderById);
 
 module.exports = router;
