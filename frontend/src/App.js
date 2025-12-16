@@ -1,13 +1,12 @@
 // src/App.js
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
+import Header from "./components/header/Header";
+import Footer from "./components/footer/Footer";
 import Home from "./pages/Home";
 import Cart from "./pages/Cart";
 import Login from "./pages/Login";
 import Checkout from "./pages/Checkout"
 import PaymentResult from './pages/PaymentResult'; 
-import ProductDetails from "./pages/ProductDetail";
 import ShipperMainLayout from "./pages/ShipperMainLayout";
 import UserProfile from "./pages/UserProfile";
 
@@ -32,7 +31,6 @@ function App() {
           <Route path="/checkout" element={<Checkout />}/>
           <Route path="/login" element={<Login />} />
           <Route path="/payment-result" element={<PaymentResult />} />
-          <Route path="/products/:id" element={<ProductDetails />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/shipper/*" element={<ShipperMainLayout />} />
         </Routes>

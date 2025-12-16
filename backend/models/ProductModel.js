@@ -17,6 +17,11 @@ const productSchema = new mongoose.Schema({
             quantity: { type: Number, default: 100 } // Mặc định kho có 100 cái
         }
     ],
+    sku: {
+        type: String,
+        required: true,
+        unique: true
+    },
     isBestSeller: { type: Boolean, default: false }
 }, { timestamps: true });
 

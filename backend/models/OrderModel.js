@@ -23,6 +23,12 @@ const orderSchema = new mongoose.Schema({
         }
     ],
 
+    shipperId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
+
     shippingAddress: {
         fullName: { type: String, required: true },
         phone: { type: String, required: true },

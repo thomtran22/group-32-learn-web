@@ -1,6 +1,6 @@
 import React from "react";
-import img1 from "../assets/images/img-1.svg";
-import img2 from "../assets/images/img-2.svg";
+import img1 from "../../assets/images/img-1.svg";
+import img2 from "../../assets/images/img-2.svg";
 
 function Contact() {
   return (

@@ -4,7 +4,7 @@ async function handleResponse(res) {
   const json = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(json.message || 'Request failed');
   return json;
-}
+};
 
 export async function login(payload) {
   const res = await fetch(`${API_BASE}/api/auth/login`, {
@@ -13,7 +13,7 @@ export async function login(payload) {
     body: JSON.stringify(payload),
   });
   return handleResponse(res);
-}
+};
 
 export async function register(payload) {
   const res = await fetch(`${API_BASE}/api/auth/register`, {
@@ -22,6 +22,4 @@ export async function register(payload) {
     body: JSON.stringify(payload),
   });
   return handleResponse(res);
-}
-
-export default { login, register };
+};

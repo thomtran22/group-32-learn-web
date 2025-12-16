@@ -5,7 +5,6 @@ import {
   FaMapMarkedAlt,
   FaChartBar,
   FaGift,
-  FaHistory,
   FaShoppingCart,
   FaArrowLeft,
 } from "react-icons/fa";

@@ -1225,7 +1225,7 @@
     ]
   },
   {
-    "name": "ÁO KHOÁC AK8838",
+    "name": "ÁO KHOÁC AK8838", // name: ÁO KHOÁC AK8838, sku: AK8838
     "price": 240000,
     "images": [
       "/assets/images/AK8838-4.jpg",

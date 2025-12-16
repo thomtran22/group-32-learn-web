@@ -34,4 +34,11 @@ const isAdmin = (req, res, next) => {
   }
 };
 
-module.exports = {verifyToken, isAdmin};
+const isShipper = (req, res, next) => {
+  if (req.user && (req.user.role === "shipper" || req.user.role === "admin")) {
+    next();
+  } else {
+    res.status(403).json({ message: "Chỉ Shipper mới có quyền này" });
+  }
+};
+module.exports = { verifyToken, isAdmin, isShipper };
