@@ -1,8 +1,8 @@
-const express = require("express");
-const mongoose = require("mongoose");
+import express from "express";
+import mongoose from "mongoose";
 const router = express.Router();
-const Voucher = require("../models/Voucher");
-const { verifyToken, isAdmin } = require("../middleware/authMiddleware");
+import Voucher from "../models/Voucher.js";
+import { verifyToken, isAdmin } from "../middleware/authMiddleware.js";
 
 router.get("/my-wallet", verifyToken, async (req, res) => {
   try {
@@ -181,4 +181,4 @@ router.delete("/:id", verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

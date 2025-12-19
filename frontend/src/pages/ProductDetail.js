@@ -1,316 +1,203 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
-import { FaShoppingBag } from "react-icons/fa";
-import { useCart } from "../context/CartContext";
-import { apiGetProduct, apiGetBestSellers } from "../services/productApi";
-
-const ImageZoom = ({ src, alt }) => {
-  const [showZoom, setShowZoom] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-
-  const handleMouseMove = (e) => {
-    const { left, top, width, height } = e.target.getBoundingClientRect();
-    const x = ((e.pageX - left) / width) * 100;
-    const y = ((e.pageY - top) / height) * 100;
-    setPosition({ x, y });
-  };
-
-  return (
-    <div
-      style={{ position: "relative", overflow: "hidden", cursor: "crosshair" }}
-      onMouseEnter={() => setShowZoom(true)}
-      onMouseLeave={() => setShowZoom(false)}
-      onMouseMove={handleMouseMove}
-    >
-      <img src={src} alt={alt} style={{ width: "100%", display: "block" }} />
-      {showZoom && (
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            top: 0,
-            width: "100%",
-            height: "100%",
-            backgroundImage: `url(${src})`,
-            backgroundPosition: `${position.x}% ${position.y}%`,
-            backgroundSize: "200%",
-            pointerEvents: "none",
-            zIndex: 10,
-          }}
-        />
-      )}
-    </div>
-  );
-};
+import { useParams } from "react-router-dom";
+import axios from 'axios'; 
+import ProductSection from "../components/sections/ProductSection";
+import { apiAddToCart } from "../services/cartApi";
 
 function ProductDetail() {
-  const { id } = useParams();
-  const { addToCart } = useCart();
+  const { sku } = useParams(); 
+  
   const [product, setProduct] = useState(null);
-  const [relatedProducts, setRelatedProducts] = useState([]);
-  const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState(null);
-  const [selectedColor, setSelectedColor] = useState(null);
-  const [mainImage, setMainImage] = useState("");
-  const [thumbnails, setThumbnails] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedColor, setSelectedColor] = useState(null); 
+  const [selectedSize, setSelectedSize] = useState(null); 
+  const [quantity, setQuantity] = useState(1);
+  const [adding, setAdding] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchProduct = async () => {
       setLoading(true);
       try {
-        const data = await apiGetProduct(id);
-        setProduct(data);
+        const { data } = await axios.get(`http://localhost:4000/api/products/${sku}`);
+        
+        // Danh sách Màu và Size duy nhất
+        const uniqueColors = data.variants ? [...new Set(data.variants.map(v => v.color))] : [];
+        const uniqueSizes = data.variants ? [...new Set(data.variants.map(v => v.size))] : [];
 
-        if (data.images && data.images.length > 0) {
-          const firstImg = data.images[0];
-          setMainImage(typeof firstImg === "string" ? firstImg : firstImg.url);
+        // Gộp dữ liệu đã xử lý vào state product
+        setProduct({
+          ...data,
+          displayColors: uniqueColors,
+          displaySizes: uniqueSizes
+        });
 
-          if (Array.isArray(data.images)) {
-            setThumbnails(
-              data.images.map((img) =>
-                typeof img === "string" ? img : img.url
-              )
-            );
-          }
-        }
+        // Tự động chọn giá trị đầu tiên nếu có
+        if (uniqueColors.length > 0) setSelectedColor(uniqueColors[0]);
+        if (uniqueSizes.length > 0) setSelectedSize(uniqueSizes[0]);
 
-        const availableColors = [
-          ...new Set(
-            data.variants?.map((v) => v.color) ||
-              data.colors?.map((c) => (typeof c === "object" ? c.name : c)) ||
-              []
-          ),
-        ];
-        if (availableColors.length > 0) {
-          setSelectedColor(availableColors[0]);
-        }
-
-        const related = await apiGetBestSellers(id);
-        setRelatedProducts(Array.isArray(related) ? related : []);
       } catch (error) {
-        console.error(error);
+        console.error(`Lỗi khi fetch sản phẩm ${sku}:`, error);
+        setProduct(null); 
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
-  }, [id]);
+    if (sku) {
+        fetchProduct();
+    }
+  }, [sku]);
 
-  const checkStock = (sizeToCheck) => {
-    if (!product || !product.variants || product.variants.length === 0)
-      return false;
-
-    const variant = product.variants.find(
-      (v) => v.color === selectedColor && v.size === sizeToCheck
-    );
-
-    return !variant || variant.quantity <= 0;
-  };
-
-  const handleThumbnailClick = (src) => {
-    setMainImage(src);
-  };
-
-  const handleColorSelect = (color) => {
-    setSelectedColor(color);
-    setSelectedSize(null);
-  };
-
+  // Hàm xử lý thêm vào giỏ hàng
   const handleAddToCart = async () => {
-    if (!selectedSize) {
-      alert("Vui lòng chọn cỡ sản phẩm!");
-      return;
-    }
-    if (!selectedColor) {
-      alert("Vui lòng chọn màu sắc sản phẩm!");
+    if (!selectedColor || !selectedSize) {
+      alert("Vui lòng chọn màu sắc và kích cỡ!");
       return;
     }
 
+    setAdding(true);
     try {
-      const productData = {
-        _id: product._id,
-        name: product.name,
-        price: product.price,
-        color: selectedColor,
-        size: selectedSize,
+      const cartData = {
+        productId: product._id,
         quantity: quantity,
-        images: product.images || [],
-        variants: product.variants || [],
+        color: selectedColor,
+        size: selectedSize
       };
-      await addToCart(productData);
-      alert(`Đã thêm ${quantity} sản phẩm vào giỏ hàng.`);
+
+      await apiAddToCart(cartData);
+      alert("Đã thêm vào giỏ hàng thành công!");
     } catch (error) {
-      alert("Lỗi khi thêm vào giỏ hàng.");
+      console.error("Lỗi thêm vào giỏ hàng:", error);
+      alert(error.response?.data?.message || "Vui lòng đăng nhập để thực hiện thao tác này!");
+    } finally {
+      setAdding(false);
     }
   };
 
-  if (loading)
-    return (
-      <div className="container" style={{ padding: 50, textAlign: "center" }}>
-        Đang tải dữ liệu...
-      </div>
-    );
-  if (!product)
-    return (
-      <div className="container" style={{ padding: 50, textAlign: "center" }}>
-        Sản phẩm không tồn tại
-      </div>
-    );
+  if (loading) {
+    return <div style={{ padding: "50px", textAlign: "center" }}>Đang tải chi tiết sản phẩm...</div>;
+  }
+  
+  if (!product) {
+    return <div style={{ padding: "50px", textAlign: "center" }}>Không tìm thấy sản phẩm! (SKU: {sku})</div>;
+  }
 
-  const availableColors = [
-    ...new Set(
-      product.variants?.map((v) => v.color) ||
-        product.colors?.map((c) => (typeof c === "object" ? c.name : c)) ||
-        []
-    ),
-  ];
-  const availableSizes = [
-    ...new Set(product.variants?.map((v) => v.size) || product.sizes || []),
-  ];
+  const mainProductImage = product.images?.[0] || 'https://via.placeholder.com/400';
 
   return (
-    <main className="container">
-      <div className="breadcrumb">
-        <Link to="/">Trang chủ</Link> /
-        {product.category ? (
-          <Link
-            to={`/category/${product.category.slug || product.category._id}`}
-          >
-            {" "}
-            {product.category.name || "Danh mục"}{" "}
-          </Link>
-        ) : (
-          " Sản phẩm "
-        )}
-        / {product.name}
+    <div className="product-detail-page container" style={{ padding: '20px 0' }}>
+      <div className="breadcrumb" style={{ fontSize: '12px', marginBottom: '20px' }}>
+          Trang chủ / Sản phẩm / {product.name}
       </div>
 
-      <div className="product-detail-section">
-        <div className="product-gallery">
-          <div className="thumbnails">
-            {thumbnails.map((src, idx) => (
-              <img
-                key={idx}
-                src={src}
-                alt="thumbnail"
-                className={src === mainImage ? "active" : ""}
-                onClick={() => handleThumbnailClick(src)}
-              />
-            ))}
-          </div>
-          <div className="main-image">
-            <ImageZoom src={mainImage} alt={product.name} />
-          </div>
+      <div className="product-info-wrap" style={{ display: 'flex', gap: '40px' }}>
+        {/* Cột 1: Ảnh */}
+        <div className="product-images" style={{ width: '45%' }}>
+            <img 
+                src={mainProductImage} 
+                alt={product.name} 
+                style={{ width: '100%', maxWidth: '400px', borderRadius: '8px' }} 
+            />
         </div>
 
-        <div className="product-info">
-          <h1>{product.name}</h1>
-          <div className="price">{product.price?.toLocaleString()}đ</div>
-          <hr />
-
-          <div className="selector-row">
-            <span>
-              Màu sắc: <strong>{selectedColor}</strong>
-            </span>
-            <div className="color-options">
-              {availableColors.map((color) => (
-                <div
+        {/* Cột 2: Thông tin chi tiết */}
+        <div className="product-details" style={{ width: '50%' }}>
+          <h2>{product.name}</h2>
+          <div style={{ fontSize: '30px', color: '#D50000', fontWeight: 'bold', margin: '15px 0' }}>
+            {product.price?.toLocaleString('vi-VN')} VNĐ
+          </div>
+          <div className="color-selection" style={{ marginBottom: '20px' }}>
+            <p style={{ fontWeight: 'bold' }}>Màu Sắc</p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {product.displayColors?.map((color) => (
+                <div 
                   key={color}
-                  onClick={() => handleColorSelect(color)}
-                  className={`color-swatch ${
-                    selectedColor === color ? "active" : ""
-                  }`}
-                  style={{ backgroundColor: color.toLowerCase() }}
-                  title={color}
-                ></div>
+                  onClick={() => setSelectedColor(color)}
+                  style={{ 
+                    padding: '5px 15px', 
+                    border: color === selectedColor ? '2px solid black' : '1px solid #ccc', 
+                    cursor: 'pointer',
+                    borderRadius: '4px'
+                  }}
+                >
+                  {color}
+                </div>
               ))}
             </div>
           </div>
 
-          <div className="selector-row">
-            <span>
-              Cỡ: <strong>{selectedSize}</strong>
-            </span>
-            <div className="size-options">
-              {availableSizes.map((size) => {
-                const isOutOfStock = checkStock(size);
-                return (
-                  <button
-                    key={size}
-                    className={`size-btn ${
-                      selectedSize === size ? "active" : ""
-                    }`}
-                    onClick={() => !isOutOfStock && setSelectedSize(size)}
-                    disabled={isOutOfStock}
-                    style={{
-                      opacity: isOutOfStock ? 0.4 : 1,
-                      cursor: isOutOfStock ? "not-allowed" : "pointer",
-                      textDecoration: isOutOfStock ? "line-through" : "none",
-                      position: "relative",
-                    }}
-                    title={isOutOfStock ? "Hết hàng" : ""}
-                  >
-                    {size}
-                  </button>
-                );
-              })}
+          {/* Lựa chọn Cỡ */}
+          <div className="size-selection" style={{ marginBottom: '20px' }}>
+            <p style={{ fontWeight: 'bold' }}>Cỡ</p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {product.displaySizes?.map((size) => (
+                <button 
+                  key={size}
+                  onClick={() => setSelectedSize(size)}
+                  style={{ 
+                    padding: '8px 15px', 
+                    border: size === selectedSize ? '2px solid black' : '1px solid #ccc', 
+                    cursor: 'pointer',
+                    backgroundColor: 'white',
+                    minWidth: '50px'
+                  }}
+                >
+                  {size}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="actions-row">
-            <div className="quantity-control">
-              <button onClick={() => setQuantity((q) => Math.max(1, q - 1))}>
-                -
-              </button>
-              <input type="text" value={quantity} readOnly />
-              <button onClick={() => setQuantity((q) => q + 1)}>+</button>
+          {/* Số lượng và Button */}
+          <div className="quantity-and-cart" style={{ marginBottom: '30px', display: 'flex', alignItems: 'flex-end', gap: '20px' }}>
+            <div>
+                <p style={{ fontWeight: 'bold', marginBottom: '5px' }}>Số lượng</p>
+                <input 
+                    type="number" 
+                    min="1"
+                    value={quantity} 
+                    onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                    style={{ width: '60px', padding: '10px', textAlign: 'center' }}
+                />
             </div>
-            <button className="add-to-cart-btn" onClick={handleAddToCart}>
-              <FaShoppingBag /> THÊM VÀO GIỎ HÀNG
+            
+            <button 
+                onClick={handleAddToCart}
+                disabled={adding}
+                style={{ 
+                    flex: 1,
+                    padding: '15px', 
+                    backgroundColor: adding ? '#666' : 'black', 
+                    color: 'white', 
+                    border: 'none',
+                    fontWeight: 'bold',
+                    cursor: adding ? 'not-allowed' : 'pointer'
+                }}
+            >
+              {adding ? 'ĐANG THÊM...' : 'THÊM VÀO GIỎ HÀNG'}
             </button>
           </div>
-
-          <div className="product-description">
-            <h3>Mô tả</h3>
-            {product.description ? (
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: product.description.replace(/\n/g, "<br/>"),
-                }}
-              />
-            ) : (
-              <p>Chưa có mô tả</p>
-            )}
+          
+          {/* Mô tả */}
+          <div className="product-description" style={{ borderTop: '1px solid #eee', paddingTop: '20px' }}>
+            <h4 style={{ fontWeight: 'bold' }}>Mô tả sản phẩm</h4>
+            <ul style={{ paddingLeft: '20px' }}>
+              {product.description?.map((line, index) => (
+                <li key={index} style={{ marginBottom: '5px' }}>{line}</li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
 
-      {relatedProducts.length > 0 && (
-        <section className="best-sellers">
-          <h2 className="section-title">CÓ THỂ BẠN CŨNG THÍCH</h2>
-          <div className="product-grid">
-            {relatedProducts.map((p) => (
-              <Link
-                to={`/products/${p._id}`}
-                key={p._id}
-                className="product-item"
-              >
-                <div className="inner-image">
-                  <img src={p.images?.[0] || p.image} alt={p.name} />
-                </div>
-                <div className="inner-content">
-                  <h3 className="inner-title">{p.name}</h3>
-                  <div className="inner-price">
-                    {p.price?.toLocaleString()} VNĐ
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
+      {product.category && product.category.slug ? (
+        <ProductSection 
+          title="SẢN PHẨM LIÊN QUAN" 
+          initialSlug={product.category.slug} 
+        />
+      ) : (
+        <ProductSection title="SẢN PHẨM MỚI" initialSlug="ao-nam" />
       )}
-    </main>
+    </div>
   );
 }
 

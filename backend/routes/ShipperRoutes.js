@@ -1,10 +1,10 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const Order = require("../models/OrderModel");
-const ShipperInfo = require("../models/ShipperInfo");
-const ShipperPerformance = require("../models/ShipperPerformance");
-const User = require("../models/UserModel");
-const { verifyToken, isShipper } = require("../middleware/authMiddleware");
+import Order from "../models/OrderModel.js";
+import ShipperInfo from "../models/ShipperInfo.js";
+import ShipperPerformance from "../models/ShipperPerformance.js";
+import User from "../models/UserModel.js";
+import { verifyToken, isShipper } from "../middleware/authMiddleware.js";;
 
 router.get("/orders/new", verifyToken, isShipper, async (req, res) => {
   try {
@@ -193,4 +193,4 @@ router.put("/info", verifyToken, isShipper, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

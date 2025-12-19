@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const VoucherSchema = new mongoose.Schema(
   {
@@ -64,6 +64,5 @@ const VoucherSchema = new mongoose.Schema(
   }
 );
 
-VoucherSchema.index({ code: 1 });
-
-module.exports = mongoose.model("Voucher", VoucherSchema);
+const Voucher = mongoose.model("Voucher", VoucherSchema);
+export default Voucher;

@@ -1,49 +1,55 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const helmet = require("helmet");
-//const xss = require('xss-clean');
-const hpp = require("hpp");
-const jwt = require("jsonwebtoken");
-require("dotenv").config();
+import express from "express";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import cors from "cors";
+import helmet from "helmet";
+import hpp from "hpp";
+import jwt from "jsonwebtoken";
+
+dotenv.config();
+
+import productRoutes from "./routes/productRoutes.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
+import cartRoutes from "./routes/cartRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import shipperRoutes from "./routes/shipperRoutes.js";
+import voucherRoutes from "./routes/voucherRoutes.js";
 
 const app = express();
+const PORT = process.env.PORT;
 
-// Middleware
-app.use(cors());
 app.use(express.json());
+app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
-//app.use(xss()); // Sanitize data
-app.use(hpp()); // Chống HTTP Parameter Pollution
+app.use(hpp());
 
-const orderRoutes = require("./routes/OrderRoutes");
-const cartRoutes = require("./routes/CartRoutes");
-const userRoutes = require("./routes/UserRoutes");
-const ShipperRoutes = require("./routes/ShipperRoutes");
-const voucherRoutes = require("./routes/voucherRoutes");
-const { router: authRoutes } = require("./routes/authRoutes");
-//const { getBestSellers } = require('./controllers/ProductController');
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("MongoDB Connected Successfully!");
+  } catch (error) {
+    console.error("MongoDB Connection Failed:", error.message);
+    process.exit(1);
+  }
+};
 
-// Routes chính
-app.use("/api/orders", orderRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/cart", cartRoutes);
-//app.use('/api/product', productRoutes);
-app.use("/api/vouchers", voucherRoutes);
-app.use("/api/shipper", ShipperRoutes);
-app.use("/api/user", userRoutes);
-// Route riêng cho best-sellers (frontend đang gọi /api/best-sellers)
-//app.get('/api/best-sellers', getBestSellers);
+connectDB();
 
-// ==========================================
-// KHU VỰC TEST (CỬA HẬU) - SAU NÀY XÓA
-// ==========================================
 app.get("/", (req, res) => {
-  res.json({ message: "Backend API đang chạy!" });
+  res.send("API is running on port " + PORT);
 });
 
-// Route lấy Token nhanh (Fake Login)
+app.use("/api/products", productRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/vouchers", voucherRoutes);
+app.use("/api/shipper", shipperRoutes);
+app.use("/api/user", userRoutes);
+
+//Todo: Dùng để test
 app.get("/api/test/get-token/:userId", (req, res) => {
   const { userId } = req.params;
   // Tạo token hạn 30 ngày
@@ -57,16 +63,4 @@ app.get("/api/test/get-token/:userId", (req, res) => {
     token: token,
   });
 });
-// ==========================================
-
-// MongoDB Connection
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.log("❌ MongoDB connection error:", err));
-
-// Server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -1,9 +1,9 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const cartSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', // Giả sử bạn có User model, nếu không có login thì có thể dùng session ID
+        ref: 'User', // Giả sử có User model, nếu không có login thì có thể dùng session ID
         required: true
     },
 
@@ -31,4 +31,5 @@ const cartSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Cart', cartSchema, 'carts');
+const Cart = mongoose.model('Cart', cartSchema, 'carts');
+export default Cart;

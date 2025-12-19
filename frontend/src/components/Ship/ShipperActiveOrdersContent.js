@@ -80,8 +80,7 @@ const ShipperActiveOrdersContent = () => {
       });
 
       alert(
-        `Đơn hàng #${orderId.slice(-6)} đã được cập nhật trạng thái thành: ${
-          STATUS_OPTIONS[newStatus] || newStatus
+        `Đơn hàng #${orderId.slice(-6)} đã được cập nhật trạng thái thành: ${STATUS_OPTIONS[newStatus] || newStatus
         }!`
       );
       fetchActiveOrders();
@@ -92,8 +91,7 @@ const ShipperActiveOrdersContent = () => {
         err.response?.data?.message || err.message
       );
       alert(
-        `Cập nhật thất bại: ${
-          err.response?.data?.message || "Lỗi mạng hoặc Server."
+        `Cập nhật thất bại: ${err.response?.data?.message || "Lỗi mạng hoặc Server."
         }`
       );
     } finally {
@@ -182,7 +180,7 @@ const ShipperActiveOrdersContent = () => {
   if (loading) {
     return (
       <div style={styles.loading}>
-                <FaSpinner className="spin" /> Đang tải đơn hàng...      {" "}
+        <FaSpinner className="spin" /> Đang tải đơn hàng...      {" "}
       </div>
     );
   }
@@ -194,49 +192,49 @@ const ShipperActiveOrdersContent = () => {
   if (activeOrders.length === 0) {
     return (
       <div style={styles.noData}>
-                <h3>🎉 Bạn không có đơn hàng nào đang giao.</h3>     {" "}
+        <h3>Bạn không có đơn hàng nào đang giao.</h3>     {" "}
       </div>
     );
   }
 
   return (
     <div style={styles.container}>
-           {" "}
+      {" "}
       <h2 style={styles.header}>
-                📦 Đơn Hàng Đang Giao ({activeOrders.length})      {" "}
+        📦 Đơn Hàng Đang Giao ({activeOrders.length})      {" "}
       </h2>
-           {" "}
+      {" "}
       <button
         onClick={fetchActiveOrders}
         style={styles.refreshButton}
         disabled={loading || isUpdating}
       >
-                <FaSyncAlt style={{ marginRight: "5px" }} /> Cập nhật danh sách
-             {" "}
+        <FaSyncAlt style={{ marginRight: "5px" }} /> Cập nhật danh sách
+        {" "}
       </button>
-                 {" "}
+      {" "}
       <div style={styles.listContainer}>
-               {" "}
+        {" "}
         {activeOrders.map((order) => {
           const isCurrentOrderUpdating = isUpdating === order._id;
           const isExpanded = expandedOrderId === order._id;
           return (
             <div key={order._id} style={styles.listItem}>
-                                       {" "}
+              {" "}
               <div
                 style={styles.summaryRow}
                 onClick={() => toggleExpand(order._id)}
               >
-                                             {" "}
+                {" "}
                 <div style={{ minWidth: 100, fontWeight: "bold" }}>
-                                    #{order._id.slice(-6)}               {" "}
+                  #{order._id.slice(-6)}               {" "}
                 </div>
-                               {" "}
+                {" "}
                 <div style={{ minWidth: 100 }}>
-                                    {getStatusDisplay(order.status)}           
-                     {" "}
+                  {getStatusDisplay(order.deliveryStatus)}
+                  {" "}
                 </div>
-                                {" "}
+                {" "}
                 <div
                   style={{
                     color: "#28a745",
@@ -245,62 +243,62 @@ const ShipperActiveOrdersContent = () => {
                     textAlign: "right",
                   }}
                 >
-                                    {formatCurrency(order.totalAmount)}         
-                       {" "}
+                  {formatCurrency(order.totalAmount)}
+                  {" "}
                 </div>
-                   {" "}
+                {" "}
                 <div style={{ marginLeft: 10, color: "#6c757d" }}>
-                                   {" "}
+                  {" "}
                   {isExpanded ? (
                     <FaChevronUp size={12} />
                   ) : (
                     <FaChevronDown size={12} />
                   )}
-                                 {" "}
+                  {" "}
                 </div>
-                             {" "}
+                {" "}
               </div>
-                           {" "}
+              {" "}
               {isExpanded && (
                 <div style={styles.expandedContent}>
-                                                     {" "}
+                  {" "}
                   <p style={styles.detailRow}>
-                                       {" "}
-                    <FaMapMarkerAlt style={styles.detailIcon} />               
-                        **Địa chỉ giao:**{" "}
+                    {" "}
+                    <FaMapMarkerAlt style={styles.detailIcon} />
+                    **Địa chỉ giao:**{" "}
                     {order.shippingDetails?.address || "N/A"}                 {" "}
                   </p>
-                                   {" "}
+                  {" "}
                   <p style={styles.detailRow}>
-                                        <FaClock style={styles.detailIcon} />   
-                                    **Thời gian tạo:**{" "}
+                    <FaClock style={styles.detailIcon} />
+                    **Thời gian tạo:**{" "}
                     {formatDateTime(order.createdAt)}                 {" "}
                   </p>
-                                                           {" "}
+                  {" "}
                   <div style={styles.productList}>
-                                        <FaBoxOpen style={styles.detailIcon} />{" "}
-                    **Sản phẩm ({order.products?.length || 0}):**              
-                         {" "}
+                    <FaBoxOpen style={styles.detailIcon} />{" "}
+                    **Sản phẩm ({order.products?.length || 0}):**
+                    {" "}
                     <ul>
-                                           {" "}
+                      {" "}
                       {order.products?.map((item, index) => (
                         <li
                           key={index}
                           style={{ marginBottom: 3, fontSize: "0.9em" }}
                         >
-                                                   {" "}
+                          {" "}
                           {item.productId?.name ||
                             `ID: ${item.productId || "Sản phẩm không rõ"}`}{" "}
                           (SL: {item.quantity})                        {" "}
                         </li>
                       ))}
-                                         {" "}
+                      {" "}
                     </ul>
-                                     {" "}
+                    {" "}
                   </div>
-                               {" "}
+                  {" "}
                   <div style={styles.actionGroup}>
-                                       {" "}
+                    {" "}
                     <button
                       style={{
                         ...styles.actionButton,
@@ -311,7 +309,7 @@ const ShipperActiveOrdersContent = () => {
                       onClick={() => handleDeliverySuccess(order._id)}
                       disabled={isCurrentOrderUpdating}
                     >
-                                           {" "}
+                      {" "}
                       {isCurrentOrderUpdating ? (
                         <>
                           <FaSpinner className="spin" size={12} /> Đang Xử Lý...
@@ -321,9 +319,9 @@ const ShipperActiveOrdersContent = () => {
                           <FaCheckCircle size={12} /> Đã Giao Thành Công
                         </>
                       )}
-                                         {" "}
+                      {" "}
                     </button>
-                                                         {" "}
+                    {" "}
                     <button
                       style={{
                         ...styles.actionButton,
@@ -333,22 +331,22 @@ const ShipperActiveOrdersContent = () => {
                       onClick={() => handleChangeStatus(order._id)}
                       disabled={isCurrentOrderUpdating}
                     >
-                                           {" "}
+                      {" "}
                       <FaCog size={11} style={{ marginRight: 4 }} /> Trạng thái
                       khác                    {" "}
                     </button>
-                                     {" "}
+                    {" "}
                   </div>
-                                 {" "}
+                  {" "}
                 </div>
               )}
-                         {" "}
+              {" "}
             </div>
           );
         })}
-             {" "}
+        {" "}
       </div>
-         {" "}
+      {" "}
     </div>
   );
 };

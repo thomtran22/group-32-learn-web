@@ -1,6 +1,6 @@
 import React, { lazy, Suspense } from "react";
 import { useLocation, NavLink, Link } from "react-router-dom";
-import Header from "../components/Header";
+import Header from "../components/header/Header";
 import {
   FaTachometerAlt,
   FaChartLine,
@@ -10,20 +10,19 @@ import {
 } from "react-icons/fa";
 
 const ShipperDashboardContent = lazy(() =>
-  import("../components/Ship/ShipperDashboardContent")
+  import("../components/ship/ShipperDashboardContent")
 );
 const ShipperStatisticsContent = lazy(() =>
-  import("../components/Ship/ShipperStatisticsContent")
+  import("../components/ship/ShipperStatisticsContent")
 );
 const ShipperProfileContent = lazy(() =>
-  import("../components/Ship/ShipperProfileContent")
+  import("../components/ship/ShipperProfileContent")
 );
 const ShipperActiveOrdersContent = lazy(() =>
-  import("../components/Ship/ShipperActiveOrdersContent")
+  import("../components/ship/ShipperActiveOrdersContent")
 );
 
-const sidebarWidth = "250px";
-const HEADER_HEIGHT = "00px";
+const HEADER_HEIGHT = "0px";
 
 const containerStyle = {
   maxWidth: "1200px",
@@ -91,7 +90,6 @@ const ShipperSidebar = () => {
     fontWeight: "bold",
     borderLeft: "4px solid #dc3545",
   };
-  // ----------------------
 
   return (
     <div style={sidebarInnerStyle}>
@@ -181,7 +179,8 @@ const ShipperMainLayout = () => {
           backgroundColor: "white",
           boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
         }}
-      ></div>
+      >
+      </div>
 
       <div style={containerStyle}>
         <div style={sidebarWrapperStyle}>

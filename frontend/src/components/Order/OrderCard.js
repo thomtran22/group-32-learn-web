@@ -1,5 +1,3 @@
-// file: src/components/Order/OrderCard.js (hoặc đường dẫn tương ứng của bạn)
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatMoney, getStatusInfo } from '../../utils/orderHelpers';
@@ -24,8 +22,6 @@ const OrderCard = ({ order, onCancelOrder, onConfirmReceived, onOrderClick }) =>
     };
 
     const renderOrderActions = () => {
-        // ... (Giữ nguyên logic renderOrderActions như cũ)
-        // Copy lại đoạn logic renderOrderActions từ file cũ của bạn vào đây
         if (order.status === 'Delivered') {
             return (
                 <>

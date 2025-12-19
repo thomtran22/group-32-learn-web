@@ -3,19 +3,19 @@ import { useCart } from '../../context/CartContext'; // Import context để l�
 
 const CartItem = ({ item, onRemove, onUpdateQuantity, isSelected, onToggleSelect }) => {
     const { updateItemVariant, cartItems } = useCart();
-    
+
     // State quản lý Popup
     const [showPopup, setShowPopup] = useState(false);
-    
+
     // State tạm khi người dùng đang chọn trong popup (chưa bấm Xác nhận)
     const [tempColor, setTempColor] = useState(item.color);
     const [tempSize, setTempSize] = useState(item.size);
-    
+
     const popupRef = useRef(null);
 
     // Lấy variants từ item (được CartContext truyền vào)
     const variants = item.variants || [];
-    
+
     // Reset lại state tạm mỗi khi mở popup hoặc khi item thay đổi bên ngoài
     useEffect(() => {
         if (showPopup) {
@@ -54,19 +54,19 @@ const CartItem = ({ item, onRemove, onUpdateQuantity, isSelected, onToggleSelect
         // 2. CHECK TỒN KHO (Logic mới theo DB Variants)
         // Nếu sản phẩm có variants, ta phải check xem combo này có tồn tại và còn hàng không
         if (variants.length > 0) {
-            const variantExist = variants.find(v => 
-                v.color === targetColor && 
-                v.size === targetSize && 
+            const variantExist = variants.find(v =>
+                v.color === targetColor &&
+                v.size === targetSize &&
                 v.quantity > 0
             );
-            
+
             if (!variantExist) {
                 return { disabled: true, reason: "Hết hàng hoặc không tồn tại" };
             }
         }
 
-        // 3. CHECK TRÙNG TRONG GIỎ (Logic cũ)
-        const isDuplicate = cartItems.some(cartItem => 
+        //Check trùng trong giỏ hàng
+        const isDuplicate = cartItems.some(cartItem =>
             cartItem.productId === item.productId && // Cùng loại sản phẩm
             cartItem.itemId !== item.itemId &&       // Khác dòng hiện tại
             cartItem.color === targetColor &&        // Trùng màu dự kiến
@@ -81,9 +81,8 @@ const CartItem = ({ item, onRemove, onUpdateQuantity, isSelected, onToggleSelect
     };
 
     // Format tiền
-    const priceFormatted = item.price.toLocaleString('vi-VN');
-    const subtotalFormatted = (item.price * item.quantity).toLocaleString('vi-VN');
-
+    const priceFormatted = (item.price || 0).toLocaleString('vi-VN');
+    const subtotalFormatted = ((item.price || 0) * (item.quantity || 1)).toLocaleString('vi-VN');
     // Nếu không có danh sách màu/size (do chưa populate hoặc lỗi), dùng mảng rỗng
     const colors = item.availableColors && item.availableColors.length > 0 ? item.availableColors : [item.color];
     const sizes = item.availableSizes && item.availableSizes.length > 0 ? item.availableSizes : [item.size];
@@ -103,11 +102,11 @@ const CartItem = ({ item, onRemove, onUpdateQuantity, isSelected, onToggleSelect
                 <img src={item.image} alt={item.name} />
                 <div className="product-info">
                     <a href="#" className="product-name">{item.name}</a>
-                    
-                    {/* === KHU VỰC PHÂN LOẠI HÀNG === */}
+
+                    {/* Phân loại hàng*/}
                     <div className="variant-selector" ref={popupRef}>
-                        
-                        {/* Nút bấm mở popup */} 
+
+                        {/* Nút bấm mở popup */}
                         <div className="variant-btn" onClick={() => setShowPopup(!showPopup)}>
                             <span>Phân loại: {item.color}, {item.size}</span>
                             <i className="fas fa-caret-down"></i>
@@ -127,7 +126,7 @@ const CartItem = ({ item, onRemove, onUpdateQuantity, isSelected, onToggleSelect
                                                     key={index}
                                                     onClick={() => !disabled && setTempColor(c)}
                                                     disabled={disabled}
-                                                    title={reason} 
+                                                    title={reason}
                                                 >
                                                     {c}
                                                     {tempColor === c && <div className="tick-icon">✓</div>}
@@ -160,13 +159,13 @@ const CartItem = ({ item, onRemove, onUpdateQuantity, isSelected, onToggleSelect
 
                                 {/* Buttons */}
                                 <div className="popup-actions">
-                                    <button 
+                                    <button
                                         className="btn-back"
                                         onClick={() => setShowPopup(false)}
                                     >
                                         Trở lại
                                     </button>
-                                    <button 
+                                    <button
                                         className="btn-confirm"
                                         onClick={handleConfirmVariant}
                                     >
@@ -176,14 +175,14 @@ const CartItem = ({ item, onRemove, onUpdateQuantity, isSelected, onToggleSelect
                             </div>
                         )}
                     </div>
-                    {/* === HẾT KHU VỰC PHÂN LOẠI === */}
+                    {/* Hết phân loại*/}
 
-                    <button 
+                    <button
                         className="remove-item-btn"
                         onClick={(e) => {
                             e.preventDefault();
                             if (window.confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
-                                onRemove(item.itemId); 
+                                onRemove(item.itemId);
                             }
                         }}
                     >
@@ -193,21 +192,21 @@ const CartItem = ({ item, onRemove, onUpdateQuantity, isSelected, onToggleSelect
             </div>
 
             <div className="price-col">{priceFormatted} VND</div>
-            
+
             <div className="quantity-col">
                 <div className="quantity-selector">
-                    <button 
+                    <button
                         className="btn-quantity minus"
-                        onClick={() => onUpdateQuantity(item.itemId, item.quantity - 1)} 
+                        onClick={() => onUpdateQuantity(item.itemId, item.quantity - 1)}
                     >-</button>
-                    <input type="number" value={item.quantity} min="1" readOnly/>
-                    <button 
+                    <input type="number" value={item.quantity} min="1" readOnly />
+                    <button
                         className="btn-quantity plus"
-                        onClick={() => onUpdateQuantity(item.itemId, item.quantity + 1)} 
+                        onClick={() => onUpdateQuantity(item.itemId, item.quantity + 1)}
                     >+</button>
                 </div>
             </div>
-            
+
             <div className="subtotal-col">{subtotalFormatted} VND</div>
         </div>
     );

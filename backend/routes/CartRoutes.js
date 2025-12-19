@@ -1,11 +1,9 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
-const {verifyToken} = require('../middleware/authMiddleware');
-
-const { addToCart, viewCart, updateCart, removeCartItem, clearCart } = require('../controllers/CartController');
-
-const { validate, addToCartRules, updateCartRules } = require('../middleware/cartValidator');
+import {verifyToken} from '../middleware/authMiddleware.js';
+import { addToCart, viewCart, updateCart, removeCartItem, clearCart } from '../controllers/cartController.js';
+import { validate, addToCartRules, updateCartRules } from '../middleware/cartValidator.js';
 
 // Tất cả các route giỏ hàng đều yêu cầu đăng nhập
 router.use(verifyToken);
@@ -27,4 +25,4 @@ router.delete('/', clearCart);
 // PUT /api/cart
 router.put('/', updateCartRules(), validate, updateCart);
 
-module.exports = router;
+export default router;

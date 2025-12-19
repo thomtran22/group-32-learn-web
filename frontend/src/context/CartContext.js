@@ -11,7 +11,7 @@ export const useCart = () => {
 export const CartProvider = ({children}) => {
     const navigate = useNavigate();
 
-    // --- STATE ---
+    // state
     const [cartItems, setCartItems] = useState([]);
     const [isCartLoaded, setIsCartLoaded] = useState(false);
     const [selectedItems, setSelectedItems] = useState([]);
@@ -25,8 +25,9 @@ export const CartProvider = ({children}) => {
             : total;
     }, 0);
 
-    // --- CALCULATE TOTAL ---
+    // caculate total
     const totalAmount = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
     const totalAmountFormatted = totalAmount.toLocaleString('vi-VN');
     const selectedTotalFormatted = selectedTotal.toLocaleString('vi-VN');
 
@@ -61,26 +62,21 @@ export const CartProvider = ({children}) => {
         }
     };
 
-    // ================== HELPER: HÀM XỬ LÝ URL ẢNH (FIX LẠI) ==================
+    // Hàm xử lý url ảnh
     const getFullImageUrl = (productObj) => {
         let imgUrl = '';
 
-        // 1. Ưu tiên lấy từ mảng images
+        //Ưu tiên lấy từ mảng images
         if (productObj.images && productObj.images.length > 0) {
             imgUrl = productObj.images[0];
         }
 
         // 2. Fallback
         if (!imgUrl) return "https://via.placeholder.com/150?text=No+Image";
-
-        // 3. QUAN TRỌNG: VÌ ẢNH NẰM Ở PUBLIC FRONTEND (PORT 3000)
-        // Nên ta giữ nguyên đường dẫn tương đối, KHÔNG thêm domain backend nữa.
-        // Ví dụ: "/assets/images/abc.jpg" -> React tự hiểu là localhost:3000/assets...
-        
         return imgUrl; 
     };
 
-    // ================== 1. LOAD GIỎ HÀNG ==================
+    // Load giỏ hàng
     useEffect(() => {
         const loadCart = async () => {
             if (isLoggedIn) {
@@ -141,7 +137,7 @@ export const CartProvider = ({children}) => {
         }
     }, [cartItems, isLoggedIn, isCartLoaded])
 
-    // ================== 3. LOGIC UPDATE SỐ LƯỢNG ==================
+    // Update số lượng
     useEffect(() => {
         if (!isLoggedIn || !isCartLoaded || !isUpdateActionRef.current) return;
 
@@ -163,10 +159,8 @@ export const CartProvider = ({children}) => {
 
         return () => clearTimeout(timeout);
     }, [cartItems, isLoggedIn, isCartLoaded]);
-
-    // ================== CÁC HÀM THAO TÁC ==================
     
-    // --- ADD ---
+    // Add
     const addToCart = async (product) => {
         isUpdateActionRef.current = false;
 
@@ -232,7 +226,7 @@ export const CartProvider = ({children}) => {
         }
     };
 
-    // --- REMOVE ---
+    // Remove
     const handleRemoveItem = async (itemId) => {
         isUpdateActionRef.current = false; 
         const prevCart = [...cartItems]; 
@@ -249,7 +243,7 @@ export const CartProvider = ({children}) => {
         }
     };
 
-    // --- UPDATE QUANTITY ---
+    // Update quantity
     const handleUpdateQuantity = (itemId, newQuantity) => {
         if(newQuantity < 1) return;
         isUpdateActionRef.current = true;
@@ -289,7 +283,7 @@ export const CartProvider = ({children}) => {
         });
     };
 
-    // --- CLEAR ---
+    // Clear
     const clearCart = async () => {
         isUpdateActionRef.current = false; 
         setCartItems([]); 
@@ -309,7 +303,7 @@ export const CartProvider = ({children}) => {
         }
     };
 
-    // --- CHECKOUT ---
+    // Checkout
     const handleCheckout = (selectedIds = []) => {       
         if (!selectedIds || selectedIds.length === 0) {
             alert("Vui lòng chọn sản phẩm để thanh toán!");
@@ -333,6 +327,7 @@ export const CartProvider = ({children}) => {
 
     const value = {
         cartItems,
+        cartCount,
         handleRemoveItem,
         handleUpdateQuantity,
         updateItemVariant,

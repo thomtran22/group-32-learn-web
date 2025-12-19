@@ -1,8 +1,8 @@
 import React, { useState }  from "react";
 
 import {useCart} from '../context/CartContext';
-import CartItem from "../components/Cart/CartItem";
-import OrderSummary from '../components/Cart/OrderSummary';
+import CartItem from "../components/cart/CartItem";
+import OrderSummary from '../components/cart/OrderSummary';
 
 const Cart = () => {
     const { 

@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const ShipperPerformanceSchema = new mongoose.Schema(
   {
@@ -17,4 +17,5 @@ const ShipperPerformanceSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("ShipperPerformance", ShipperPerformanceSchema);
+const ShipperPerformance = mongoose.model("ShipperPerformance", ShipperPerformanceSchema);
+export default ShipperPerformance;

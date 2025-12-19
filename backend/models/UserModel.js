@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
@@ -6,14 +6,14 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
 
-    gender: { type: String },
-    birthDay: String,
-    birthMonth: String,
-    birthYear: String,
+    gender: ["Nam", "Nữ", "Khác"],
+    birthDay: { type: String },
+    birthMonth: { type: String },
+    birthYear: { type: String },
 
     role: {
       type: String,
-      enum: ["customer", "shipper", "admin"],
+      enum: ["customer", "shipper"],
       required: true,
       default: "customer",
     },
@@ -21,4 +21,5 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("User", userSchema, "users");
+const User = mongoose.model("User", userSchema, "users");
+export default User;

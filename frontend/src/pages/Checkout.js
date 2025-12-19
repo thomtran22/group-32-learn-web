@@ -1,8 +1,8 @@
 import React, {useState, useEffect} from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCart } from '../context/CartContext';
-import CheckoutForm from '../components/Checkout/CheckoutForm';
-import CheckoutSummary from '../components/Checkout/CheckoutSummary';
+import CheckoutForm from '../components/checkout/CheckoutForm';
+import CheckoutSummary from '../components/checkout/CheckoutSummary';
 
 
 import { apiCreateOrder, apiCreatePaymentUrl } from '../services/orderApi';
@@ -25,7 +25,7 @@ const Checkout = () => {
                             ? itemsFromLocation 
                             : itemsFromContext;
 
-    // 4. Nếu vẫn rỗng (người dùng gõ thẳng URL /checkout mà chưa chọn gì) -> đá về trang chủ hoặc giỏ hàng
+    // 4. Nếu vẫn rỗng (người dùng gõ thẳng URL /checkout mà chưa chọn gì), về trang chủ hoặc giỏ hàng
     useEffect(() => {
         if (itemsToCheckout.length === 0) {
             navigate('/cart');

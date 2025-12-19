@@ -3,6 +3,12 @@
     margin-bottom: 30px;
 }
 
+.checkout-wrapper {
+    max-width: 1200px; /* Đặt lại kích thước riêng cho trang này */
+    margin: 30px auto;
+    padding: 0 15px;
+}
+
 /* --- Coupon Banner --- */
 .coupon-banner {
     border: 1px solid var(--border-color);

@@ -1,4 +1,4 @@
-const { body, param, validationResult } = require('express-validator');
+import { body, param, validationResult } from 'express-validator';
 
 const validate = (req, res, next) => {
     const errors = validationResult(req);
@@ -29,7 +29,7 @@ const updateCartRules = () => {
     ];
 };
 
-module.exports = {
+export {
     validate,
     addToCartRules,
     updateCartRules

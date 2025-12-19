@@ -1,5 +1,5 @@
-const Cart = require('../models/CartModel');
-const Product = require('../models/ProductModel');
+import Cart from '../models/CartModel.js';
+import Product from '../models/ProductModel.js';
 
 // POST /api/cart
 const addToCart = async (req, res) => {
@@ -29,7 +29,7 @@ const addToCart = async (req, res) => {
             });
         }
 
-        // Query 2: lấy giỏ hàng, dùng *1 lần duy nhất*
+        // Query 2: lấy giỏ hàng, dùng 1 lần duy nhất*
         let cart = await Cart.findOne({ userId });
 
         let existingQty = 0;
@@ -110,7 +110,7 @@ const viewCart = async (req, res) => {
             cart
         });
     } catch (error) {
-        console.error('❌ View cart error:', error);
+        console.error('View cart error:', error);
 
         res.status(500).json({
             success: false,
@@ -130,7 +130,6 @@ const updateCart = async (req, res) => {
         if (!cart) cart = new Cart({ userId, items: [] });
 
         const productIds = items.map(item => item.productId);
-        // --- SỬA: Lấy thêm variants để check tồn kho nếu cần (tạm thời chỉ lấy info cơ bản) ---
         const products = await Product.find({ _id: { $in: productIds } });
         const productMap = products.reduce((acc, product) => {
             acc[product._id.toString()] = product;
@@ -172,7 +171,7 @@ const updateCart = async (req, res) => {
             cart: populatedCart
         });
     } catch (error) {
-        console.error('❌ Update cart error:', error);
+        console.error('Update cart error:', error);
         res.status(500).json({
             success: false,
             message: error.message
@@ -226,7 +225,7 @@ const clearCart = async (req, res) => {
     }
 }; 
 
-module.exports = { 
+export { 
     addToCart,
     viewCart,
     updateCart,

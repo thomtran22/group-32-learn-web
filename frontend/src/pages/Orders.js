@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
-// Import các API cần thiết (giả sử bạn đã viết thêm apiCancelOrder, apiConfirmReceived)
 import { apiViewOrders, apiCancelOrder, apiReceiveOrder } from '../services/orderApi';
-import OrderTabs from '../components/Order/OrderTabs';
-import OrderSearch from '../components/Order/OrderSearch';
-import OrderCard from '../components/Order/OrderCard';
-import EmptyState from '../components/Order/EmptyState';
+import OrderTabs from '../components/order/OrderTabs';
+import OrderSearch from '../components/order/OrderSearch';
+import OrderCard from '../components/order/OrderCard';
+import EmptyState from '../components/order/EmptyState';
 // Import constant tab ID để đảm bảo đồng bộ
 import { ORDER_TABS } from '../utils/orderHelpers'; 
 
@@ -14,7 +13,7 @@ const Orders = () => {
     const [activeTab, setActiveTab] = useState('ALL'); // Mặc định là 'ALL'
     const [searchText, setSearchText] = useState('');
 
-    // 1. Fetch dữ liệu khi mount
+    // Fetch dữ liệu khi mount
     useEffect(() => {
         const fetchOrders = async () => {
             try {
@@ -35,7 +34,7 @@ const Orders = () => {
         fetchOrders();
     }, []);
 
-    // 2. Xử lý Hủy đơn hàng (Truyền xuống OrderCard)
+    //Xử lý Hủy đơn hàng (Truyền xuống OrderCard)
     const handleCancelOrder = async (orderId) => {
         if (!window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này?")) return;
 
@@ -56,7 +55,7 @@ const Orders = () => {
         }
     };
 
-    // 3. Xử lý Xác nhận đã nhận hàng (Truyền xuống OrderCard)
+    //Xử lý Xác nhận đã nhận hàng (Truyền xuống OrderCard)
     const handleConfirmReceived = async (orderId) => {
         if (!window.confirm("Bạn xác nhận đã nhận được hàng và hài lòng với sản phẩm?")) return;
 
@@ -73,10 +72,10 @@ const Orders = () => {
         }
     };
 
-    // 4. Logic Lọc dữ liệu (Dùng useMemo để tối ưu hiệu năng)
+    //Logic Lọc dữ liệu (Dùng useMemo để tối ưu hiệu năng)
     const filteredOrders = useMemo(() => {
         return orders.filter(order => {
-            // A. Lọc theo Tab
+            // Lọc theo Tab
             let matchTab = false;
             switch (activeTab) {
                 case 'ALL':
@@ -100,7 +99,7 @@ const Orders = () => {
                     matchTab = true;
             }
 
-            // B. Lọc theo Search Text (Mã đơn hoặc Tên sản phẩm)
+            // Lọc theo Search Text (Mã đơn hoặc Tên sản phẩm)
             let matchSearch = true;
             if (searchText) {
                 const keyword = searchText.toLowerCase();

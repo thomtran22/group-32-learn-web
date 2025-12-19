@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const ShipperInfoSchema = new mongoose.Schema(
   {
@@ -31,4 +31,5 @@ const ShipperInfoSchema = new mongoose.Schema(
 
 ShipperInfoSchema.index({ currentLocation: "2dsphere" });
 
-module.exports = mongoose.model("ShipperInfo", ShipperInfoSchema);
+const ShipperInfo = mongoose.model("ShipperInfo", ShipperInfoSchema);
+export default ShipperInfo;

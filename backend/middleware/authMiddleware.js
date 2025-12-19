@@ -1,28 +1,27 @@
-const jwt = require("jsonwebtoken");
+import jwt from 'jsonwebtoken';
 
 const verifyToken = (req, res, next) => {
-  // Lấy token từ header: "Authorization: Bearer <token>"
-  const authHeader = req.header("Authorization");
-  const token = authHeader && authHeader.split(" ")[1];
+    // Lấy token từ header: "Authorization: Bearer <token>"
+    const authHeader = req.header('Authorization');
+    const token = authHeader && authHeader.split(' ')[1];
 
-  if (!token) {
-    return res.status(401).json({
-      success: false,
-      message: "Truy cập bị từ chối. Thiếu Token.",
-    });
-  }
+    if (!token) {
+        return res.status(401).json({
+            success: false,
+            message: "Truy cập bị từ chối. Thiếu Token."
+        });
+    }
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    req.user = decoded;
-    next();
-  } catch (e) {
-    return res.status(403).json({
-      success: false,
-      message: "Token không hợp lệ.",
-    });
-  }
+        req.user = decoded;
+        next();
+    } catch (e) {
+        return res.status(403).json({
+            success: false,
+            message: "Token không hợp lệ." });
+    }
 };
 
 const isAdmin = (req, res, next) => {
@@ -42,4 +41,4 @@ const isShipper = (req, res, next) => {
     res.status(403).json({ message: "Chỉ Shipper mới có quyền này" });
   }
 };
-module.exports = { verifyToken, isAdmin, isShipper };
+export { verifyToken, isAdmin, isShipper };
