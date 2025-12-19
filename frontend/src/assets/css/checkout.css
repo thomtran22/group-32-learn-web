@@ -1,0 +1,383 @@
+.container {
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+.checkout-wrapper {
+    max-width: 1200px; /* Đặt lại kích thước riêng cho trang này */
+    margin: 30px auto;
+    padding: 0 15px;
+}
+
+/* --- Coupon Banner --- */
+.coupon-banner {
+    border: 1px solid var(--border-color);
+    padding: 15px 20px;
+    margin-bottom: 30px;
+    font-size: 14px;
+}
+.coupon-banner a {
+    color: var(--text-color);
+    font-weight: 700;
+    text-decoration: none;
+}
+.coupon-banner a:hover {
+    color: var(--primary-color);
+}
+
+/* --- Checkout Layout --- */
+.checkout-layout {
+    display: flex;
+    gap: 40px;
+}
+.billing-details {
+    flex: 1.8;
+}
+.your-order {
+    flex: 1;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+/* --- Form Styling --- */
+.form-row {
+    display: flex;
+    gap: 20px;
+}
+.form-group {
+    margin-bottom: 15px;
+    flex: 1;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="tel"],
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    font-size: 14px;
+    font-family: 'Be Vietnam Pro', sans-serif;
+}
+.form-group select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+}
+.form-group textarea {
+    resize: vertical;
+}   
+
+/* --- Your Order Section --- */
+.your-order {
+    padding: 25px;
+    border: 1px solid var(--border-color);
+    height: fit-content;
+}
+.order-summary .summary-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 700;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border-color);
+    text-transform: uppercase;
+    font-size: 13px;
+}
+.order-summary .summary-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+.summary-item .product-name {
+    font-weight: 500;
+    margin: 0 0 5px 0;
+}
+.summary-item .product-meta {
+    font-size: 13px;
+    color: var(--text-light);
+    margin: 0;
+}
+.summary-item .product-price {
+    white-space: nowrap;
+    margin-left: 20px;
+}
+.order-summary .summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 0;
+}
+.order-summary .summary-row.total {
+    font-weight: 700;
+    font-size: 18px;
+    border-top: 2px solid var(--border-color);
+    padding-top: 15px;
+}
+.total-amount {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+/* --- Payment Methods Container --- */
+.payment-methods-container {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 2px solid var(--border-color);
+}
+
+.payment-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+
+/* Payment Option Styles */
+.payment-option {
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.payment-option:hover {
+    border-color: var(--primary-color);
+    background-color: #fafafa;
+}
+
+.payment-option.active {
+    border-color: var(--primary-color);
+    background-color: #fff5f5;
+    box-shadow: 0 0 0 1px var(--primary-color);
+}
+
+.payment-option input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+    vertical-align: middle;
+}
+
+.payment-option label {
+    display: inline-flex;
+    align-items: center;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    margin: 0;
+}
+
+.payment-option label i {
+    margin-right: 8px;
+    color: var(--primary-color);
+}
+
+/* QR Code Box */
+.qr-code-box {
+    margin-top: 15px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 8px;
+    text-align: center;
+}
+
+.qr-title {
+    font-weight: 600;
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #333;
+}
+
+.qr-title i {
+    color: var(--primary-color);
+    margin-right: 5px;
+}
+
+.qr-image-wrapper {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    display: inline-block;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.qr-image {
+    width: 200px;
+    height: 200px;
+    display: block;
+}
+
+.bank-info {
+    margin-top: 15px;
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: left;
+}
+
+.bank-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 13px;
+}
+
+.bank-row:last-of-type {
+    border-bottom: none;
+}
+
+.bank-label {
+    color: #666;
+    font-weight: 500;
+}
+
+.bank-value {
+    color: #333;
+    font-weight: 600;
+}
+
+.bank-note {
+    margin-top: 12px;
+    padding: 10px;
+    background-color: #fff3cd;
+    border-left: 3px solid #ffc107;
+    font-size: 12px;
+    border-radius: 4px;
+}
+
+.bank-note i {
+    color: #ffc107;
+    margin-right: 5px;
+}
+
+.bank-note strong {
+    color: var(--primary-color);
+}
+
+/* VNPay Styles */
+.vnpay-label {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.vnpay-logo {
+    height: 20px;
+    margin-left: 10px;
+}
+
+.vnpay-note {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #e3f2fd;
+    border-left: 3px solid #2196f3;
+    font-size: 13px;
+    border-radius: 4px;
+}
+
+.vnpay-note i {
+    color: #2196f3;
+    margin-right: 5px;
+}
+
+/* Place Order Button */
+.btn-place-order {
+    width: 100%;
+    background-color: var(--secondary-color);
+    color: #fff;
+    border: none;
+    padding: 16px;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    margin-top: 20px;
+    text-transform: uppercase;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-place-order:hover {
+    background-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(201, 37, 44, 0.3);
+}
+
+.btn-place-order i {
+    font-size: 16px;
+}
+
+/* Style cho ô textarea */
+#ordernotes {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px 15px; 
+    border: 1px solid #e1e1e1; 
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 14px;
+    color: #333;
+    background-color: #fff; 
+    resize: vertical;
+    outline: none; 
+    transition: all 0.3s ease; 
+}
+
+/* Hiệu ứng khi người dùng click chuột vào ô (Focus) */
+#ordernotes:focus {
+    border-color: #d70018;
+    box-shadow: 0 0 0 3px rgba(215, 0, 24, 0.1);
+}
+
+/* Style cho Placeholder (dòng chữ gợi ý mờ mờ) */
+#ordernotes::placeholder {
+    color: #999;
+    font-style: italic;
+}
+
+/* --- Responsive --- */
+@media (max-width: 992px) {
+    .checkout-layout {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .qr-image {
+        width: 180px;
+        height: 180px;
+    }
+    
+    .bank-row {
+        flex-direction: column;
+        gap: 5px;
+    }
+}

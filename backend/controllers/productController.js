@@ -1,69 +1,79 @@
 import asyncHandler from 'express-async-handler';
 import Product from '../models/ProductModel.js';
 import Category from '../models/CategoryModel.js';
-const getProducts = asyncHandler(async (req, res) => {
-    const { category: categorySlug, page: pageQuery, limit: limitQuery, size, sort } = req.query;
+import mongoose from 'mongoose';
 
-    const page = parseInt(pageQuery) || 1; 
-    const limit = parseInt(limitQuery) || 12; 
-    const skip = (page - 1) * limit; 
+export const getProducts = asyncHandler(async (req, res) => {
+    const { category: categorySlug, size, sort, page: pageQuery, priceRange } = req.query;
     
-    let filter = {};
-    let sortOptions = { createdAt: -1 };
-    if (categorySlug) {
-        const category = await Category.findOne({ slug: categorySlug });
+    const page = parseInt(pageQuery) || 1;
+    const limit = 12;
+    const skip = (page - 1) * limit;
 
-        if (category) {
-            filter.category = category._id; 
+    let filter = {};
+
+    if (categorySlug && categorySlug !== 'all') {
+        // Tìm danh mục cha bằng slug
+        const categoryDoc = await Category.findOne({ slug: categorySlug }).lean();
+
+        if (categoryDoc) {
+            // Tìm tất cả ID của danh mục con
+            const childCategories = await Category.find({ parent: categoryDoc._id }).lean();
+            
+            // Gom mảng ID chuẩn kiểu ObjectId
+            const allCategoryIds = [
+                categoryDoc._id, 
+                ...childCategories.map(c => c._id)
+            ];
+            
+            // Lọc sản phẩm khớp với danh sách ID này
+            filter.category = { $in: allCategoryIds };
+
         } else {
-            return res.json({ products: [], page: 1, pages: 1, count: 0 }); 
+            return res.json({ products: [], page: 1, pages: 0, count: 0 });
         }
     }
-    if (size) {
-        filter.sizes = { $in: [size] };
+
+    //Lọc theo size (Dùng $elemMatch vì variants là mảng object)
+    if (size && size.trim() !== '') {
+        filter.variants = { $elemMatch: { size: size } };
     }
-    if (sort === 'price-asc') {
-        sortOptions = { price: 1, createdAt: -1 };
-    } else if (sort === 'price-desc') {
-        sortOptions = { price: -1, createdAt: -1 };
-    } else {
-        sortOptions = { createdAt: -1 }; 
+
+    //Lọc theo  khoảng giá
+    if (priceRange) {
+        if (priceRange === 'under500') {
+            // Giá nhỏ hơn 500.000
+            filter.price = { $lt: 500000 };
+        } else if (priceRange === '500-1000') {
+            // Giá từ 500.000 đến 1.000.000
+            filter.price = { $gte: 500000, $lte: 1000000 };
+        } else if (priceRange === 'over1000') {
+            // Giá trên 1.000.000
+            filter.price = { $gt: 1000000 };
+        }
     }
-    
-    // Đếm tổng số sản phẩm dựa trên bộ lọc đã áp dụng (category + size)
+
+    // Truy vấn và đếm sản phẩm
     const count = await Product.countDocuments(filter);
-
-    //Truy vấn sản phẩm CÓ PHÂN TRANG, CÓ LỌC và CÓ SẮP XẾP
     const products = await Product.find(filter)
-        .populate('category', 'name slug image')
-        .sort(sortOptions)
-        .skip(skip) 
-        .limit(limit); 
-
-    //Tính tổng số trang
-    const pages = Math.ceil(count / limit);
-
-    // Trả về kết quả phân trang
+        .populate('category', 'name slug')
+        .sort(sort === 'price-asc' ? { price: 1 } : sort === 'price-desc' ? { price: -1 } : { createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean();
     res.json({
-        products,
+        products: products || [],
         page,
-        pages,
-        count
+        pages: Math.ceil(count / limit) || 1,
+        count: count || 0
     });
 });
 
-const getProductBySku = asyncHandler(async (req, res) => {
-    const productSku = req.params.sku; 
-
-    const product = await Product.findOne({ sku: productSku })
-        .populate('category', 'name slug image'); 
-
-    if (product) {
-        res.json(product);
-    } else {
+export const getProductBySku = asyncHandler(async (req, res) => {
+    const product = await Product.findOne({ sku: req.params.sku }).populate('category', 'name slug').lean();
+    if (product) res.json(product);
+    else {
         res.status(404);
         throw new Error('Product not found');
     }
 });
-
-export { getProducts, getProductBySku };

@@ -1,0 +1,49 @@
+.payment-result-container {
+    max-width: 600px;
+    margin: 80px auto;
+    padding: 40px;
+    background-color: #fff;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.status-icon {
+    font-size: 80px;
+    margin-bottom: 24px;
+}
+
+.icon-success { color: #4caf50; } /* Xanh lá */
+.icon-error { color: #f44336; }   /* Đỏ */
+.icon-warning { color: #ff9800; } /* Cam vàng */
+
+.result-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #333;
+}
+
+.result-message {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 32px;
+    line-height: 1.5;
+}
+
+.action-group {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+}
+
+/* Tận dụng lại class btn từ orders.css hoặc định nghĩa lại */
+.btn-outline {
+    background: transparent;
+    border: 1px solid #ddd;
+    color: #555;
+}
+.btn-outline:hover {
+    border-color: #333;
+    color: #333;
+}

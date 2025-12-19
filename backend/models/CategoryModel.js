@@ -12,6 +12,11 @@ const categorySchema = mongoose.Schema(
             type: String,
             required: true,
             unique: true, // Slug là duy nhất
+        },
+        parent: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Category', // Tham chiếu đến chính Model Category này
+            default: null,   // Nếu là null thì đây là danh mục cha lớn nhất (ví dụ: Áo Nam)
         }
     },
     //Tự động cập nhật thời gian tạo và thời gian cập nhật

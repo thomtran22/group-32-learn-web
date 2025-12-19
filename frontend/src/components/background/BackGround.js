@@ -1,4 +1,3 @@
-// src/components/Section1.js
 import React from "react";
 import bg from "../../assets/images/background.jpg";
 
