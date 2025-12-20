@@ -1,0 +1,274 @@
+/* shipper.css */
+:root {
+  --ship-primary: #dc3545; /* Màu đỏ chủ đạo của Shipper */
+  --ship-blue: #007bff;
+  --ship-green: #28a745;
+  --ship-gray: #6c757d;
+  --ship-bg: #f4f7f9;
+  --ship-white: #ffffff;
+  --ship-border: #dee2e6;
+  --ship-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Layout chính */
+.shipper-layout-wrapper {
+  background-color: var(--ship-bg);
+  min-height: 100vh;
+}
+
+.shipper-container {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 0 15px;
+  display: flex;
+  gap: 30px;
+}
+
+.shipper-sidebar {
+  flex: 0 0 250px;
+  background-color: var(--ship-white);
+  border-radius: 8px;
+  box-shadow: var(--ship-shadow);
+  padding: 15px;
+  height: fit-content;
+  position: sticky;
+  top: 20px;
+}
+
+.shipper-content {
+  flex-grow: 1;
+  background-color: var(--ship-white);
+  border-radius: 8px;
+  box-shadow: var(--ship-shadow);
+  padding: 25px;
+}
+
+/* Sidebar Elements */
+.sidebar-menu-header {
+  font-size: 0.85em;
+  font-weight: bold;
+  color: var(--ship-gray);
+  text-transform: uppercase;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--ship-border);
+  margin-bottom: 15px;
+}
+
+.shipper-nav-link {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  text-decoration: none;
+  color: #343a40;
+  border-radius: 6px;
+  margin-bottom: 5px;
+  transition: all 0.2s;
+}
+
+.shipper-nav-link:hover {
+  background-color: #f8f9fa;
+}
+
+.shipper-nav-link.active {
+  background-color: #fff0f1;
+  color: var(--ship-primary);
+  font-weight: bold;
+  border-left: 4px solid var(--ship-primary);
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  padding: 20px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: white;
+  border: 1px solid var(--ship-border);
+}
+
+.stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+/* Table */
+.shipper-table-container {
+  overflow-x: auto;
+  margin-top: 15px;
+}
+
+.shipper-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.shipper-table th {
+  background-color: #f8f9fa;
+  padding: 12px;
+  text-align: left;
+  border-bottom: 2px solid var(--ship-border);
+}
+
+.shipper-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--ship-border);
+}
+
+/* Active Orders List */
+.order-accordion-item {
+  border: 1px solid var(--ship-border);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.order-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background-color: #fcfcfc;
+  cursor: pointer;
+}
+
+.order-expanded-body {
+  padding: 20px;
+  border-top: 1px solid var(--ship-border);
+  background-color: white;
+}
+
+/* Status Badges */
+.badge {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.85em;
+  font-weight: bold;
+}
+
+.badge-pending {
+  background: #fff3cd;
+  color: #856404;
+}
+.badge-shipping {
+  background: #cce5ff;
+  color: #004085;
+}
+.badge-success {
+  background: #d4edda;
+  color: #155724;
+}
+.badge-error {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* Buttons */
+.btn-ship {
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: opacity 0.2s;
+}
+
+.btn-ship-primary {
+  background-color: var(--ship-primary);
+  color: white;
+}
+.btn-ship-success {
+  background-color: var(--ship-green);
+  color: white;
+}
+.btn-ship-blue {
+  background-color: var(--ship-blue);
+  color: white;
+}
+.btn-ship-outline {
+  background: transparent;
+  border: 1px solid var(--ship-border);
+}
+
+/* Modal */
+.modal-ship-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-ship-content {
+  background: white;
+  width: 90%;
+  max-width: 550px;
+  border-radius: 10px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 25px;
+}
+
+.profile-input-group {
+  margin-bottom: 15px;
+}
+
+.profile-input-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #555;
+  font-size: 0.9em;
+}
+
+.ship-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--ship-border);
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.ship-input:focus {
+  border-color: var(--ship-blue);
+}
+
+.ship-input:disabled {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+.profile-card-header {
+  border-bottom: 1px solid var(--ship-border);
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+  color: var(--ship-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

@@ -2,9 +2,7 @@ import "dotenv/config";
 import express from "express";
 const router = express.Router();
 import User from "../models/UserModel.js";
-import UserAddress from "../models/UserAddress.js";
 import Order from "../models/OrderModel.js";
-import ProductReview from "../models/ProductReview.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
@@ -55,7 +53,7 @@ router.post("/register", async (req, res) => {
       password: hashedPassword,
       gender: gender || "Khác",
       dateOfBirth: dateOfBirth,
-      role: "customer",
+      role: role || "customer",
     });
 
     await newUser.save();
@@ -238,21 +236,6 @@ router.get("/stats", verifyToken, async (req, res) => {
               ],
             },
           },
-        },
-      },
-    ]);
-
-    const reviewStats = await ProductReview.aggregate([
-      {
-        $match: {
-          userId,
-          rating: 5,
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          totalFiveStarReviews: { $sum: 1 },
         },
       },
     ]);

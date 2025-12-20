@@ -4,7 +4,7 @@ import Order from "../models/OrderModel.js";
 import ShipperInfo from "../models/ShipperInfo.js";
 import ShipperPerformance from "../models/ShipperPerformance.js";
 import User from "../models/UserModel.js";
-import { verifyToken, isShipper } from "../middleware/authMiddleware.js";;
+import { verifyToken, isShipper } from "../middleware/authMiddleware.js";
 
 router.get("/orders/new", verifyToken, isShipper, async (req, res) => {
   try {
@@ -153,32 +153,61 @@ router.get("/stats", verifyToken, isShipper, async (req, res) => {
 router.get("/info", verifyToken, isShipper, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
-    const shipperInfo = await ShipperInfo.findOne({ userId: req.user.id });
 
-    if (!user) return res.status(404).json({ message: "User không tồn tại" });
+    let shipperInfo = await ShipperInfo.findOne({ userId: req.user.id });
+
+    if (!user) {
+      return res.status(404).json({ message: "Người dùng không tồn tại" });
+    }
+
+    const shipperDetails = shipperInfo || {
+      phoneNumber: "",
+      vehicleType: "Motorbike",
+      licensePlate: "",
+      workingArea: [],
+      status: "ACTIVE",
+      rating: 5,
+    };
 
     res.json({
       user,
-      shipperDetails: shipperInfo || {},
+      shipperDetails,
     });
   } catch (error) {
-    res.status(500).json({ message: "Lỗi tải hồ sơ" });
+    console.error("Lỗi GET /info:", error);
+    res.status(500).json({ message: "Lỗi máy chủ khi tải hồ sơ" });
   }
 });
 
 router.put("/info", verifyToken, isShipper, async (req, res) => {
-  const { fullName, phone, vehicleType, licensePlate } = req.body;
+  const { fullName, email, phone, vehicleType, licensePlate } = req.body;
 
   try {
+    if (email) {
+      const existingUser = await User.findOne({
+        email,
+        _id: { $ne: req.user.id },
+      });
+      if (existingUser) {
+        return res
+          .status(400)
+          .json({ message: "Email này đã được sử dụng bởi tài khoản khác." });
+      }
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
-      { fullName, phoneNumber: phone },
+      { fullName, email },
       { new: true }
     ).select("-password");
 
     const updatedShipperInfo = await ShipperInfo.findOneAndUpdate(
       { userId: req.user.id },
-      { vehicleType, licensePlate },
+      {
+        phoneNumber: phone,
+        vehicleType,
+        licensePlate,
+      },
       { new: true, upsert: true }
     );
 
@@ -189,7 +218,7 @@ router.put("/info", verifyToken, isShipper, async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Lỗi cập nhật hồ sơ" });
+    res.status(500).json({ message: "Lỗi hệ thống khi cập nhật hồ sơ" });
   }
 });
 
