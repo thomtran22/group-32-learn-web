@@ -4,7 +4,7 @@ import { formatMoney, getStatusInfo } from '../../utils/orderHelpers';
 import OrderItem from './OrderItem';
 
 // Thêm prop onOrderClick
-const OrderCard = ({ order, onCancelOrder, onConfirmReceived, onOrderClick }) => {
+const OrderCard = ({ order, onCancelOrder, onConfirmReceived, onOrderClick, onPayNow }) => {
     const navigate = useNavigate();
     const statusInfo = getStatusInfo(order.status);
 
@@ -49,14 +49,20 @@ const OrderCard = ({ order, onCancelOrder, onConfirmReceived, onOrderClick }) =>
                     {order.paymentMethod === 'VNPAY' && !order.isPaid && (
                         <button 
                             className="btn btn-primary"
-                            onClick={() => window.location.href = `/api/payment/create_payment_url/${order._id}`} 
+                            onClick={(e) => {
+                                e.stopPropagation(); // Ngăn click lan ra thẻ card
+                                onPayNow(order);
+                            }}
                         >
                             Thanh toán ngay
                         </button>
                     )}
                     <button 
                         className="btn btn-danger"
-                        onClick={() => onCancelOrder(order._id)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onCancelOrder(order._id);
+                        }}
                     >
                         Hủy đơn hàng
                     </button>

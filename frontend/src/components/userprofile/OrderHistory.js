@@ -4,13 +4,17 @@ import {
     apiViewOrders, 
     apiGetOrderDetail, 
     apiCancelOrder, 
-    apiReceiveOrder 
+    apiReceiveOrder,
+    apiCreatePaymentUrl
 } from "../../services/orderApi";
 import OrderTabs from "../order/OrderTabs";     
 import OrderSearch from "../order/OrderSearch";
 import OrderCard from "../order/OrderCard";
 import EmptyState from "../order/EmptyState";
 import ShippingInformation from "../ShippingInformation"; 
+
+import { toast } from 'react-toastify'; // Thông báo góc màn hình
+import 'react-toastify/dist/ReactToastify.css'; // CSS cho toast
 
 const OrderHistory = () => {
   // --- STATE QUẢN LÝ LIST & FILTER (Từ Orders.js) ---
@@ -125,6 +129,38 @@ const OrderHistory = () => {
       return <div style={{padding: 20}}>Đang tải dữ liệu...</div>;
   }
 
+  const handlePayNow = async (order) => {
+    const toastId = toast.loading("Đang kết nối cổng thanh toán VNPAY...");
+    
+    try {
+        const vnpayData = {
+            orderId: order._id,
+            amount: order.totalPrice, // Lấy tổng tiền từ đơn hàng cũ
+            language: 'vn'
+        };
+
+        const res = await apiCreatePaymentUrl(vnpayData);
+        if (res.success && res.url) {
+            window.location.href = res.url; 
+        } else {
+            // Nếu thất bại
+            toast.update(toastId, { 
+                render: "Không thể tạo liên kết thanh toán.", 
+                type: "error", 
+                isLoading: false, 
+                autoClose: 3000 
+            });
+        }
+    } catch (error) {
+        console.error(error);
+        toast.update(toastId, { 
+            render: "Lỗi kết nối server.", 
+            type: "error", 
+            isLoading: false, 
+            autoClose: 3000 
+        });
+      }
+  };
   return (
     <div className="order-history-container" style={{ fontFamily: "Arial, sans-serif" }}>
       
@@ -157,6 +193,7 @@ const OrderHistory = () => {
                         onConfirmReceived={handleConfirmReceived}
                         // Truyền hàm này để chặn navigate mặc định
                         onOrderClick={handleViewDetail} 
+                        onPayNow={handlePayNow}
                     />
                 ))}
             </div>
