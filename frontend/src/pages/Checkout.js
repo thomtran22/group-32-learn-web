@@ -162,7 +162,7 @@ const Checkout = () => {
 
     return (
         <>
-            <div className="container">
+            <div className="checkout-wrapper">
                 <div className="checkout-layout">
                     <CheckoutForm formData={formData} handleChange={handleChange}/>
                     <CheckoutSummary 

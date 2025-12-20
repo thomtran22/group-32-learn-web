@@ -1,438 +1,326 @@
-.container {
-    margin-top: 30px;
-    margin-bottom: 30px;
+
+:root {
+    --primary-color: #000;
+    --accent-color: #2f5acf;
+    --border-color: #e6e6e6;
+    --bg-light: #fafafa;
+    --text-color: #333;
+    --text-light: #737373;
 }
 
 .checkout-wrapper {
-    max-width: 1200px; /* Đặt lại kích thước riêng cho trang này */
-    margin: 30px auto;
-    padding: 0 15px;
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+    font-family: 'Be Vietnam Pro', sans-serif; /* Hoặc font bạn đang dùng */
 }
 
-/* --- Coupon Banner --- */
-.coupon-banner {
-    border: 1px solid var(--border-color);
-    padding: 15px 20px;
-    margin-bottom: 30px;
-    font-size: 14px;
-}
-.coupon-banner a {
-    color: var(--text-color);
-    font-weight: 700;
-    text-decoration: none;
-}
-.coupon-banner a:hover {
-    color: var(--primary-color);
-}
-
-/* --- Checkout Layout --- */
+/* --- Layout Split Screen --- */
 .checkout-layout {
-    display: flex;
-    gap: 40px;
+    display: grid;
+    grid-template-columns: 1.4fr 1fr; /* Bên trái rộng hơn */
+    gap: 60px;
+    align-items: start;
 }
+
+/* --- LEFT COLUMN: Form --- */
 .billing-details {
-    flex: 1.8;
-}
-.your-order {
-    flex: 1;
+    padding-right: 20px;
 }
 
 .section-title {
-    font-size: 18px;
-    font-weight: 700;
-    margin-top: 0;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    color: var(--text-color);
+    letter-spacing: -0.5px;
+}
+
+/* Form Styles */
+.form-group {
     margin-bottom: 20px;
 }
 
-/* --- Form Styling --- */
 .form-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 20px;
 }
-.form-group {
-    margin-bottom: 15px;
-    flex: 1;
-}
+
 .form-group label {
     display: block;
     margin-bottom: 8px;
-    font-weight: 500;
-}
-.form-group input[type="text"],
-.form-group input[type="email"],
-.form-group input[type="tel"],
-.form-group select,
-.form-group textarea {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--border-color);
-    font-size: 14px;
-    font-family: 'Be Vietnam Pro', sans-serif;
-}
-.form-group select {
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    background-size: 16px 12px;
-}
-.form-group textarea {
-    resize: vertical;
-}   
-
-/* --- Your Order Section --- */
-.your-order {
-    padding: 25px;
-    border: 1px solid var(--border-color);
-    /* height: fit-content;  <-- Xóa dòng này đi hoặc để cũng được */
-    
-    /* --- THÊM MỚI: Biến cả khối to này thành Sticky --- */
-    position: sticky;
-    top: 20px; 
-    background: #fff; /* Quan trọng: Phải có màu nền để không bị trong suốt */
-    z-index: 10;
-    border-radius: 8px; /* Bo góc chút cho đẹp giống Cart */
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
-/* --- Your Order Section --- */
-.your-order .order-summary {
-    position: static ;
-    box-shadow: none;
-    padding: 0;
-    background: transparent;
-    margin-bottom: 20px;
-}
-
-.order-summary .summary-header {
-    display: flex;
-    justify-content: space-between;
-    font-weight: 700;
-    padding-bottom: 10px;
-    border-bottom: 2px solid var(--border-color);
-    text-transform: uppercase;
     font-size: 13px;
-}
-.order-summary .summary-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 15px 0;
-    border-bottom: 1px solid var(--border-color);
-}
-.summary-item .product-name {
     font-weight: 500;
-    margin: 0 0 5px 0;
-}
-.summary-item .product-meta {
-    font-size: 13px;
-    color: var(--text-light);
-    margin: 0;
-}
-.summary-item .product-price {
-    white-space: nowrap;
-    margin-left: 20px;
-}
-.order-summary .summary-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 15px 0;
-}
-.order-summary .summary-row.total {
-    font-weight: 700;
-    font-size: 18px;
-    border-top: 2px solid var(--border-color);
-    padding-top: 15px;
-}
-.total-amount {
-    color: var(--primary-color);
-    font-weight: 700;
-}
-
-/* --- Payment Methods Container --- */
-.payment-methods-container {
-    margin-top: 25px;
-    padding-top: 20px;
-    border-top: 2px solid var(--border-color);
-}
-
-.payment-title {
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 15px;
-    text-transform: uppercase;
-}
-
-/* Payment Methods Container */
-.payment-methods-container {
-    margin-top: 30px; /* Tăng khoảng cách với bảng tổng tiền */
-    padding-top: 25px;
-    border-top: 1px dashed var(--border-color); /* Đổi sang nét đứt cho nhẹ nhàng */
-}
-
-.payment-title {
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 20px;
-    text-transform: uppercase;
-}
-
-/* Payment Option Styles - DÙNG FLEXBOX ĐỂ CĂN GIỮA */
-.payment-option {
-    display: flex; /* Quan trọng: để căn hàng ngang */
-    align-items: center; /* Căn giữa theo chiều dọc */
-    flex-wrap: wrap; /* Để dòng thông báo VNPay rớt xuống dòng dưới */
-    border: 1px solid var(--border-color); /* Viền mỏng thôi */
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    background-color: #fff;
-}
-
-.payment-option:hover {
-    border-color: var(--primary-color);
-    background-color: #fffcfc;
-}
-
-.payment-option.active {
-    border-color: var(--primary-color);
-    background-color: #fff5f5; /* Nền hồng nhạt khi chọn */
-    box-shadow: 0 0 0 1px var(--primary-color); /* Hiệu ứng viền đôi sắc nét */
-}
-
-/* Style lại nút tròn Radio cho đẹp */
-.payment-option input[type="radio"] {
-    width: 18px;
-    height: 18px;
-    margin-right: 12px;
-    cursor: pointer;
-    accent-color: var(--primary-color);
-    margin-top: 0; /* Reset margin thừa */
-}
-
-/* Label chứa chữ và icon */
-.payment-option label {
-    flex: 1; /* Chiếm hết khoảng trống còn lại */
-    display: flex;
-    align-items: center;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    margin: 0;
     color: var(--text-color);
 }
 
-.payment-option label i {
-    margin-right: 10px;
-    color: var(--primary-color);
-    font-size: 16px;
-    width: 20px; /* Cố định chiều rộng icon để chữ thẳng hàng */
-    text-align: center;
-}
-
-/* Riêng cho VNPay Label */
-.vnpay-label {
-    justify-content: space-between; /* Đẩy logo sang phải cùng */
+.form-group input,
+.form-group select,
+.form-group textarea {
     width: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px; /* Bo góc mềm mại */
+    font-size: 14px;
+    transition: all 0.2s ease;
+    background-color: #fff;
+    color: var(--text-color);
 }
 
-.vnpay-logo {
-    height: 24px; /* Tăng kích thước logo lên chút cho rõ */
-    width: auto;
-    object-fit: contain;
-    margin-left: 10px;
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 4px rgba(47, 90, 207, 0.1); /* Hiệu ứng focus xịn */
+    outline: none;
 }
 
-/* Dòng thông báo màu xanh của VNPay */
-.vnpay-note {
-    flex-basis: 100%; /* Chiếm trọn 1 dòng mới */
-    margin-top: 12px;
-    margin-left: 30px; /* Thụt vào thẳng hàng với chữ, né nút radio ra */
-    padding: 10px 15px;
-    background-color: #e6f7ff; /* Màu xanh dương nhạt chuẩn style thông báo */
-    border: 1px solid #91d5ff;
-    color: #0050b3;
-    font-size: 13px;
-    border-radius: 6px;
+.form-group input::placeholder {
+    color: #bbb;
+}
+
+/* --- RIGHT COLUMN: Summary (Sticky Sidebar) --- */
+.your-order {
+    background-color: var(--bg-light);
+    padding: 30px;
+    border-radius: 12px;
+    position: sticky;
+    top: 30px;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+/* Product Item in Summary */
+.summary-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    animation: fadeIn 0.3s ease;
+    margin-bottom: 20px;
+    gap: 15px;
 }
 
-.vnpay-note i {
-    color: #1890ff; /* Icon màu xanh dương */
-}
-
-/* Hiệu ứng xuất hiện nhẹ nhàng */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* QR Code Box */
-.qr-code-box {
-    margin-top: 15px;
-    padding: 20px;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+.product-image-container {
+    position: relative;
+    width: 65px;
+    height: 65px;
+    border: 1px solid rgba(0,0,0,0.1);
     border-radius: 8px;
-    text-align: center;
+    background: #fff;
+    padding: 2px;
 }
 
-.qr-title {
-    font-weight: 600;
-    margin-bottom: 15px;
-    font-size: 14px;
-    color: #333;
-}
-
-.qr-title i {
-    color: var(--primary-color);
-    margin-right: 5px;
-}
-
-.qr-image-wrapper {
-    background: white;
-    padding: 15px;
-    border-radius: 8px;
-    display: inline-block;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-.qr-image {
-    width: 200px;
-    height: 200px;
-    display: block;
-}
-
-.bank-info {
-    margin-top: 15px;
-    background: white;
-    padding: 15px;
-    border-radius: 8px;
-    text-align: left;
-}
-
-.bank-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid #f0f0f0;
-    font-size: 13px;
-}
-
-.bank-row:last-of-type {
-    border-bottom: none;
-}
-
-.bank-label {
-    color: #666;
-    font-weight: 500;
-}
-
-.bank-value {
-    color: #333;
-    font-weight: 600;
-}
-
-.bank-note {
-    margin-top: 12px;
-    padding: 10px;
-    background-color: #fff3cd;
-    border-left: 3px solid #ffc107;
-    font-size: 12px;
-    border-radius: 4px;
-}
-
-.bank-note i {
-    color: #ffc107;
-    margin-right: 5px;
-}
-
-.bank-note strong {
-    color: var(--primary-color);
-}
-
-/* Place Order Button */
-.btn-place-order {
+.product-thumb {
     width: 100%;
-    background-color: var(--secondary-color);
-    color: #fff;
-    border: none;
-    padding: 16px;
-    font-weight: 700;
-    font-size: 15px;
-    cursor: pointer;
-    margin-top: 20px;
-    text-transform: uppercase;
+    height: 100%;
+    object-fit: contain;
     border-radius: 6px;
-    transition: all 0.3s ease;
+}
+
+.product-qty-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #666;
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.product-info {
+    flex: 1;
+}
+
+.product-name {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.4;
+    color: var(--text-color);
+}
+
+.product-meta {
+    font-size: 12px;
+    color: var(--text-light);
+    margin: 4px 0 0 0;
+}
+
+.product-price {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* Calculations */
+.order-calculation {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(0,0,0,0.1);
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: var(--text-light);
+}
+
+.summary-row.total {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(0,0,0,0.1);
+    color: var(--text-color);
+    font-size: 18px;
+    font-weight: 700;
+    align-items: center;
+}
+
+.total-amount {
+    color: var(--accent-color);
+    font-size: 24px;
+}
+
+/* Payment Methods Styles */
+.payment-methods-container {
+    margin-top: 30px;
+}
+
+.payment-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.payment-option {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: #fff;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.payment-option:hover {
+    border-color: var(--accent-color);
+}
+
+.payment-option.active {
+    border-color: var(--accent-color);
+    background-color: #f0f5ff; /* Xanh rất nhạt */
+}
+
+/* Custom Radio Circle (Thay thế input radio mặc định xấu xí) */
+.payment-option input[type="radio"] {
+    display: none; /* Ẩn radio mặc định */
+}
+
+.radio-circle {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    margin-right: 12px;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.payment-option.active .radio-circle {
+    border-color: var(--accent-color);
+    background-color: var(--accent-color);
+    box-shadow: inset 0 0 0 4px #fff; /* Tạo hiệu ứng chấm tròn ở giữa */
+}
+
+.payment-option label {
+    flex: 1;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.icon-payment {
+    color: var(--text-light);
+    font-size: 18px;
+}
+
+.vnpay-logo {
+    height: 20px;
+    margin-left: 10px;
+}
+
+.vnpay-note {
+    background-color: #e6f7ff;
+    border: 1px solid #91d5ff;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #0050b3;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
     gap: 8px;
 }
 
-.btn-place-order:hover {
-    background-color: var(--primary-color);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(201, 37, 44, 0.3);
-}
-
-.btn-place-order i {
-    font-size: 16px;
-}
-
-/* Style cho ô textarea */
-#ordernotes {
+/* Button Submit */
+.btn-place-order {
     width: 100%;
-    min-height: 120px;
-    padding: 12px 15px; 
-    border: 1px solid #e1e1e1; 
-    border-radius: 4px;
-    font-family: inherit;
-    font-size: 14px;
-    color: #333;
-    background-color: #fff; 
-    resize: vertical;
-    outline: none; 
-    transition: all 0.3s ease; 
+    background-color: var(--primary-color);
+    color: #fff;
+    border: none;
+    padding: 18px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 8px;
+    margin-top: 25px;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
 }
 
-/* Hiệu ứng khi người dùng click chuột vào ô (Focus) */
-#ordernotes:focus {
-    border-color: #d70018;
-    box-shadow: 0 0 0 3px rgba(215, 0, 24, 0.1);
+.btn-place-order:hover {
+    background-color: #333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
 }
 
-/* Style cho Placeholder (dòng chữ gợi ý mờ mờ) */
-#ordernotes::placeholder {
-    color: #999;
-    font-style: italic;
+.btn-place-order:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    transform: none;
 }
 
 /* --- Responsive --- */
-@media (max-width: 992px) {
+@media (max-width: 900px) {
     .checkout-layout {
-        flex-direction: column;
+        grid-template-columns: 1fr; /* Về 1 cột trên mobile */
+        gap: 30px;
     }
-}
 
-@media (max-width: 768px) {
-    .form-row {
-        flex-direction: column;
-        gap: 0;
+    .checkout-layout {
+        display: flex;
+        flex-direction: column-reverse; /* Đưa Summary lên trên Form trên Mobile (tuỳ chọn) */
+    }
+    /* Hoặc giữ nguyên thứ tự */
+    .checkout-layout {
+        display: block;
     }
     
-    .qr-image {
-        width: 180px;
-        height: 180px;
+    .billing-details {
+        padding-right: 0;
     }
     
-    .bank-row {
-        flex-direction: column;
-        gap: 5px;
+    .your-order {
+        margin-bottom: 30px;
     }
 }
