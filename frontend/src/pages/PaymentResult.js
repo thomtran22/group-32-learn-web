@@ -113,7 +113,7 @@ const PaymentResult = () => {
             <div className="action-group">
                 {statusData.type === 'success' ? (
                     // Trường hợp THÀNH CÔNG
-                    <Link to="/orders" className="btn btn-primary">
+                    <Link to="/profile" className="btn btn-primary">
                         Xem đơn hàng
                     </Link>
                 ) : (

@@ -46,7 +46,6 @@ function Header() {
               {/* Actions (Cart & Login) */}
               <div className="header-actions flex items-center gap-4 shrink-0">
                 {/* Giỏ hàng */}
-                {/* Giỏ hàng */}
                 <Link to="/cart" className="relative group p-2 hover:bg-gray-100 rounded-full transition-all duration-300">
                   <FaShoppingCart className="text-2xl text-gray-700 group-hover:text-red-600" />
 

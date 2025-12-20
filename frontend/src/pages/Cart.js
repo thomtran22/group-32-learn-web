@@ -1,4 +1,4 @@
-import React, { useState }  from "react";
+import React, { useState, useEffect }  from "react";
 
 import {useCart} from '../context/CartContext';
 import CartItem from "../components/cart/CartItem";
@@ -7,6 +7,7 @@ import OrderSummary from '../components/cart/OrderSummary';
 const Cart = () => {
     const { 
         cartItems,
+        loadCart,
         handleRemoveItem,
         handleUpdateQuantity,
         selectedTotal,
@@ -17,6 +18,12 @@ const Cart = () => {
         handleToggleSelect
     } = useCart();
     
+    useEffect(() => {
+        if (typeof loadCart === 'function') {
+            loadCart();
+        }
+    }, []);
+
     {/*Nếu giỏ hàng trống*/}
     if(cartItems.length === 0) {
         return (

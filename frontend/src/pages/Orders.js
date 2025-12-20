@@ -4,13 +4,17 @@ import OrderTabs from '../components/order/OrderTabs';
 import OrderSearch from '../components/order/OrderSearch';
 import OrderCard from '../components/order/OrderCard';
 import EmptyState from '../components/order/EmptyState';
-// Import constant tab ID để đảm bảo đồng bộ
 import { ORDER_TABS } from '../utils/orderHelpers'; 
+
+// 1. Import thư viện mới
+import Swal from 'sweetalert2'; // Popup xác nhận đẹp
+import { toast, ToastContainer } from 'react-toastify'; // Thông báo góc màn hình
+import 'react-toastify/dist/ReactToastify.css'; // CSS cho toast
 
 const Orders = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('ALL'); // Mặc định là 'ALL'
+    const [activeTab, setActiveTab] = useState('ALL'); 
     const [searchText, setSearchText] = useState('');
 
     // Fetch dữ liệu khi mount
@@ -20,13 +24,13 @@ const Orders = () => {
                 setLoading(true);
                 const data = await apiViewOrders();
                 if (data.success) {
-                    // Sắp xếp đơn mới nhất lên đầu
                     const sortedOrders = data.orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                     setOrders(sortedOrders);
                 }
             } catch (error) {
                 console.error("Lỗi tải đơn hàng:", error);
-                // Có thể thêm toast error tại đây
+                // Thay thế console log bằng Toast báo lỗi nhẹ nhàng
+                toast.error("Không thể tải danh sách đơn hàng.");
             } finally {
                 setLoading(false);
             }
@@ -34,77 +38,94 @@ const Orders = () => {
         fetchOrders();
     }, []);
 
-    //Xử lý Hủy đơn hàng (Truyền xuống OrderCard)
+    // Xử lý Hủy đơn hàng (Dùng SweetAlert2)
     const handleCancelOrder = async (orderId) => {
-        if (!window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này?")) return;
+        // Thay window.confirm bằng Swal.fire
+        const result = await Swal.fire({
+            title: 'Bạn chắc chắn chứ?',
+            text: "Bạn muốn hủy đơn hàng này? Hành động này không thể hoàn tác!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33', // Màu đỏ cho nút hủy
+            cancelButtonColor: '#3085d6', // Màu xanh cho nút đóng
+            confirmButtonText: 'Đúng, hủy đơn!',
+            cancelButtonText: 'Không, giữ lại'
+        });
+
+        if (!result.isConfirmed) return; // Nếu người dùng bấm Cancel thì thoát
 
         try {
             const res = await apiCancelOrder(orderId);
             if (res.success) {
-                // Cập nhật state trực tiếp để UI thay đổi ngay lập tức
                 setOrders(prevOrders => prevOrders.map(order => 
                     order._id === orderId ? { ...order, status: 'Cancelled' } : order
                 ));
-                alert("Đã hủy đơn hàng thành công");
+                
+                // Thay alert bằng SweetAlert success hoặc Toast
+                Swal.fire(
+                    'Đã hủy!',
+                    'Đơn hàng của bạn đã được hủy thành công.',
+                    'success'
+                );
             } else {
-                alert(res.message || "Hủy đơn thất bại");
+                toast.error(res.message || "Hủy đơn thất bại");
             }
         } catch (error) {
             console.error("Lỗi hủy đơn:", error);
-            alert("Lỗi kết nối server");
+            toast.error("Lỗi kết nối server, vui lòng thử lại.");
         }
     };
 
-    //Xử lý Xác nhận đã nhận hàng (Truyền xuống OrderCard)
+    // Xử lý Xác nhận đã nhận hàng (Dùng SweetAlert2)
     const handleConfirmReceived = async (orderId) => {
-        if (!window.confirm("Bạn xác nhận đã nhận được hàng và hài lòng với sản phẩm?")) return;
+        const result = await Swal.fire({
+            title: 'Xác nhận đã nhận hàng?',
+            text: "Bạn xác nhận đã nhận được sản phẩm và hài lòng với chất lượng?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745', // Màu xanh lá uy tín
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Xác nhận đã nhận',
+            cancelButtonText: 'Chưa nhận được'
+        });
+
+        if (!result.isConfirmed) return;
 
         try {
-            const res = await apiReceiveOrder(orderId); // API gọi endpoint update status -> Delivered
+            const res = await apiReceiveOrder(orderId);
             if (res.success) {
                 setOrders(prevOrders => prevOrders.map(order => 
                     order._id === orderId ? { ...order, status: 'Delivered', isDelivered: true, deliveredAt: Date.now() } : order
                 ));
-                alert("Xác nhận thành công!");
+                
+                // Báo thành công bằng Toast cho gọn (hoặc Swal tùy ý)
+                toast.success("Cảm ơn bạn đã mua sắm! 🎉");
+            } else {
+                toast.error(res.message || "Xác nhận thất bại");
             }
         } catch (error) {
             console.error("Lỗi xác nhận:", error);
+            toast.error("Có lỗi xảy ra.");
         }
     };
 
-    //Logic Lọc dữ liệu (Dùng useMemo để tối ưu hiệu năng)
+    // Logic Lọc dữ liệu (Giữ nguyên)
     const filteredOrders = useMemo(() => {
         return orders.filter(order => {
-            // Lọc theo Tab
             let matchTab = false;
             switch (activeTab) {
-                case 'ALL':
-                    matchTab = true;
-                    break;
-                case 'PENDING':
-                    // Pending: Chờ xác nhận (hoặc chờ thanh toán VNPay)
-                    matchTab = order.status === 'Pending';
-                    break;
-                case 'PROCESSING':
-                    // Tab Vận chuyển bao gồm: Đang chuẩn bị (Processing) + Đang giao (Shipping)
-                    matchTab = ['Processing', 'Shipping'].includes(order.status);
-                    break;
-                case 'DELIVERED':
-                    matchTab = order.status === 'Delivered';
-                    break;
-                case 'CANCELLED':
-                    matchTab = order.status === 'Cancelled';
-                    break;
-                default:
-                    matchTab = true;
+                case 'ALL': matchTab = true; break;
+                case 'PENDING': matchTab = order.status === 'Pending'; break;
+                case 'PROCESSING': matchTab = ['Processing', 'Shipping'].includes(order.status); break;
+                case 'DELIVERED': matchTab = order.status === 'Delivered'; break;
+                case 'CANCELLED': matchTab = order.status === 'Cancelled'; break;
+                default: matchTab = true;
             }
 
-            // Lọc theo Search Text (Mã đơn hoặc Tên sản phẩm)
             let matchSearch = true;
             if (searchText) {
                 const keyword = searchText.toLowerCase();
                 const orderIdMatch = order._id.toLowerCase().includes(keyword);
-                // Tìm trong danh sách item xem có tên sản phẩm nào khớp không
                 const productNameMatch = order.orderItems.some(item => 
                     item.name.toLowerCase().includes(keyword)
                 );
@@ -116,16 +137,17 @@ const Orders = () => {
     }, [orders, activeTab, searchText]);
 
     if (loading) {
-        return <div className="loading-spinner">Đang tải...</div>; // CSS Spinner của bạn
+        return <div className="loading-spinner">Đang tải...</div>;
     }
 
     return (
         <div className="order-page-container">
-            {/* Truyền activeTab và hàm set */}
+            {/* 2. Đặt ToastContainer ở đây để nó hiển thị được */}
+            <ToastContainer position="top-right" autoClose={3000} />
+
             <OrderTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
             <div className="order-container">
-                {/* Nhận keyword từ Component Search */}
                 <OrderSearch onSearch={setSearchText} />
 
                 {filteredOrders.length === 0 ? (
@@ -136,7 +158,6 @@ const Orders = () => {
                             <OrderCard 
                                 key={order._id} 
                                 order={order} 
-                                // Truyền hàm xử lý xuống
                                 onCancelOrder={handleCancelOrder}
                                 onConfirmReceived={handleConfirmReceived}
                             />

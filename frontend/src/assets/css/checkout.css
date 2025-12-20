@@ -85,8 +85,26 @@
 .your-order {
     padding: 25px;
     border: 1px solid var(--border-color);
-    height: fit-content;
+    /* height: fit-content;  <-- Xóa dòng này đi hoặc để cũng được */
+    
+    /* --- THÊM MỚI: Biến cả khối to này thành Sticky --- */
+    position: sticky;
+    top: 20px; 
+    background: #fff; /* Quan trọng: Phải có màu nền để không bị trong suốt */
+    z-index: 10;
+    border-radius: 8px; /* Bo góc chút cho đẹp giống Cart */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
+
+/* --- Your Order Section --- */
+.your-order .order-summary {
+    position: static ;
+    box-shadow: none;
+    padding: 0;
+    background: transparent;
+    margin-bottom: 20px;
+}
+
 .order-summary .summary-header {
     display: flex;
     justify-content: space-between;
@@ -145,49 +163,113 @@
     text-transform: uppercase;
 }
 
-/* Payment Option Styles */
+/* Payment Methods Container */
+.payment-methods-container {
+    margin-top: 30px; /* Tăng khoảng cách với bảng tổng tiền */
+    padding-top: 25px;
+    border-top: 1px dashed var(--border-color); /* Đổi sang nét đứt cho nhẹ nhàng */
+}
+
+.payment-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+}
+
+/* Payment Option Styles - DÙNG FLEXBOX ĐỂ CĂN GIỮA */
 .payment-option {
-    border: 2px solid var(--border-color);
+    display: flex; /* Quan trọng: để căn hàng ngang */
+    align-items: center; /* Căn giữa theo chiều dọc */
+    flex-wrap: wrap; /* Để dòng thông báo VNPay rớt xuống dòng dưới */
+    border: 1px solid var(--border-color); /* Viền mỏng thôi */
     border-radius: 8px;
     padding: 15px;
     margin-bottom: 12px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
+    transition: all 0.2s ease;
+    background-color: #fff;
 }
 
 .payment-option:hover {
     border-color: var(--primary-color);
-    background-color: #fafafa;
+    background-color: #fffcfc;
 }
 
 .payment-option.active {
     border-color: var(--primary-color);
-    background-color: #fff5f5;
-    box-shadow: 0 0 0 1px var(--primary-color);
+    background-color: #fff5f5; /* Nền hồng nhạt khi chọn */
+    box-shadow: 0 0 0 1px var(--primary-color); /* Hiệu ứng viền đôi sắc nét */
 }
 
+/* Style lại nút tròn Radio cho đẹp */
 .payment-option input[type="radio"] {
     width: 18px;
     height: 18px;
-    margin-right: 10px;
+    margin-right: 12px;
     cursor: pointer;
     accent-color: var(--primary-color);
-    vertical-align: middle;
+    margin-top: 0; /* Reset margin thừa */
 }
 
+/* Label chứa chữ và icon */
 .payment-option label {
-    display: inline-flex;
+    flex: 1; /* Chiếm hết khoảng trống còn lại */
+    display: flex;
     align-items: center;
     font-weight: 600;
     font-size: 14px;
     cursor: pointer;
     margin: 0;
+    color: var(--text-color);
 }
 
 .payment-option label i {
-    margin-right: 8px;
+    margin-right: 10px;
     color: var(--primary-color);
+    font-size: 16px;
+    width: 20px; /* Cố định chiều rộng icon để chữ thẳng hàng */
+    text-align: center;
+}
+
+/* Riêng cho VNPay Label */
+.vnpay-label {
+    justify-content: space-between; /* Đẩy logo sang phải cùng */
+    width: 100%;
+}
+
+.vnpay-logo {
+    height: 24px; /* Tăng kích thước logo lên chút cho rõ */
+    width: auto;
+    object-fit: contain;
+    margin-left: 10px;
+}
+
+/* Dòng thông báo màu xanh của VNPay */
+.vnpay-note {
+    flex-basis: 100%; /* Chiếm trọn 1 dòng mới */
+    margin-top: 12px;
+    margin-left: 30px; /* Thụt vào thẳng hàng với chữ, né nút radio ra */
+    padding: 10px 15px;
+    background-color: #e6f7ff; /* Màu xanh dương nhạt chuẩn style thông báo */
+    border: 1px solid #91d5ff;
+    color: #0050b3;
+    font-size: 13px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: fadeIn 0.3s ease;
+}
+
+.vnpay-note i {
+    color: #1890ff; /* Icon màu xanh dương */
+}
+
+/* Hiệu ứng xuất hiện nhẹ nhàng */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* QR Code Box */
@@ -271,33 +353,6 @@
 
 .bank-note strong {
     color: var(--primary-color);
-}
-
-/* VNPay Styles */
-.vnpay-label {
-    display: flex !important;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-}
-
-.vnpay-logo {
-    height: 20px;
-    margin-left: 10px;
-}
-
-.vnpay-note {
-    margin-top: 10px;
-    padding: 10px;
-    background-color: #e3f2fd;
-    border-left: 3px solid #2196f3;
-    font-size: 13px;
-    border-radius: 4px;
-}
-
-.vnpay-note i {
-    color: #2196f3;
-    margin-right: 5px;
 }
 
 /* Place Order Button */
