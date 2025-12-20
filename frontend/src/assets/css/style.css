@@ -1,0 +1,235 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --color-text-dark: #000;
+    --color-text-light: #EE1010;
+    --font: "Inter Tight", sans-serif;
+
+    --fs-xxl: 36px;
+    --fs-xl: 22px;
+    --fs-lg: 20px;
+    --fs-md: 16px;
+    --fs-sm: 14px;
+    --primary-color: #ee4d2d;
+    --primary-dark: #d73211;
+    --primary-light: #fff5f3; 
+    --secondary-color: #212529;
+    --text-color: #333333;
+    --text-muted: #757575;
+    --color-text-dark: #000;
+    --color-text-light: #EE1010;
+    --bg-body: #f5f5f5;
+    --background-color: #f8f9fa;
+    --white: #ffffff;
+    --border-color: #e5e5e5;
+    --success: #4caf50;
+    --warning: #ff9800;
+    --danger: #f44336;
+    --info: #2196f3;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+    --shadow-md: 0 2px 8px rgba(0,0,0,.08);
+    --shadow-lg: 0 4px 12px rgba(0,0,0,.12);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: var(--font);
+    line-height: 1.4;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.container {
+    width: 100%;
+    max-width: 1180px;
+    padding: 0 15px;
+    margin: 0 auto;
+}
+/* Section-1 */
+
+.section-1 img {
+    width: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+/* End Section-1 */
+
+.section-2,
+.section-4 {
+    margin-top: 50px;
+}
+
+.section-4 {
+    margin-bottom: 70px;
+}
+
+/* Tiêu đề chung (Cũ) */
+.section-2 h2,
+.section-4 h2 {
+    text-align: center;
+    font-size: var(--fs-xxl);
+    margin: 0 0 30px;
+    font-weight: 400;
+}
+
+
+@media (max-width: 992px) {
+
+    .section-2 h2,
+    .section-4 h2 {
+        font-size: var(--fs-xl);
+    }
+}
+/* Blog-item */
+.blog-item {
+    width: calc((100% - 60px) / 3);
+    background: #fff;
+    padding: 8px;
+    text-align: center;
+}
+
+.blog-item img {
+    width: 100%;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+}
+
+.blog-item .inner-time {
+    color: var(--color-text-light);
+    font-size: var(--fs-md);
+    margin-bottom: 8px;
+}
+
+.blog-item .inner-title-1,
+.blog-item .inner-title-2 {
+    font-size: var(--fs-lg);
+}
+
+@media (max-width: 1200px) {
+
+    .blog-item .inner-title-1,
+    .blog-item .inner-title-2 {
+        font-size: var(--fs-md);
+    }
+}
+
+@media (max-width: 992px) {
+
+    .blog-item .inner-title-1,
+    .blog-item .inner-title-2 {
+        font-size: var(--fs-sm);
+    }
+}
+
+@media (max-width: 768px) {
+    .blog-item {
+        width: calc((100% - 20px) / 2);
+    }
+}
+
+/* End Blog-item */
+
+/* Contact */
+
+.contact {
+    background: #F5F5F5;
+    padding: 15px 0;
+}
+
+.contact .inner-wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.contact .register-1,
+.contact .register-2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-register {
+    display: flex;
+}
+
+.form-register input {
+    border: none;
+    outline: none;
+    padding: 8px 12px;
+}
+
+.form-register button {
+    background: var(--color-text-dark);
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .contact .inner-wrap {
+        gap: 10px;
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+/* End Contact */
+
+/* Footer */
+
+.footer .inner-wrap {
+    margin-top: 50px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.footer .inner-wrap>div {
+    width: calc((100% - 60px) / 4);
+}
+
+.footer ul {
+    list-style: none;
+    padding: 0;
+}
+
+.footer li {
+    font-size: var(--fs-sm);
+    margin-bottom: 6px;
+}
+
+.footer .inner-image-1 img {
+    width: 100%;
+}
+
+.footer .inner-image-2 {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+@media (max-width: 768px) {
+    .footer .inner-wrap>div {
+        width: calc((100% - 20px) / 2);
+    }
+}
+
+@media (max-width: 576px) {
+    .footer .inner-wrap>div {
+        width: 100%;
+    }
+}
+
+/* End Footer */
