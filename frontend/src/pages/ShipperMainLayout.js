@@ -1,5 +1,5 @@
-import React, { lazy, Suspense } from "react";
-import { useLocation, NavLink, Link } from "react-router-dom";
+import React, { lazy, Suspense, useEffect } from "react";
+import { useLocation, useNavigate, NavLink } from "react-router-dom";
 import {
   FaTachometerAlt,
   FaChartLine,
@@ -22,7 +22,7 @@ const ShipperActiveOrdersContent = lazy(() =>
   import("../components/ship/ShipperActiveOrdersContent")
 );
 
-const ShipperSidebar = () => (
+const ShipperSidebar = ({ onLogout }) => (
   <div className="shipper-sidebar">
     <div className="sidebar-menu-header">MENU</div>
     <nav>
@@ -59,10 +59,16 @@ const ShipperSidebar = () => (
       >
         <FaUserCircle style={{ marginRight: "10px" }} /> Hồ sơ Cá nhân
       </NavLink>
+
+      {/* Nút Đăng xuất với hàm xử lý */}
       <div style={{ marginTop: "50px" }}>
-        <Link to="/" className="shipper-nav-link">
+        <div
+          className="shipper-nav-link"
+          onClick={onLogout}
+          style={{ cursor: "pointer" }}
+        >
           <FaSignOutAlt style={{ marginRight: "10px" }} /> Đăng Xuất
-        </Link>
+        </div>
       </div>
     </nav>
   </div>
@@ -70,6 +76,32 @@ const ShipperSidebar = () => (
 
 const ShipperMainLayout = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const userRole = localStorage.getItem("role")?.toLowerCase();
+
+  useEffect(() => {
+    // Nếu không phải shipper thì đẩy về trang chủ
+    if (userRole !== "shipper") {
+      alert("Bạn không có quyền truy cập trang này!");
+      navigate("/");
+    }
+  }, [userRole, navigate]);
+
+  const handleLogout = () => {
+    const confirmLogout = window.confirm(
+      "Bạn có chắc chắn muốn đăng xuất tài khoản Shipper?"
+    );
+    if (confirmLogout) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      sessionStorage.clear();
+
+      alert("Đã đăng xuất thành công!");
+      navigate("/");
+    }
+  };
+  if (userRole !== "shipper") return null;
 
   const getActiveContent = (pathname) => {
     if (pathname.includes("/shipper/profile")) return <ShipperProfileContent />;
@@ -83,7 +115,9 @@ const ShipperMainLayout = () => {
   return (
     <div className="shipper-layout-wrapper">
       <div className="shipper-container">
-        <ShipperSidebar />
+        {/* Truyền hàm logout vào Sidebar */}
+        <ShipperSidebar onLogout={handleLogout} />
+
         <div className="shipper-content">
           <Suspense fallback={<div>Đang tải nội dung...</div>}>
             {getActiveContent(location.pathname)}

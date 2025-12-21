@@ -1,16 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import logo from "../../assets/images/logo.svg";
-import LoginModal from '../login/LoginModal';
+import LoginModal from "../login/LoginModal";
 import { FaUser, FaShoppingCart, FaSearch } from "react-icons/fa";
-import { useCart } from '../../context/CartContext';
+import { useCart } from "../../context/CartContext";
 
 function Header() {
   const { cartCount } = useCart();
+
+  const clickIconUser = () => {
+    const userRole = localStorage.getItem("role");
+
+    if (userRole === "customer") return "/profile";
+    if (userRole === "shipper") return "/shipper";
+    return "/login";
+  };
+
   const navLinkClass = ({ isActive }) =>
-    `text-xl md:text-lg font-bold tracking-widest transition duration-150 uppercase border-b-2 pb-1 ${isActive
-      ? "text-red-600 border-red-600"
-      : "text-gray-800 border-transparent hover:text-red-600"
+    `text-xl md:text-lg font-bold tracking-widest transition duration-150 uppercase border-b-2 pb-1 ${
+      isActive
+        ? "text-red-600 border-red-600"
+        : "text-gray-800 border-transparent hover:text-red-600"
     }`;
   return (
     <>
@@ -18,7 +28,8 @@ function Header() {
       <div className="bg-[#F5F5F5] py-4 md:py-[6px] text-center text-xl md:text-base font-['Inter_Tight']">
         <div className="container mx-auto px-4 md:px-[15px] max-w-[1180px]">
           <div className="inner-title">
-            Hotline Mua Hàng: **0973 285 886** | Hotline CSKH: **1900 886 803** - Ext 1 | Email CSKH: **360boutique.vn@gmail.com**
+            Hotline Mua Hàng: **0973 285 886** | Hotline CSKH: **1900 886 803**
+            - Ext 1 | Email CSKH: **360boutique.vn@gmail.com**
           </div>
         </div>
       </div>
@@ -46,8 +57,10 @@ function Header() {
               {/* Actions (Cart & Login) */}
               <div className="header-actions flex items-center gap-4 shrink-0">
                 {/* Giỏ hàng */}
-                {/* Giỏ hàng */}
-                <Link to="/cart" className="relative group p-2 hover:bg-gray-100 rounded-full transition-all duration-300">
+                <Link
+                  to="/cart"
+                  className="relative group p-2 hover:bg-gray-100 rounded-full transition-all duration-300"
+                >
                   <FaShoppingCart className="text-2xl text-gray-700 group-hover:text-red-600" />
 
                   {/* Hiển thị số lượng: Chỉ hiện khi lớn hơn 0 */}
@@ -59,7 +72,10 @@ function Header() {
                 </Link>
 
                 {/* Người dùng */}
-                <Link to="/profile" className="flex items-center gap-2 group p-2 hover:bg-gray-100 rounded-lg transition-all duration-300">
+                <Link
+                  to={clickIconUser()}
+                  className="flex items-center gap-2 group p-2 hover:bg-gray-100 rounded-lg transition-all duration-300"
+                >
                   <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 group-hover:bg-red-100 transition-colors">
                     <FaUser className="text-xl text-gray-600 group-hover:text-red-600" />
                   </div>
@@ -71,16 +87,24 @@ function Header() {
             <nav className="inner-bottom mt-4">
               <ul className="flex justify-between items-center list-none p-0 m-0">
                 <li>
-                  <NavLink to="/" end className={navLinkClass}>TRANG CHỦ</NavLink>
+                  <NavLink to="/" end className={navLinkClass}>
+                    TRANG CHỦ
+                  </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/category/ao-nam" className={navLinkClass}>ÁO NAM</NavLink>
+                  <NavLink to="/category/ao-nam" className={navLinkClass}>
+                    ÁO NAM
+                  </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/category/quan-nam" className={navLinkClass}>QUẦN NAM</NavLink>
+                  <NavLink to="/category/quan-nam" className={navLinkClass}>
+                    QUẦN NAM
+                  </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/category/phu-kien" className={navLinkClass}>PHỤ KIỆN</NavLink>
+                  <NavLink to="/category/phu-kien" className={navLinkClass}>
+                    PHỤ KIỆN
+                  </NavLink>
                 </li>
               </ul>
             </nav>

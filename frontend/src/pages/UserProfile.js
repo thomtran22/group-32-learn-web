@@ -1,15 +1,17 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaUserCircle,
   FaChartBar,
   FaGift,
   FaShoppingCart,
+  FaSignOutAlt,
 } from "react-icons/fa";
 import UserStatistics from "../components/UserStatistics";
 import PersonalInfo from "../components/userprofile/PersonalInfo";
 import VoucherWallet from "../components/userprofile/VoucherWallet";
 import OrderHistory from "../components/userprofile/OrderHistory";
+
 import "../assets/css/userprofile.css";
 
 const menuItems = [
@@ -54,23 +56,65 @@ const SidebarItem = ({ item, isActive, onClick }) => {
 
 const UserProfile = () => {
   const [activeTab, setActiveTab] = useState("info");
+  const navigate = useNavigate();
+  const userRole = localStorage.getItem("role");
+  useEffect(() => {
+    if (userRole !== "customer") {
+      alert("Bạn không có quyền truy cập trang này!");
+      navigate("/");
+    }
+  }, [userRole, navigate]);
+
   const ActiveComponent = menuItems.find(
     (item) => item.id === activeTab
   )?.component;
   const ActiveTitle = menuItems.find((item) => item.id === activeTab)?.name;
 
+  const handleLogout = () => {
+    if (window.confirm("Bạn có chắc chắn muốn đăng xuất?")) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      sessionStorage.clear();
+      navigate("/login");
+    }
+  };
+
   return (
     <div className="user-profile-container">
       <div className="user-profile-sidebar">
         <h3 className="sidebar-title">Quản lý Tài khoản</h3>
-        {menuItems.map((item) => (
-          <SidebarItem
-            key={item.id}
-            item={item}
-            isActive={activeTab === item.id}
-            onClick={setActiveTab}
-          />
-        ))}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
+            justifyContent: "space-between",
+          }}
+        >
+          <div>
+            {menuItems.map((item) => (
+              <SidebarItem
+                key={item.id}
+                item={item}
+                isActive={activeTab === item.id}
+                onClick={setActiveTab}
+              />
+            ))}
+          </div>
+
+          <div
+            className="sidebar-item"
+            onClick={handleLogout}
+            style={{
+              marginTop: "20px",
+              color: "var(--primary-color)",
+              borderTop: "1px solid #eee",
+            }}
+          >
+            <FaSignOutAlt className="sidebar-item-icon" />
+            Đăng xuất
+          </div>
+        </div>
       </div>
 
       <div className="user-profile-content">
