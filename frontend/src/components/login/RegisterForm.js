@@ -80,6 +80,40 @@ function RegisterForm({ formData, handleChange, handleSubmit, toggleForm }) {
           </div>
         </div>
       </div>
+{/* Vai trò (đặt trên Email) */}
+<div className="space-y-1">
+  <label className="font-semibold">Bạn là</label>
+
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+    {[
+      { label: "Người dùng", value: "customer" },
+      { label: "Shipper", value: "shipper" },
+    ].map((roleOption) => (
+      <label key={roleOption.value} className="block">
+        <input
+          type="radio"
+          name="role"
+          value={roleOption.value}
+          checked={formData.role === roleOption.value}
+          onChange={handleChange}
+          className="hidden peer"
+        />
+
+        <div
+          className="inline-flex w-full items-center justify-center rounded-xl border-2 border-black
+                     border-2 border-black
+                     bg-white px-4 py-3 text-base font-semibold cursor-pointer select-none
+                     transition
+                     hover:bg-gray-50
+                     peer-checked:bg-black peer-checked:text-white"
+        >
+          {roleOption.label}
+        </div>
+      </label>
+    ))}
+  </div>
+</div>
+
 
       {/* Email */}
       <div className="space-y-1">
