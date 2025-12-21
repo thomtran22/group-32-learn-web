@@ -1,6 +1,8 @@
 import User from "../models/UserModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { randomBytes, createHash } from "crypto";
+import { sendPasswordResetEmail } from "../services/emailService.js";
 
 export const register = async (req, res) => {
   try {
@@ -46,12 +48,8 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: "Sai email hoặc mật khẩu" });
     }
 
-    // ✅ JWT: thống nhất payload với middleware (id + role)
     const token = jwt.sign(
-      {
-        id: user._id.toString(),
-        role: user.role, // customer | shipper | admin
-      },
+      { id: user._id.toString(), role: user.role },
       process.env.JWT_SECRET,
       {
         expiresIn: "7d",
@@ -69,6 +67,81 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.json({
+        message: "Nếu email tồn tại, link khôi phục đã được gửi.",
+      });
+    }
+
+    // ✅ SỬA: randomBytes / createHash thay vì crypto.randomBytes / crypto.createHash
+    const resetToken = randomBytes(32).toString("hex");
+
+    user.resetPasswordToken = createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
+
+    await user.save();
+
+    const resetLink = `http://localhost:5173/reset-password?token=${resetToken}`;
+
+    await sendPasswordResetEmail({
+      recipientEmail: user.email,
+      recipientName: user.fullName,
+      resetLink,
+    });
+
+    res.json({
+      message: "Nếu email tồn tại, link khôi phục đã được gửi.",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({ message: "Thiếu thông tin" });
+    }
+
+    const hashedToken = createHash("sha256").update(token).digest("hex");
+
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Link không hợp lệ hoặc đã hết hạn",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+
+    await user.save();
+
+    res.json({ message: "Đặt lại mật khẩu thành công" });
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Lỗi server" });
   }
 };

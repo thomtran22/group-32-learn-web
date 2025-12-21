@@ -1,6 +1,6 @@
 import React from "react";
 
-function LoginForm({ formData, handleChange, handleSubmit, toggleForm }) {
+function LoginForm({ formData, handleChange, handleSubmit, toggleForm, goForgotPassword }) {
   const inputClassName =
     "mt-2 w-full rounded-xl bg-gray-100 px-4 py-3 text-lg font-medium " +
     "outline-none ring-1 ring-gray-200 focus:bg-white focus:ring-black transition";
@@ -64,9 +64,13 @@ function LoginForm({ formData, handleChange, handleSubmit, toggleForm }) {
 
         <p>
           Quên mật khẩu?{" "}
-          <button type="button" className={fancyLinkClassName}>
-            <span className="relative z-10">Khôi phục mật khẩu</span>
-          </button>
+<button
+  type="button"
+  className={fancyLinkClassName}
+  onClick={goForgotPassword}
+>
+  <span className="relative z-10">Khôi phục mật khẩu</span>
+</button>
         </p>
       </div>
     </form>
