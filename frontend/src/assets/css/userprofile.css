@@ -15,7 +15,7 @@
 /* Layout chính */
 .user-profile-container {
   max-width: 1200px;
-  margin: 40px auto;
+  margin: 30px auto 90px;
   padding: 0 15px;
   font-family: Arial, sans-serif;
   display: flex;
@@ -254,4 +254,29 @@
   background: var(--primary-color);
   color: #fff;
   border-color: var(--primary-color);
+}
+
+/* Style cho nút ẩn hiện mật khẩu */
+.password-toggle-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  z-index: 10;
+}
+
+.password-toggle-btn:hover {
+  color: var(--primary-color);
+}
+
+.input-group div[style*="position: relative"] {
+  width: 100%;
 }

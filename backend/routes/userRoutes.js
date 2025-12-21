@@ -1,26 +1,22 @@
-import 'dotenv/config'
+import "dotenv/config";
 import express from "express";
 const router = express.Router();
 import User from "../models/UserModel.js";
-import UserAddress from "../models/UserAddress.js";
 import Order from "../models/OrderModel.js";
-import ProductReview from "../models/ProductReview.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 import mongoose from "mongoose";
-import bcrypt from 'bcryptjs';
-import jwt from "jsonwebtoken"
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
-export const generateToken = (userId) => {
+export const generateToken = (userId, role) => {
   if (!userId) {
     return;
   }
 
-  const token = jwt.sign(
-    { id: userId },
-    process.env.JWT_SECRET,
-    { expiresIn: '3d' }
-  );
-}
+  return jwt.sign({ id: userId, role: role }, process.env.JWT_SECRET, {
+    expiresIn: "3d",
+  });
+};
 
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
@@ -28,15 +24,15 @@ router.post("/login", async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: 'Invalid Credentials' });
+      return res.status(400).json({ message: "Invalid Credentials" });
     }
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
-      return res.status(400).json({ message: 'Invalid Credentials' });
+      return res.status(400).json({ message: "Invalid Credentials" });
     }
 
-    const token = generateToken(user._id, res);
+    const token = generateToken(user._id, user.role);
 
     res.status(200).json({
       _id: user._id,
@@ -46,10 +42,9 @@ router.post("/login", async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal Server Error' });
+    res.status(500).json({ message: "Internal Server Error" });
   }
-})
-
+});
 
 router.get("/me", verifyToken, async (req, res) => {
   try {
@@ -66,90 +61,37 @@ router.get("/me", verifyToken, async (req, res) => {
 });
 
 router.put("/me", verifyToken, async (req, res) => {
-  const { firstName, lastName, phoneNumber, dateOfBirth, gender } = req.body;
+  // Nhận các trường khớp với state của React Frontend
+  const { fullName, gender, birthDay, birthMonth, birthYear } = req.body;
+
   try {
     const user = await User.findById(req.user.id);
 
     if (user) {
-      user.firstName = firstName || user.firstName;
-      user.lastName = lastName || user.lastName;
-      user.phoneNumber = phoneNumber || user.phoneNumber;
-      user.dateOfBirth = dateOfBirth || user.dateOfBirth;
+      user.fullName = fullName || user.fullName;
       user.gender = gender || user.gender;
+      user.birthDay = birthDay || user.birthDay;
+      user.birthMonth = birthMonth || user.birthMonth;
+      user.birthYear = birthYear || user.birthYear;
 
       const updatedUser = await user.save();
-      res.json({ message: "Cập nhật thành công", user: updatedUser });
+
+      res.json({
+        message: "Cập nhật thành công",
+        user: {
+          fullName: updatedUser.fullName,
+          gender: updatedUser.gender,
+          birthDay: updatedUser.birthDay,
+          birthMonth: updatedUser.birthMonth,
+          birthYear: updatedUser.birthYear,
+          email: updatedUser.email,
+        },
+      });
     } else {
-      res.status(404).json({ message: "User not found" });
+      res.status(404).json({ message: "Không tìm thấy người dùng" });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
-  }
-});
-
-router.get("/addresses", verifyToken, async (req, res) => {
-  try {
-    const addresses = await UserAddress.find({ userId: req.user.id }).sort({
-      isDefault: -1,
-      createdAt: 1,
-    });
-    res.json(addresses);
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-router.post("/addresses", verifyToken, async (req, res) => {
-  const {
-    receiverName,
-    phone,
-    addressDetail,
-    district,
-    city,
-    isDefault,
-    type,
-  } = req.body;
-  try {
-    const newAddress = new UserAddress({
-      userId: req.user.id,
-      receiverName,
-      phone,
-      addressDetail,
-      district,
-      city,
-      isDefault,
-      type,
-    });
-
-    if (isDefault) {
-      await UserAddress.updateMany(
-        { userId: req.user.id, isDefault: true },
-        { $set: { isDefault: false } }
-      );
-    }
-
-    const savedAddress = await newAddress.save();
-    res.status(201).json(savedAddress);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-router.delete("/addresses/:addressId", verifyToken, async (req, res) => {
-  try {
-    const result = await UserAddress.findOneAndDelete({
-      _id: req.params.addressId,
-      userId: req.user.id,
-    });
-
-    if (!result) {
-      return res
-        .status(404)
-        .json({ message: "Address not found or unauthorized" });
-    }
-    res.json({ message: "Address deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -160,26 +102,26 @@ router.get("/stats", verifyToken, async (req, res) => {
     const orderStats = await Order.aggregate([
       {
         $match: {
-          userId,
+          user: userId,
         },
       },
       {
         $group: {
           _id: null,
-          totalOrders: { $sum: 1 },
+          totalOrders: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "Delivered"] }, 1, 0],
+            },
+          },
           totalSpent: {
             $sum: {
-              $cond: [
-                { $eq: ["$currentStatus", "Thành công"] },
-                "$totalAmount",
-                0,
-              ],
+              $cond: [{ $eq: ["$status", "Delivered"] }, "$totalPrice", 0],
             },
           },
           pendingOrders: {
             $sum: {
               $cond: [
-                { $in: ["$currentStatus", ["Đang xử lý", "Chờ xác nhận"]] },
+                { $in: ["$status", ["Pending", "Processing", "Shipping"]] },
                 1,
                 0,
               ],
@@ -189,37 +131,28 @@ router.get("/stats", verifyToken, async (req, res) => {
       },
     ]);
 
-    const reviewStats = await ProductReview.aggregate([
-      {
-        $match: {
-          userId,
-          rating: 5,
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          totalFiveStarReviews: { $sum: 1 },
-        },
-      },
-    ]);
+    const stats = orderStats[0] || {
+      totalOrders: 0,
+      totalSpent: 0,
+      pendingOrders: 0,
+    };
 
-    const totalSpent = orderStats[0]?.totalSpent || 0;
-
-    const NEXT_TIER_REQUIREMENT = 5000000;
+    const totalSpent = stats.totalSpent || 0;
+    const NEXT_TIER_REQUIREMENT = 5000000; // Ngưỡng 5 triệu để lên hạng
     const NEXT_TIER_DISCOUNT = 10;
 
     res.json({
-      totalOrders: orderStats[0]?.totalOrders || 0,
-      totalSpent,
-      pendingOrders: orderStats[0]?.pendingOrders || 0,
-      totalFiveStarReviews: reviewStats[0]?.totalFiveStarReviews || 0,
+      totalOrders: stats.totalOrders,
+      totalSpent: totalSpent,
+      pendingOrders: stats.pendingOrders,
+      totalFiveStarReviews: 0, // Hiện tại bỏ qua vì không dùng ProductReview
       nextTierDiscount: NEXT_TIER_DISCOUNT,
       pointsToNextTier: Math.max(0, NEXT_TIER_REQUIREMENT - totalSpent),
     });
   } catch (error) {
+    console.error("Lỗi thống kê:", error);
     res.status(500).json({
-      message: "Error fetching statistics",
+      message: "Lỗi hệ thống khi lấy thống kê",
       error: error.message,
     });
   }

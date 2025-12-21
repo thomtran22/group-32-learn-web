@@ -4,7 +4,7 @@ import Order from "../models/OrderModel.js";
 import ShipperInfo from "../models/ShipperInfo.js";
 import ShipperPerformance from "../models/ShipperPerformance.js";
 import User from "../models/UserModel.js";
-import { verifyToken, isShipper } from "../middleware/authMiddleware.js";;
+import { verifyToken, isShipper } from "../middleware/authMiddleware.js";
 
 router.get("/orders/new", verifyToken, isShipper, async (req, res) => {
   try {
@@ -29,7 +29,7 @@ router.get("/orders/active", verifyToken, isShipper, async (req, res) => {
       shipperId: req.user.id,
       status: "Shipping",
     })
-      .select("shippingAddress totalPrice status orderItems")
+      .select("shippingAddress totalPrice status orderItems createAt")
       .populate("orderItems.product", "name images")
       .sort({ updatedAt: -1 });
 
@@ -51,7 +51,7 @@ router.put(
     if (!allowedStatuses.includes(newStatus)) {
       return res.status(400).json({
         message:
-          "Shipper chỉ có thể cập nhật trạng thái thành 'Delivered' hoặc 'Cancelled'",
+          "Shipper chỉ có thể cập nhật trạng thái thành 'giao thanh cong' hoặc 'giao that bai/huy'",
       });
     }
 
@@ -167,18 +167,34 @@ router.get("/info", verifyToken, isShipper, async (req, res) => {
 });
 
 router.put("/info", verifyToken, isShipper, async (req, res) => {
-  const { fullName, phone, vehicleType, licensePlate } = req.body;
+  const { fullName, email, phone, vehicleType, licensePlate } = req.body;
 
   try {
+    if (email) {
+      const existingUser = await User.findOne({
+        email,
+        _id: { $ne: req.user.id },
+      });
+      if (existingUser) {
+        return res
+          .status(400)
+          .json({ message: "Email này đã được sử dụng bởi tài khoản khác." });
+      }
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
-      { fullName, phoneNumber: phone },
+      { fullName, email },
       { new: true }
     ).select("-password");
 
     const updatedShipperInfo = await ShipperInfo.findOneAndUpdate(
       { userId: req.user.id },
-      { vehicleType, licensePlate },
+      {
+        phoneNumber: phone,
+        vehicleType,
+        licensePlate,
+      },
       { new: true, upsert: true }
     );
 
@@ -189,7 +205,7 @@ router.put("/info", verifyToken, isShipper, async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Lỗi cập nhật hồ sơ" });
+    res.status(500).json({ message: "Lỗi hệ thống khi cập nhật hồ sơ" });
   }
 });
 
