@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
-import ForgotPassword from "./ForgotPassword"; 
+import ForgotPassword from "./ForgotPassword";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 function LoginModal({ closeModal }) {
-  const [mode, setMode] = useState("login"); 
+  const [mode, setMode] = useState("login");
+  const navigate = useNavigate();
+
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -35,33 +39,41 @@ function LoginModal({ closeModal }) {
 
     try {
       if (mode === "login") {
-        const response = await axios.post("http://localhost:3000/api/auth/login", {
-          email: formData.email,
-          password: formData.password,
-        });
+        const response = await axios.post(
+          "http://localhost:3000/api/auth/login",
+          {
+            email: formData.email,
+            password: formData.password,
+          }
+        );
 
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("userRole", response.data.role || "");
         localStorage.setItem("fullName", response.data.user?.fullName || "");
 
-        alert("Đăng nhập thành công!");
-        window.location.href = "/";
+        toast.success("Đăng nhập thành công!");
+        closeModal?.();
+        navigate("/");
       }
 
       if (mode === "register") {
-        await axios.post("http://localhost:3000/api/auth/register", formData);
-        alert("Đăng ký thành công!");
-        setMode("login"); 
+        await axios.post(
+          "http://localhost:3000/api/auth/register",
+          formData
+        );
+
+        toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
+        setMode("login");
       }
     } catch (error) {
-      alert(error.response?.data?.message || "Có lỗi xảy ra");
+      toast.error(
+        error.response?.data?.message || "Có lỗi xảy ra"
+      );
     }
   };
 
   const toggleForm = (shouldBeLogin) => {
-    if (shouldBeLogin) setMode("login");
-    else setMode("register");
-
+    setMode(shouldBeLogin ? "login" : "register");
     setFormData({
       fullName: "",
       email: "",
@@ -99,7 +111,7 @@ function LoginModal({ closeModal }) {
               handleChange={handleChange}
               handleSubmit={handleSubmit}
               toggleForm={toggleForm}
-              goForgotPassword={() => setMode("forgot")} 
+              goForgotPassword={() => setMode("forgot")}
             />
           )}
 
@@ -113,7 +125,7 @@ function LoginModal({ closeModal }) {
           )}
 
           {mode === "forgot" && (
-            <ForgotPassword toggleBack={() => setMode("login")} /> 
+            <ForgotPassword toggleBack={() => setMode("login")} />
           )}
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import Header from "./components/header/Header";
 import Footer from "./components/footer/Footer";
 import Contact from "./components/contact/Contact";
@@ -26,6 +27,7 @@ function App() {
   return (
      <Router>
       <CartProvider>
+        <Toaster position="top-right" />
         <Header />
         <Routes>
           <Route path="/" element={<Home />} />
