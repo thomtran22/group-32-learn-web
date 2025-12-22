@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom";
 
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -15,6 +15,7 @@ import ProductDetail from './pages/ProductDetail';
 import ProductListPage from "./pages/ProductListPage";
 import ShipperMainLayout from "./pages/ShipperMainLayout";
 import UserProfile from "./pages/UserProfile";
+import Admin from "./pages/Admin"
 
 import { CartProvider } from './context/CartContext'; 
 import "./assets/css/globals.css";
@@ -26,12 +27,24 @@ import "./assets/css/payment-result.css";
 import "./assets/css/detail.css"
 import './App.css';
 
+const PublicLayout = () => {
+  return (
+    <>
+      <Header />
+      {/* Outlet là nơi nội dung các trang con (Home, Cart...) sẽ hiển thị */}
+      <main>
+        <Outlet />
+      </main>
+      <Contact/>
+      <Footer />
+    </>
+  );
+};
+
 function App() {
   return (
      <Router>
       <CartProvider>
-        <Header />
-
         <ToastContainer 
             position="top-right" 
             autoClose={3000} 
@@ -45,18 +58,25 @@ function App() {
             theme="light"
         />
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />}/>
-          <Route path="/login" element={<Login />} />
-          <Route path="/payment-result" element={<PaymentResult />} />
-          <Route path="/profile" element={<UserProfile />} />
+          {/* ROUTE ADMIN không có Header/Footer */}
+          <Route path="/admin/*" element={<Admin />} />
+
+          {/* ROUTE SHIPPER*/}
           <Route path="/shipper/*" element={<ShipperMainLayout />} />
-          <Route path="/products/:sku" element={<ProductDetail />} />
-          <Route path="/category/:categorySlug" element={<ProductListPage />} />
+
+          {/* Giao diện khách hàng - Header/Footer*/}
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />}/>
+            <Route path="/login" element={<Login />} />
+            <Route path="/payment-result" element={<PaymentResult />} />
+            <Route path="/profile" element={<UserProfile />} />
+            <Route path="/products/:sku" element={<ProductDetail />} />
+            <Route path="/category/:categorySlug" element={<ProductListPage />} />
+          </Route>
+
         </Routes>
-        <Contact/>
-        <Footer />
       </CartProvider>
     </Router>
   );

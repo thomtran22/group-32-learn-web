@@ -1,31 +1,30 @@
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 
 const verifyToken = (req, res, next) => {
-    // Lấy token từ header: "Authorization: Bearer <token>"
-    const authHeader = req.header('Authorization');
-    const token = authHeader && authHeader.split(' ')[1];
+  const authHeader = req.headers.authorization || req.header("Authorization");
+  const token = authHeader && authHeader.split(" ")[1];
 
-    if (!token) {
-        return res.status(401).json({
-            success: false,
-            message: "Truy cập bị từ chối. Thiếu Token."
-        });
-    }
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: "Truy cập bị từ chối. Thiếu Token.",
+    });
+  }
 
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-        req.user = decoded;
-        next();
-    } catch (e) {
-        return res.status(403).json({
-            success: false,
-            message: "Token không hợp lệ." });
-    }
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded; // { userId, role }
+    next();
+  } catch (e) {
+    return res.status(401).json({
+      success: false,
+      message: "Token không hợp lệ hoặc đã hết hạn.",
+    });
+  }
 };
 
 const isAdmin = (req, res, next) => {
-  if (req.user && req.user.role === "admin") {
+  if (req.user?.role === "admin") {
     next();
   } else {
     res.status(403).json({
@@ -35,10 +34,12 @@ const isAdmin = (req, res, next) => {
 };
 
 const isShipper = (req, res, next) => {
-  if (req.user && (req.user.role === "shipper" || req.user.role === "admin")) {
+  if (req.user?.role === "shipper" || req.user?.role === "admin") {
     next();
   } else {
-    res.status(403).json({ message: "Chỉ Shipper mới có quyền này" });
+    res.status(403).json({
+      message: "Chỉ Shipper mới có quyền này",
+    });
   }
 };
 export { verifyToken, isAdmin, isShipper };
