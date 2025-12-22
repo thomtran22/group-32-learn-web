@@ -62,7 +62,6 @@ const PersonalInfo = () => {
     fetchUserInfo();
   }, []);
 
-  // Chuyển đổi Day/Month/Year từ state sang định dạng YYYY-MM-DD cho input date
   const getFormattedDate = () => {
     if (!userInfo.birthYear || !userInfo.birthMonth || !userInfo.birthDay)
       return "";
@@ -72,9 +71,8 @@ const PersonalInfo = () => {
     return `${y}-${m}-${d}`;
   };
 
-  // Cập nhật lại 3 trường ngày, tháng, năm khi người dùng chọn ngày
   const handleDateChange = (e) => {
-    const selectedDate = e.target.value; // YYYY-MM-DD
+    const selectedDate = e.target.value;
     if (!selectedDate) return;
     const [year, month, day] = selectedDate.split("-");
     setUserInfo({
@@ -118,14 +116,16 @@ const PersonalInfo = () => {
       setIsPasswordModalOpen(false);
       setPassword({ current: "", new: "", confirm: "" });
     } catch (error) {
-      alert("Lỗi!");
+      alert(error.response?.data?.message || "Lỗi đổi mật khẩu!");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const PasswordModal = () =>
-    isPasswordModalOpen && (
+  const renderPasswordModal = () => {
+    if (!isPasswordModalOpen) return null;
+
+    return (
       <div className="modal-overlay">
         <div className="modal-content">
           <button
@@ -136,14 +136,13 @@ const PersonalInfo = () => {
           </button>
           <h3 className="content-title">Đổi mật khẩu</h3>
 
-          {/* Mật khẩu hiện tại */}
           <div className="input-group">
             <label className="input-label">Mật khẩu hiện tại</label>
             <div style={{ position: "relative" }}>
               <input
                 type={showPassword.current ? "text" : "password"}
                 className="profile-input"
-                style={{ paddingRight: "40px" }} // Tránh chữ đè lên icon
+                style={{ paddingRight: "40px" }}
                 value={password.current}
                 onChange={(e) =>
                   setPassword({ ...password, current: e.target.value })
@@ -159,7 +158,6 @@ const PersonalInfo = () => {
             </div>
           </div>
 
-          {/* Mật khẩu mới */}
           <div className="input-group">
             <label className="input-label">Mật khẩu mới</label>
             <div style={{ position: "relative" }}>
@@ -182,7 +180,6 @@ const PersonalInfo = () => {
             </div>
           </div>
 
-          {/* Xác nhận mật khẩu */}
           <div className="input-group">
             <label className="input-label">Xác nhận mật khẩu</label>
             <div style={{ position: "relative" }}>
@@ -224,6 +221,7 @@ const PersonalInfo = () => {
         </div>
       </div>
     );
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
@@ -284,7 +282,7 @@ const PersonalInfo = () => {
               className="profile-input"
               value={getFormattedDate()}
               disabled={!isEditing}
-              max={today} // Chặn không cho chọn ngày tương lai
+              max={today}
               onChange={handleDateChange}
             />
           </div>
@@ -332,7 +330,7 @@ const PersonalInfo = () => {
           )}
         </div>
       </div>
-      <PasswordModal />
+      {renderPasswordModal()}
     </div>
   );
 };
