@@ -280,3 +280,121 @@
 .input-group div[style*="position: relative"] {
   width: 100%;
 }
+
+/* --- Shipping Information Styles --- */
+.ship-info-container {
+  padding: 25px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background-color: #fff;
+  box-shadow: var(--shadow);
+  margin-bottom: 30px;
+}
+
+.ship-info-header {
+  font-size: 1.25em;
+  font-weight: bold;
+  color: var(--text-main);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 2px solid var(--bg-light);
+  padding-bottom: 10px;
+}
+
+.ship-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-bottom: 25px;
+}
+
+.ship-info-section-title {
+  font-weight: bold;
+  font-size: 0.9em;
+  color: var(--primary-color);
+  margin-bottom: 15px;
+  text-transform: uppercase;
+}
+
+.ship-info-detail-item {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.ship-info-label {
+  font-size: 0.85em;
+  color: var(--gray-color);
+  margin: 0;
+}
+
+.ship-info-value {
+  font-size: 0.95em;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.ship-info-icon {
+  color: var(--primary-color);
+  margin-top: 3px;
+}
+
+/* Danh sách sản phẩm */
+.ship-info-product-list {
+  border-top: 1px solid var(--border-color);
+  padding-top: 20px;
+  margin-top: 10px;
+}
+
+.ship-info-product-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--border-color);
+}
+
+.ship-info-product-detail {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.ship-info-product-img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  borderradius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.ship-info-total-section {
+  margin-top: 20px;
+  text-align: right;
+  padding: 15px;
+  background-color: var(--bg-light);
+  border-radius: 8px;
+}
+
+.ship-info-total-label {
+  font-size: 0.9em;
+  color: var(--gray-color);
+  margin-right: 10px;
+}
+
+.ship-info-total-price {
+  font-size: 1.3em;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+/* Responsive cho mobile */
+@media (max-width: 768px) {
+  .ship-info-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}

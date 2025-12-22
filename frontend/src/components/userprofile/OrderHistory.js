@@ -21,6 +21,19 @@ const OrderHistory = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const handleCancelOrder = async (orderId) => {
+    if (window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) {
+      try {
+        await apiCancelOrder(orderId);
+        alert("Hủy đơn hàng thành công!");
+        fetchOrders();
+      } catch (err) {
+        console.error(err);
+        alert(err.response?.data?.message || "Không thể hủy đơn hàng lúc này.");
+      }
+    }
+  };
+
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
@@ -45,8 +58,8 @@ const OrderHistory = () => {
       let matchTab =
         activeTab === "ALL" ||
         (activeTab === "PENDING" && order.status === "Pending") ||
-        (activeTab === "PROCESSING" &&
-          ["Processing", "Shipping"].includes(order.status)) ||
+        (activeTab === "PROCESSING" && order.status === "Processing") ||
+        (activeTab === "SHIPPING" && order.status === "Shipping") ||
         (activeTab === "DELIVERED" && order.status === "Delivered") ||
         (activeTab === "CANCELLED" && order.status === "Cancelled");
       let matchSearch =
@@ -63,9 +76,11 @@ const OrderHistory = () => {
     setView("detail");
     setLoading(true);
     try {
-      const data = await apiGetOrderDetail(orderId);
-      setSelectedOrder(data);
+      const res = await apiGetOrderDetail(orderId);
+
+      setSelectedOrder(res.order || res);
     } catch (err) {
+      console.error("Lỗi lấy chi tiết đơn:", err);
       setView("list");
     } finally {
       setLoading(false);
@@ -92,6 +107,7 @@ const OrderHistory = () => {
                   key={order._id}
                   order={order}
                   onOrderClick={handleViewDetail}
+                  onCancelOrder={handleCancelOrder}
                 />
               ))}
             </div>
@@ -109,7 +125,7 @@ const OrderHistory = () => {
           {loading ? (
             <p>Đang tải chi tiết...</p>
           ) : selectedOrder ? (
-            <ShippingInformation orderDetail={selectedOrder} />
+            <ShippingInformation orderId={selectedOrder?._id} />
           ) : (
             <p className="status-badge status-error">Lỗi dữ liệu.</p>
           )}

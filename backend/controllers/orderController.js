@@ -1,5 +1,6 @@
 import Order from "../models/OrderModel.js";
 import Product from "../models/ProductModel.js";
+import ShipperInfo from "../models/ShipperInfo.js";
 import Cart from "../models/CartModel.js";
 import crypto from "crypto";
 import querystring from "qs";
@@ -409,6 +410,97 @@ const getOrderById = async (req, res) => {
   }
 };
 
+const getShippingInfo = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.orderId).populate(
+      "shipperId",
+      "fullName"
+    );
+    if (!order)
+      return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+
+    let shipperPhone = null;
+    if (order.shipperId) {
+      const info = await ShipperInfo.findOne({ userId: order.shipperId._id });
+      shipperPhone = info?.phoneNumber; // Lấy phoneNumber từ bảng ShipperInfo
+    }
+
+    res.json({
+      recipientName: order.shippingAddress.fullName,
+      recipientPhone: order.shippingAddress.phone, // Lấy từ OrderModel
+      address: `${order.shippingAddress.streetAddress}, ${order.shippingAddress.ward}, ${order.shippingAddress.district}, ${order.shippingAddress.city}`,
+      shipperName: order.shipperId?.fullName || null,
+      shipperPhone: shipperPhone || null, // Số điện thoại vừa tìm được ở bước 2
+      status: order.status,
+      orderItems: order.orderItems,
+      totalPrice: order.totalPrice,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi Server" });
+  }
+};
+
+const cancelOrder = async (req, res) => {
+  try {
+    const id = req.params.orderId;
+    const userId = req.user.id;
+
+    const order = await Order.findById(id);
+
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy đơn hàng." });
+    }
+
+    if (order.user.toString() !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "Bạn không có quyền hủy đơn hàng này.",
+      });
+    }
+
+    if (order.status !== "PENDING") {
+      return res.status(400).json({
+        success: false,
+        message: `Không thể hủy đơn hàng vì đơn đang ở trạng thái: ${order.status}`,
+      });
+    }
+
+    const bulkUpdateOps = order.orderItems.map((item) => ({
+      updateOne: {
+        filter: {
+          _id: item.product,
+          "variants.color": item.color,
+          "variants.size": item.size,
+        },
+        update: {
+          $inc: { "variants.$.quantity": item.quantity },
+        },
+      },
+    }));
+
+    if (bulkUpdateOps.length > 0) {
+      await Product.bulkWrite(bulkUpdateOps);
+    }
+
+    order.status = "Cancelled";
+
+    await order.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Hủy đơn hàng thành công và đã hoàn lại số lượng vào kho.",
+      order,
+    });
+  } catch (error) {
+    console.error("Lỗi khi hủy đơn hàng:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Lỗi server khi hủy đơn hàng." });
+  }
+};
+
 export {
   createOrder,
   createPaymentUrl,
@@ -417,4 +509,6 @@ export {
   getOrderById,
   getOrderAvail,
   acceptOrder,
+  getShippingInfo,
+  cancelOrder,
 };

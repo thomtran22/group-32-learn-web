@@ -8,6 +8,8 @@ import {
   getOrderById,
   getOrderAvail,
   acceptOrder,
+  getShippingInfo,
+  cancelOrder,
 } from "../controllers/orderController.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 
@@ -27,5 +29,9 @@ router.get("/", verifyToken, viewOrders);
 router.get("/:id", verifyToken, getOrderById);
 
 router.put("/:orderId/accept", verifyToken, acceptOrder);
+
+router.get("/:orderId/shipping-info", verifyToken, getShippingInfo);
+
+router.put("/:orderId/cancel", verifyToken, cancelOrder);
 
 export default router;
