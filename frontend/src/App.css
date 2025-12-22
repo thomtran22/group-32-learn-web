@@ -3,3 +3,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@layer components {
+  /* Tùy chỉnh vị trí và hình dáng dấu chấm slide */
+  .section-1 .swiper-pagination-bullets {
+    @apply bottom-6 !important; /* Đẩy dấu chấm lên cao chút cho thoáng */
+  }
+
+  .section-1 .swiper-pagination-bullet {
+    @apply w-2 h-2 bg-white opacity-50 transition-all duration-300 mx-1;
+  }
+
+  .section-1 .swiper-pagination-bullet-active {
+    @apply w-8 rounded-full bg-purple-600 opacity-100; /* Màu tím & thanh dài giống mẫu */
+  }
+}

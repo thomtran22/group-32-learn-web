@@ -2,7 +2,6 @@ import React from "react";
 import Section1 from "../components/background/BackGround";
 import { ProductSection } from "../components/sections/ProductSection"; // Đảm bảo dùng ngoặc nhọn nếu export const
 import Section4 from "../components/sections/Section4";
-import Contact from "../components/contact/Contact"
 
 function Home() {
   return (

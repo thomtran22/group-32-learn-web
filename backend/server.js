@@ -5,6 +5,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import hpp from 'hpp';
 import jwt from 'jsonwebtoken';
+import authRoutes from './routes/authRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
@@ -41,6 +42,7 @@ app.get('/', (req, res) => {
 });
 
 
+app.use('/api/auth', authRoutes);
 
 
 app.use('/api/products', productRoutes);
@@ -52,10 +54,9 @@ app.use("/api/vouchers", voucherRoutes);
 app.use("/api/shipper", shipperRoutes);
 app.use("/api/user", userRoutes);
 
-//Todo: Dùng để test
 app.get('/api/test/get-token/:userId', (req, res) => {
     const { userId } = req.params;
-    // Tạo token hạn 30 ngày
+
     const token = jwt.sign(
         { id: userId },
         process.env.JWT_SECRET,
@@ -63,9 +64,9 @@ app.get('/api/test/get-token/:userId', (req, res) => {
     );
 
     res.json({
-        message: "Tạo token thành công! Copy token bên dưới ném vào LocalStorage",
-        userId: userId,
-        token: token
+        message: "Tạo token thành công!",
+        userId,
+        token
     });
 });
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

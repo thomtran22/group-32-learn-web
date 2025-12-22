@@ -1,95 +1,171 @@
-import React from 'react';
-
-// Hàm hỗ trợ tạo danh sách tùy chọn cho Ngày/Tháng/Năm
-const generateOptions = (start, end) => {
-    const options = [];
-    for (let i = start; i <= end; i++) {
-        options.push(<option key={i} value={i}>{i}</option>);
-    }
-    return options;
-};
+import React from "react";
 
 function RegisterForm({ formData, handleChange, handleSubmit, toggleForm }) {
-    const currentYear = new Date().getFullYear();
-    const years = generateOptions(1900, currentYear);
-    const days = generateOptions(1, 31);
-    const months = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
+  const inputClassName =
+    "w-full rounded-xl bg-gray-100 px-4 py-2.5 text-base font-medium " +
+    "outline-none ring-1 ring-gray-200 focus:bg-white focus:ring-black transition";
 
-    return (
-        <form onSubmit={handleSubmit}>
-            <h2 className="modal-title-register">Tạo tài khoản mới</h2>
+  // Radio viền đen + chấm đen ở giữa khi checked
+  const radioClassName =
+    "h-4 w-4 appearance-none rounded-full border-2 border-black bg-white " +
+    "checked:shadow-[inset_0_0_0_4px_#000] " +
+    "focus:outline-none focus:ring-2 focus:ring-black/30 transition";
 
-            <div className="form-group">
-                <input type="text" name="fullName" placeholder="Họ và Tên" value={formData.fullName} onChange={handleChange} required/>
-            </div>
-            {/* Ngày sinh */}
-            <div className="form-group">
-                <label className="label-with-icon">Ngày tháng năm sinh <span className="help-icon">?</span></label>
-                <div className="form-row form-date">
-                    <select name="birthDay" value={formData.birthDay || '1'} onChange={handleChange}>
-                        {days}
-                    </select>
-                    <select name="birthMonth" value={formData.birthMonth || '12'} onChange={handleChange}>
-                        {months.map((month, index) => (
-                            <option key={index + 1} value={index + 1}>{month}</option>
-                        ))}
-                    </select>
-                    <select name="birthYear" value={formData.birthYear || currentYear} onChange={handleChange}>
-                        {years}
-                    </select>
-                </div>
-            </div>
+  // Link hiệu ứng underline trồi lên -> nở thành background
+  const fancyLinkClassName =
+    "relative inline-block font-semibold text-gray-800 px-1 rounded-[4px] " +
+    "after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-full after:h-[2px] " +
+    "after:bg-black after:transition-all after:duration-300 after:origin-left after:z-0 " +
+    "hover:after:bottom-[2px] hover:after:h-full hover:text-white transition";
 
-            {/* Giới tính */}
-            <div className="form-group form-group-gender">
-                <label className="label-with-icon">Giới tính ?</label>
-                <div className="form-row form-gender">
-                    {/* Tùy chọn 1: Female */}
-                    <div className="gender-option">
-                        <label htmlFor="gender-female">Nữ</label>
-                        <input type="radio" id="gender-female" name="gender" value="Female" checked={formData.gender === 'Female'} onChange={handleChange} />
-                    </div>
-                    {/* Tùy chọn 2: Male */}
-                    <div className="gender-option">
-                        <label htmlFor="gender-male">Nam</label>
-                        <input type="radio" id="gender-male" name="gender" value="Male" checked={formData.gender === 'Male'} onChange={handleChange} />
-                    </div>
-                    {/* Tùy chọn 3: Custom */}
-                    <div className="gender-option">
-                        <label htmlFor="gender-custom">Khác</label>
-                        <input type="radio" id="gender-custom" name="gender" value="Custom" checked={formData.gender === 'Custom'} onChange={handleChange} />
-                    </div>
-                </div>
-            </div>
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 text-sm">
+      <h2 className="text-xl font-bold text-center">Tạo tài khoản mới</h2>
 
-            {/* Email/SĐT & Mật khẩu */}
-            <div className="form-group">
-                <input 
-                    type="email" 
-                    name="email"
-                    placeholder="Nhập email" 
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
+      {/* Họ & tên */}
+      <div className="space-y-1">
+        <label className="font-semibold">Họ và tên</label>
+        <input
+          className={inputClassName}
+          type="text"
+          name="fullName"
+          placeholder="Nguyễn Văn A"
+          value={formData.fullName}
+          onChange={handleChange}
+          required
+        />
+      </div>
+
+      {/* Date + Gender */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+        {/* Ngày sinh */}
+        <div className="space-y-1">
+          <label className="font-semibold">Ngày sinh</label>
+          <input
+            type="date"
+            name="dateOfBirth"
+            value={formData.dateOfBirth}
+            onChange={handleChange}
+            required
+            max={new Date().toISOString().split("T")[0]}
+            className={inputClassName}
+          />
+        </div>
+
+        {/* Giới tính (căn giữa cụm radio) */}
+        <div className="space-y-1">
+          <label className="font-semibold">Giới tính</label>
+
+          <div className="flex items-center justify-center gap-6 pt-2">
+            {[
+              { label: "Nữ", value: "Female" },
+              { label: "Nam", value: "Male" },
+              { label: "Khác", value: "Custom" },
+            ].map((genderOption) => (
+              <label
+                key={genderOption.value}
+                className="flex items-center justify-center gap-2 cursor-pointer select-none"
+              >
+                <input
+                  type="radio"
+                  name="gender"
+                  value={genderOption.value}
+                  checked={formData.gender === genderOption.value}
+                  onChange={handleChange}
+                  className={radioClassName}
                 />
-            </div>
-            <div className="form-group">
-                <input 
-                    type="password" 
-                    name="password"
-                    placeholder="Nhập mật khẩu" 
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                />
-            </div>
-            <button type="submit" className="btn-main-action btn-register-green">
-                Đăng ký
-            </button>
-            
-            <p className="link-login-bottom"><a href="#" onClick={(e) => {e.preventDefault(); toggleForm(true);}}>Already have an account?</a></p>
-        </form>
-    );
+                <span className="leading-none">{genderOption.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+{/* Vai trò (đặt trên Email) */}
+<div className="space-y-1">
+  <label className="font-semibold">Bạn là</label>
+
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+    {[
+      { label: "Người dùng", value: "customer" },
+      { label: "Shipper", value: "shipper" },
+    ].map((roleOption) => (
+      <label key={roleOption.value} className="block">
+        <input
+          type="radio"
+          name="role"
+          value={roleOption.value}
+          checked={formData.role === roleOption.value}
+          onChange={handleChange}
+          className="hidden peer"
+        />
+
+        <div
+          className="inline-flex w-full items-center justify-center rounded-xl border-2 border-black
+                     border-2 border-black
+                     bg-white px-4 py-3 text-base font-semibold cursor-pointer select-none
+                     transition
+                     hover:bg-gray-50
+                     peer-checked:bg-black peer-checked:text-white"
+        >
+          {roleOption.label}
+        </div>
+      </label>
+    ))}
+  </div>
+</div>
+
+
+      {/* Email */}
+      <div className="space-y-1">
+        <label className="font-semibold">Email</label>
+        <input
+          className={inputClassName}
+          type="email"
+          name="email"
+          placeholder="example@email.com"
+          value={formData.email}
+          onChange={handleChange}
+          required
+        />
+      </div>
+
+      {/* Mật khẩu */}
+      <div className="space-y-1">
+        <label className="font-semibold">Mật khẩu</label>
+        <input
+          className={inputClassName}
+          type="password"
+          name="password"
+          placeholder="Tối thiểu 8 ký tự"
+          value={formData.password}
+          onChange={handleChange}
+          required
+        />
+      </div>
+
+      {/* Button */}
+      <button
+        type="submit"
+        className="w-full rounded-xl bg-black py-2.5 text-base font-bold text-white
+                   hover:bg-white hover:text-black hover:ring-2 hover:ring-black
+                   active:scale-[0.98] transition"
+      >
+        ĐĂNG KÝ
+      </button>
+
+      {/* Back to login */}
+      <p className="text-center">
+        Đã có tài khoản?{" "}
+        <button
+          type="button"
+          onClick={() => toggleForm(true)}
+          className={fancyLinkClassName}
+        >
+          <span className="relative z-10">Đăng nhập</span>
+        </button>
+      </p>
+    </form>
+  );
 }
 
 export default RegisterForm;
