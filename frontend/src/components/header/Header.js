@@ -78,7 +78,7 @@
 // }
 //  export default Header;
 import React, { useState, useEffect } from 'react';
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import logo from "../../assets/images/logo.svg";
 import LoginModal from '../login/LoginModal';
 import { FaUser, FaShoppingCart, FaSearch } from "react-icons/fa";
@@ -89,12 +89,26 @@ function Header() {
   const { cartCount } = useCart();
 
   // Menu link với hiệu ứng gạch chân mượt mà hơn
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const closeModal = () => setIsModalOpen(false);
+  const navigate = useNavigate(); 
+
   const navLinkClass = ({ isActive }) =>
     `relative text-sm md:text-base font-semibold tracking-[0.1em] transition-all duration-300 uppercase py-2 ${
       isActive
         ? "text-red-600 after:w-full"
         : "text-gray-600 hover:text-red-600 after:w-0"
     } after:content-[''] after:absolute after:bottom-0 after:left-0 after:h-[2px] after:bg-red-600 after:transition-all after:duration-300 hover:after:w-full`;
+
+  const handleUserClick = () => {
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      navigate("/profile"); // đúng route của Anh
+    } else {
+      setIsModalOpen(true);
+    }
+  };
 
   return (
     <>
@@ -146,10 +160,22 @@ function Header() {
                     )}
                   </AnimatePresence>
                 </Link>
-                
-                <Link to="/profile" className="p-2 text-gray-700 hover:text-red-600 transition-colors relative">
-                  <FaUser className="text-xl" />
-                </Link>
+              
+                {/* User – CHỈ ĐỔI onClick */}
+                <div
+                  className="flex items-center gap-2 group p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 cursor-pointer"
+                  onClick={handleUserClick}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ")
+                      handleUserClick();
+                  }}
+                >
+                  <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 group-hover:bg-red-100 transition-colors">
+                    <FaUser className="text-xl text-gray-600 group-hover:text-red-600" />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -166,6 +192,7 @@ function Header() {
           </div>
         </div>
       </header>
+      {isModalOpen && <LoginModal closeModal={closeModal} />}
     </>
   );
 }
