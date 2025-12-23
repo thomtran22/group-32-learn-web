@@ -12,6 +12,7 @@ import ProductDetail from './pages/ProductDetail';
 import ProductListPage from "./pages/ProductListPage";
 import ShipperMainLayout from "./pages/ShipperMainLayout";
 import UserProfile from "./pages/UserProfile";
+import ResetPassword from "./pages/ResetPassword";
 
 import { CartProvider } from './context/CartContext'; 
 import "./assets/css/globals.css";
@@ -39,6 +40,7 @@ function App() {
           <Route path="/shipper/*" element={<ShipperMainLayout />} />
           <Route path="/products/:sku" element={<ProductDetail />} />
           <Route path="/category/:categorySlug" element={<ProductListPage />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Routes>
         <Contact/>
         <Footer />
