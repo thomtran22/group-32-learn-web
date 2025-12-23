@@ -77,8 +77,6 @@ export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
-    console.log("🔥 forgotPassword HIT", email);
-
     if (!email) {
       return res.status(400).json({ message: "Thiếu email" });
     }
@@ -91,8 +89,13 @@ export const forgotPassword = async (req, res) => {
       });
     }
 
-    if (!user.email) {
-      return res.status(400).json({ message: "Email người dùng không hợp lệ" });
+    if (
+      user.resetPasswordExpires &&
+      user.resetPasswordExpires > Date.now() - 10 * 60 * 1000
+    ) {
+      return res.json({
+        message: "Nếu email tồn tại, link khôi phục đã được gửi",
+      });
     }
 
     const resetToken = randomBytes(32).toString("hex");
@@ -103,7 +106,7 @@ export const forgotPassword = async (req, res) => {
 
     await user.save();
 
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const frontendUrl = process.env.FRONTEND_URL;
     const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
 
     await sendPasswordResetEmail(user.email, resetUrl);
