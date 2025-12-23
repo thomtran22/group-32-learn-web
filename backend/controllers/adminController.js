@@ -2,6 +2,7 @@ import Order from '../models/OrderModel.js';
 import Product from '../models/ProductModel.js';
 import User from '../models/UserModel.js';
 import ShipperInfo from '../models/ShipperInfo.js';
+import { differenceInDays, startOfDay, endOfDay } from 'date-fns';
 import mongoose from 'mongoose';
 
 // --- DASHBOARD ---
@@ -66,40 +67,69 @@ export const getDashboardStats = async (req, res) => {
 // --- REVENUE CHART ---
 export const getRevenueStats = async (req, res) => {
     try {
-        const { period = 'day' } = req.query;
-        let groupBy = {};
+        // Lấy từ query, mặc định 7 ngày qua
+        const { from, to } = req.query;
 
-        if (period === 'day') {
-            groupBy = { 
-                year: { $year: '$deliveredAt' }, 
-                month: { $month: '$deliveredAt' }, 
-                day: { $dayOfMonth: '$deliveredAt' } 
-            };
-        } else if (period === 'month') {
-            groupBy = { 
-                year: { $year: '$deliveredAt' }, 
-                month: { $month: '$deliveredAt' } 
-            };
-        } else if (period === 'year') {
-            groupBy = { year: { $year: '$deliveredAt' } };
-        } else {
-             groupBy = { year: { $year: '$deliveredAt' }, week: { $week: '$deliveredAt' } };
+        if (!from || !to) {
+            return res.status(400).json({ success: false, message: 'Vui lòng cung cấp ngày bắt đầu và kết thúc.' });
         }
+        
+        const startDate = startOfDay(new Date(from));
+        const endDate = endOfDay(new Date(to));
 
+        const daysDiff = differenceInDays(endDate, startDate);
+
+        let groupBy = {};
+        let dateFormat = ''; // Dùng để format _id cho dễ xử lý ở frontend
+
+        // Tự động quyết định cách nhóm dữ liệu
+        if (daysDiff <= 1) { // Xem trong 1 ngày -> nhóm theo giờ
+            groupBy = {
+                year: { $year: '$deliveredAt' },
+                month: { $month: '$deliveredAt' },
+                day: { $dayOfMonth: '$deliveredAt' },
+                hour: { $hour: '$deliveredAt' }
+            };
+            dateFormat = '%Y-%m-%dT%H:00:00.000Z'; // Format ISO để dễ parse giờ
+        } else if (daysDiff <= 90) { // Xem dưới 3 tháng -> nhóm theo ngày
+            groupBy = {
+                year: { $year: '$deliveredAt' },
+                month: { $month: '$deliveredAt' },
+                day: { $dayOfMonth: '$deliveredAt' }
+            };
+            dateFormat = '%Y-%m-%d';
+        } else { // Xem dài hạn -> nhóm theo tháng
+            groupBy = {
+                year: { $year: '$deliveredAt' },
+                month: { $month: '$deliveredAt' }
+            };
+            dateFormat = '%Y-%m';
+        }
+        
         const revenueData = await Order.aggregate([
-            { $match: { status: 'Delivered', isPaid: true } },
+            {
+                $match: {
+                    status: 'Delivered',
+                    isPaid: true,
+                    deliveredAt: {
+                        $gte: startDate,
+                        $lte: endDate
+                    }
+                }
+            },
             {
                 $group: {
-                    _id: groupBy,
+                    _id: { $dateToString: { format: dateFormat, date: "$deliveredAt" } },
                     totalRevenue: { $sum: '$totalPrice' },
                     orderCount: { $sum: 1 }
                 }
             },
-            { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 } }
+            { $sort: { '_id': 1 } }
         ]);
 
         res.json({ success: true, data: revenueData });
     } catch (error) {
+        console.error('Revenue stats error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };

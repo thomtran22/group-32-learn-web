@@ -5,6 +5,9 @@ import {
 } from 'recharts';
 // Import API mới
 import { apiGetDashboardStats, apiGetRevenueStats } from '../../services/adminApi';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
+import { subDays, startOfMonth, endOfMonth, startOfToday, endOfToday, format, eachDayOfInterval, eachHourOfInterval, eachMonthOfInterval, getYear, getMonth, getDate } from 'date-fns';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
@@ -24,16 +27,31 @@ const StatCard = ({ title, value, icon: Icon, colorClass, subtitle }) => (
 const Dashboard = () => {
     const [stats, setStats] = useState(null);
     const [revenueData, setRevenueData] = useState([]);
-    const [period, setPeriod] = useState('day');
     const [loading, setLoading] = useState(true);
+    const [loadingChart, setLoadingChart] = useState(true);
+
+    // STATE MỚI: Quản lý khoảng thời gian
+    const [dateRange, setDateRange] = useState([subDays(new Date(), 6), new Date()]);
+    const [startDate, endDate] = dateRange;
+    const [activePreset, setActivePreset] = useState('7days');
+
+    const presets = {
+        'today': { label: 'Hôm nay', range: [startOfToday(), endOfToday()] },
+        'yesterday': { label: 'Hôm qua', range: [subDays(startOfToday(), 1), subDays(endOfToday(), 1)] },
+        '7days': { label: '7 ngày qua', range: [subDays(new Date(), 6), new Date()] },
+        '30days': { label: '30 ngày qua', range: [subDays(new Date(), 29), new Date()] },
+        'thisMonth': { label: 'Tháng này', range: [startOfMonth(new Date()), endOfMonth(new Date())] },
+    };
 
     useEffect(() => {
         fetchDashboardData();
     }, []);
 
     useEffect(() => {
-        fetchRevenueData();
-    }, [period]);
+        if (startDate && endDate) {
+            fetchRevenueData();
+        }
+    }, [dateRange]); // Chạy lại khi dateRange thay đổi
 
     const fetchDashboardData = async () => {
         try {
@@ -49,36 +67,70 @@ const Dashboard = () => {
     };
 
     const fetchRevenueData = async () => {
+        setLoadingChart(true);
         try {
-            const res = await apiGetRevenueStats(period);
-            if (res.success) {
-                // Transform data for Recharts based on period
-                const chartData = res.data.map(item => {
-                    let label = '';
-                    const { _id } = item;
-                    if (period === 'day') label = `${_id.day}/${_id.month}`;
-                    else if (period === 'week') label = `Tuần ${_id.week}`;
-                    else if (period === 'month') label = `Tháng ${_id.month}`;
-                    else label = `${_id.year}`;
+            const res = await apiGetRevenueStats({
+                startDate: format(startDate, 'yyyy-MM-dd'),
+                endDate: format(endDate, 'yyyy-MM-dd')
+            });
 
+            if (res.success) {
+                // LOGIC "ZERO-FILLING" ĐỂ LẤP ĐẦY DỮ LIỆU TRỐNG
+                const daysDiff = (endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24);
+                let templateData = [];
+
+                if (daysDiff <= 1) { // Group theo giờ
+                    templateData = eachHourOfInterval({ start: startDate, end: endDate }).map(d => ({
+                        name: format(d, 'HH:mm'),
+                        key: format(d, 'yyyy-MM-dd\'T\'HH:00:00.000Z')
+                    }));
+                } else if (daysDiff <= 90) { // Group theo ngày
+                    templateData = eachDayOfInterval({ start: startDate, end: endDate }).map(d => ({
+                        name: format(d, 'dd/MM'),
+                        key: format(d, 'yyyy-MM-dd')
+                    }));
+                } else { // Group theo tháng
+                    templateData = eachMonthOfInterval({ start: startDate, end: endDate }).map(d => ({
+                        name: `T${format(d, 'M')}/${format(d, 'yy')}`,
+                        key: format(d, 'yyyy-MM')
+                    }));
+                }
+
+                const apiDataMap = new Map(res.data.map(item => [item._id, item]));
+
+                const chartData = templateData.map(template => {
+                    const apiData = apiDataMap.get(template.key);
                     return {
-                        name: label,
-                        revenue: item.totalRevenue,
-                        orders: item.orderCount
+                        name: template.name,
+                        revenue: apiData ? apiData.totalRevenue : 0,
+                        orders: apiData ? apiData.orderCount : 0,
                     };
                 });
+                
                 setRevenueData(chartData);
             }
         } catch (error) {
             console.error("Failed to fetch revenue", error);
+            setRevenueData([]); // Xóa dữ liệu cũ nếu lỗi
+        } finally {
+            setLoadingChart(false);
         }
     };
+    
+    const handlePresetClick = (key) => {
+        setActivePreset(key);
+        setDateRange(presets[key].range);
+    }
+    
+    const handleDateChange = (update) => {
+        setDateRange(update);
+        if (update[1]) { // Chỉ bỏ active preset khi đã chọn xong cả 2 ngày
+            setActivePreset(null);
+        }
+    }
 
     const formatCurrency = (val) => val?.toLocaleString('vi-VN') + 'đ';
-
     if (loading) return <div className="p-10 text-center text-gray-500">Đang tải dữ liệu...</div>;
-
-    // Backend trả về mảng [{_id: 'Status', count: 10}], map lại cho PieChart
     const orderStatusData = stats?.orders?.map(item => ({ name: item._id, value: item.count })) || [];
 
     return (
@@ -116,35 +168,49 @@ const Dashboard = () => {
 
             {/* Charts Section */}
             <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
                     <h3 className="text-lg font-bold text-gray-700">Biểu đồ Doanh thu</h3>
-                    <div className="flex bg-gray-100 rounded p-1">
-                        {['day', 'week', 'month', 'year'].map(p => (
-                            <button
-                                key={p}
-                                onClick={() => setPeriod(p)}
-                                className={`px-4 py-1.5 text-sm rounded transition-all ${
-                                    period === p ? 'bg-white shadow text-blue-600 font-medium' : 'text-gray-500 hover:text-gray-700'
+                    <div className="flex flex-wrap items-center gap-2">
+                        {Object.entries(presets).map(([key, { label }]) => (
+                             <button
+                                key={key}
+                                onClick={() => handlePresetClick(key)}
+                                className={`px-3 py-1.5 text-sm rounded transition-all ${
+                                    activePreset === key 
+                                    ? 'bg-blue-600 text-white font-medium shadow-sm' 
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                             >
-                                {p === 'day' ? 'Ngày' : p === 'week' ? 'Tuần' : p === 'month' ? 'Tháng' : 'Năm'}
+                                {label}
                             </button>
                         ))}
+                        <DatePicker
+                            selectsRange={true}
+                            startDate={startDate}
+                            endDate={endDate}
+                            onChange={handleDateChange}
+                            dateFormat="dd/MM/yyyy"
+                            className="w-56 text-sm border-gray-300 rounded-md shadow-sm p-1.5 text-center focus:ring-blue-500 focus:border-blue-500"
+                        />
                     </div>
                 </div>
                 <div className="h-[400px]">
+                    {loadingChart ? <div className="text-center pt-20">Đang tải biểu đồ...</div> : 
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={revenueData}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                            <XAxis dataKey="name" axisLine={false} tickLine={false} dy={10} />
-                            <YAxis yAxisId="left" axisLine={false} tickLine={false} />
-                            <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} />
-                            <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} dy={10} fontSize={12} />
+                            <YAxis yAxisId="left" axisLine={false} tickLine={false} tickFormatter={val => new Intl.NumberFormat('vi-VN').format(val)} />
+                            <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} allowDecimals={false} />
+                            <Tooltip 
+                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} 
+                                formatter={(value, name) => [name === 'Doanh thu' ? formatCurrency(value) : value, name]}
+                            />
                             <Legend />
-                            <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="#10B981" strokeWidth={3} dot={{r: 4}} activeDot={{r: 6}} name="Doanh thu" />
-                            <Line yAxisId="right" type="monotone" dataKey="orders" stroke="#3B82F6" strokeWidth={3} dot={{r: 4}} activeDot={{r: 6}} name="Số đơn" />
+                            <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="#10B981" strokeWidth={2} dot={false} activeDot={{ r: 6 }} name="Doanh thu" />
+                            <Line yAxisId="right" type="monotone" dataKey="orders" stroke="#3B82F6" strokeWidth={2} dot={false} activeDot={{ r: 6 }} name="Số đơn" />
                         </LineChart>
-                    </ResponsiveContainer>
+                    </ResponsiveContainer>}
                 </div>
             </div>
 

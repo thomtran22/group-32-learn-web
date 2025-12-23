@@ -19,11 +19,14 @@ export const apiGetDashboardStats = async () => {
     return response.data;
 };
 
-export const apiGetRevenueStats = async (period) => {
-    // period: 'day', 'week', 'month', 'year'
+export const apiGetRevenueStats = async ({ startDate, endDate }) => {
+    // startDate và endDate phải là chuỗi format YYYY-MM-DD
     const response = await axios.get(`${API_URL}/revenue`, {
         ...getAuthConfig(),
-        params: { period }
+        params: { 
+            from: startDate,
+            to: endDate
+        }
     });
     return response.data;
 };

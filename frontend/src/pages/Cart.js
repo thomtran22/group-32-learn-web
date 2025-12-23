@@ -1,7 +1,7 @@
 import React, { useState, useEffect }  from "react";
 
 import {useCart} from '../context/CartContext';
-import CartItem from "../components/cart/CartItem";
+import CartItem from '../components/cart/CartItem';
 import OrderSummary from '../components/cart/OrderSummary';
 
 const Cart = () => {
@@ -61,10 +61,12 @@ const Cart = () => {
                         <div className="cart-table">
                             {/* Tiêu đề bảng */}
                             <div className="cart-header">
-                                <div className="header-item product-col">SẢN PHẨM</div>
-                                <div className="header-item">GIÁ</div>
-                                <div className="header-item">SỐ LƯỢNG</div>
-                                <div className="header-item subtotal-col">ĐƠN GIÁ</div>
+                                {/* THÊM cột rỗng này để chiếm chỗ cho ô checkbox bên dưới */}
+                                <div className="checkbox-col"></div>
+                                <div className="product-col">SẢN PHẨM</div>
+                                <div className="price-col">ĐƠN GIÁ</div>
+                                <div className="quantity-col">SỐ LƯỢNG</div>
+                                <div className="subtotal-col">SỐ TIỀN</div> 
                             </div>
 
                             {cartItems.map(item => (

@@ -35,6 +35,7 @@
     "css-select": "^5.2.2",
     "css-what": "^6.2.2",
     "data-uri-to-buffer": "^6.0.2",
+    "date-fns": "^4.1.0",
     "degenerator": "^5.0.1",
     "devtools-protocol": "^0.0.1534754",
     "dom-serializer": "^2.0.0",
