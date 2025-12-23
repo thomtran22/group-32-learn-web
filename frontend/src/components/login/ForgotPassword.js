@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 
 function ForgotPassword({ toggleBack }) {
@@ -6,6 +6,7 @@ function ForgotPassword({ toggleBack }) {
     "mt-2 w-full rounded-xl bg-gray-100 px-4 py-3 text-lg font-medium " +
     "outline-none ring-1 ring-gray-200 focus:bg-white focus:ring-black transition";
 
+  // underline hover giống LoginForm
   const fancyLinkClassName =
     "relative inline-block font-semibold text-gray-800 px-1 rounded-[4px] " +
     "after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-full after:h-[2px] " +
@@ -16,54 +17,25 @@ function ForgotPassword({ toggleBack }) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [cooldown, setCooldown] = useState(0);
-
-  const lastSentEmailRef = useRef(null);
-
-  useEffect(() => {
-    if (cooldown <= 0) return;
-    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [cooldown]);
-
-  const normalizeEmail = (value) => value.trim().toLowerCase();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const normalizedEmail = normalizeEmail(email);
-    if (!normalizedEmail) return;
-
-    if (
-      cooldown > 0 &&
-      lastSentEmailRef.current === normalizedEmail
-    ) {
-      return;
-    }
-
     setLoading(true);
     setMessage("");
 
     try {
-      await axios.post("http://localhost:3000/api/auth/forgot-password", {
-        email: normalizedEmail,
+      await axios.post("http://localhost:4000/api/auth/forgot-password", {
+        email,
       });
 
-      lastSentEmailRef.current = normalizedEmail;
-      setCooldown(60);
+      // ❗ message trung tính – không lộ email
       setMessage("Nếu email tồn tại, link khôi phục đã được gửi.");
     } catch (error) {
-      lastSentEmailRef.current = normalizedEmail;
-      setCooldown(60);
       setMessage("Nếu email tồn tại, link khôi phục đã được gửi.");
     } finally {
       setLoading(false);
     }
   };
-
-  const isSameAsLastSent =
-    lastSentEmailRef.current &&
-    normalizeEmail(email) === lastSentEmailRef.current;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -87,23 +59,17 @@ function ForgotPassword({ toggleBack }) {
 
       <button
         type="submit"
-        disabled={loading || (cooldown > 0 && isSameAsLastSent)}
+        disabled={loading}
         className="w-full rounded-xl bg-black py-3 text-lg font-bold text-white tracking-wide
                    hover:bg-white hover:text-black hover:ring-2 hover:ring-black
                    disabled:opacity-60
                    active:scale-[0.98] transition"
       >
-        {cooldown > 0 && isSameAsLastSent
-          ? `Vui lòng chờ ${cooldown}s`
-          : loading
-          ? "Đang gửi..."
-          : "Gửi link khôi phục"}
+        {loading ? "Đang gửi..." : "Gửi link khôi phục"}
       </button>
 
       {message && (
-        <p className="text-center text-base text-gray-700">
-          {message}
-        </p>
+        <p className="text-center text-base text-gray-700">{message}</p>
       )}
 
       <div className="text-center text-lg">

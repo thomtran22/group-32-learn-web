@@ -1,8 +1,6 @@
 {
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
-    "animate.css": "^4.1.1",
-    "nodemailer": "^7.0.12",
-    "react-notifications-component": "^3.4.1"
+    "nodemailer": "^7.0.12"
   }
 }
