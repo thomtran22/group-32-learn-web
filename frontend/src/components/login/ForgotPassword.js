@@ -24,7 +24,7 @@ function ForgotPassword({ toggleBack }) {
     setMessage("");
 
     try {
-      await axios.post("http://localhost:3000/api/auth/forgot-password", {
+      await axios.post("http://localhost:4000/api/auth/forgot-password", {
         email,
       });
 

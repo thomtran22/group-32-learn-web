@@ -10,16 +10,12 @@ const CheckoutForm = ({ formData, handleChange }) => {
         district: '',
         ward: ''
     });
-
-    //Lấy danh sách Tỉnh/Thành phố
     useEffect(() => {
         const fetchProvinces = async () => {
             try {
-                const response = await fetch('https://esgoo.net/api-tinhthanh/1/0.htm');
-                const result = await response.json();
-                if (result.error === 0) {
-                    setProvinces(result.data);
-                }
+                const response = await fetch('https://provinces.open-api.vn/api/p/');
+                const data = await response.json();
+                setProvinces(data);
             } catch (error) {
                 console.error("Lỗi khi lấy danh sách tỉnh thành:", error);
             }
@@ -30,26 +26,25 @@ const CheckoutForm = ({ formData, handleChange }) => {
     //Xử lý khi chọn Tỉnh/Thành phố
     const handleProvinceChange = async (e) => {
         const provinceCode = e.target.value;
-        setSelectedCodes(prev => ({ ...prev, city: provinceCode, district: '', ward: '' }));
+        
+        // Reset state
+        setSelectedCodes({ city: provinceCode, district: '', ward: '' });
+        setDistricts([]);
+        setWards([]);
 
-        const selectedProvince = provinces.find(p => p.id === provinceCode);
-        const provinceName = selectedProvince ? selectedProvince.full_name : '';
+        // Tìm tên tỉnh để lưu vào formData
+        const selectedProvince = provinces.find(p => p.code === parseInt(provinceCode));
+        const provinceName = selectedProvince ? selectedProvince.name : '';
 
-        // Cập nhật formData
         handleChange({ target: { name: 'city', value: provinceName } });
         handleChange({ target: { name: 'district', value: '' } });
         handleChange({ target: { name: 'ward', value: '' } });
 
-        setDistricts([]);
-        setWards([]);
-
         if (provinceCode) {
             try {
-                const res = await fetch(`https://esgoo.net/api-tinhthanh/2/${provinceCode}.htm`);
-                const result = await res.json();
-                if (result.error === 0) {
-                    setDistricts(result.data);
-                }
+                const res = await fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
+                const data = await res.json();
+                setDistricts(data.districts || []);
             } catch (error) {
                 console.error("Lỗi lấy quận huyện:", error);
             }
@@ -59,22 +54,21 @@ const CheckoutForm = ({ formData, handleChange }) => {
     //Xử lý khi chọn Quận/Huyện
     const handleDistrictChange = async (e) => {
         const districtCode = e.target.value;
+        
         setSelectedCodes(prev => ({ ...prev, district: districtCode, ward: '' }));
+        setWards([]);
 
-        const selectedDistrict = districts.find(d => d.id === districtCode);
-        const districtName = selectedDistrict ? selectedDistrict.full_name : '';
+        const selectedDistrict = districts.find(d => d.code === parseInt(districtCode));
+        const districtName = selectedDistrict ? selectedDistrict.name : '';
 
         handleChange({ target: { name: 'district', value: districtName } });
         handleChange({ target: { name: 'ward', value: '' } });
-        setWards([]);
 
         if (districtCode) {
             try {
-                const res = await fetch(`https://esgoo.net/api-tinhthanh/3/${districtCode}.htm`);
-                const result = await res.json();
-                if (result.error === 0) {
-                    setWards(result.data);
-                }
+                const res = await fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
+                const data = await res.json();
+                setWards(data.wards || []);
             } catch (error) {
                 console.error("Lỗi lấy xã phường:", error);
             }
@@ -86,8 +80,8 @@ const CheckoutForm = ({ formData, handleChange }) => {
         const wardCode = e.target.value;
         setSelectedCodes(prev => ({ ...prev, ward: wardCode }));
 
-        const selectedWard = wards.find(w => w.id === wardCode);
-        const wardName = selectedWard ? selectedWard.full_name : '';
+        const selectedWard = wards.find(w => w.code === parseInt(wardCode));
+        const wardName = selectedWard ? selectedWard.name : '';
 
         handleChange({ target: { name: 'ward', value: wardName } });
     };
@@ -120,7 +114,6 @@ const CheckoutForm = ({ formData, handleChange }) => {
                             onChange={handleChange}
                         />
                     </div>
-
                     <div className="form-group">
                         <label htmlFor="email">Email *</label>
                         <input
@@ -145,8 +138,8 @@ const CheckoutForm = ({ formData, handleChange }) => {
                         >
                             <option value="">-- Chọn Tỉnh/Thành phố --</option>
                             {provinces.map((province) => (
-                                <option key={province.id} value={province.id}>
-                                    {province.full_name}
+                                <option key={province.code} value={province.code}>
+                                    {province.name}
                                 </option>
                             ))}
                         </select>
@@ -163,8 +156,8 @@ const CheckoutForm = ({ formData, handleChange }) => {
                         >
                             <option value="">-- Chọn Quận/Huyện --</option>
                             {districts.map((district) => (
-                                <option key={district.id} value={district.id}>
-                                    {district.full_name}
+                                <option key={district.code} value={district.code}>
+                                    {district.name}
                                 </option>
                             ))}
                         </select>
@@ -183,8 +176,8 @@ const CheckoutForm = ({ formData, handleChange }) => {
                         >
                             <option value="">-- Chọn Xã/Phường --</option>
                             {wards.map((ward) => (
-                                <option key={ward.id} value={ward.id}>
-                                    {ward.full_name}
+                                <option key={ward.code} value={ward.code}>
+                                    {ward.name}
                                 </option>
                             ))}
                         </select>
