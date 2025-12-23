@@ -53,7 +53,6 @@ const OrderManagement = () => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thanh toán</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Shipper</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hành động</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -73,7 +72,7 @@ const OrderManagement = () => {
                                     {order.isPaid ? <span className="text-green-600 text-xs font-bold">Đã TT</span> : <span className="text-orange-500 text-xs">Chưa TT</span>}
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-600">
-                                    {order.shipperId ? order.shipperId.fullName : <span className="italic text-gray-400">Chưa gán</span>}
+                                    {order.shipperId ? order.shipperId.fullName : <span className="italic text-gray-400">Chưa có shipper nhận đơn</span>}
                                 </td>
                                 <td className="px-6 py-4">
                                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
@@ -83,11 +82,6 @@ const OrderManagement = () => {
                                     }`}>
                                         {order.status}
                                     </span>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <button className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1">
-                                        <FaEye /> Xem
-                                    </button>
                                 </td>
                             </tr>
                         ))}

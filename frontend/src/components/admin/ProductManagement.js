@@ -97,9 +97,12 @@ const ProductManagement = () => {
                 <h1 className="text-2xl font-bold text-gray-800">Quản lý Sản phẩm</h1>
                 <button
                     onClick={() => setShowModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-green-200 text-green-700 font-medium rounded-lg hover:bg-green-50 hover:border-green-300 hover:text-green-800 transition-colors shadow-sm"
                 >
-                    <FaPlus size={14} /> Thêm sản phẩm
+                    <div className="bg-green-100 p-1 rounded-md">
+                        <FaPlus size={12} />
+                    </div>
+                    Thêm sản phẩm mới
                 </button>
             </div>
 

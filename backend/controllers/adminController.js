@@ -273,7 +273,6 @@ export const createProduct = async (req, res) => {
     }
 };
 
-// --- HÀM BỊ THIẾU ĐÃ ĐƯỢC THÊM ---
 export const updateProduct = async (req, res) => {
     try {
         const { productId } = req.params;
