@@ -72,7 +72,8 @@ export const apiVerifyVnpayReturn = async (queryString) => {
 
 // Hủy đơn
 export const apiCancelOrder = async (orderId) => {
-  const response = await axios.put(`/orders/${orderId}/cancel`);
+  const config = getAuthConfig(); // Lấy token từ localStorage
+  const response = await axios.put(`${API_URL}/${orderId}/cancel`, {}, config);
   return response.data;
 };
 

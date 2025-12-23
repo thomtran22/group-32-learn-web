@@ -460,7 +460,7 @@ const cancelOrder = async (req, res) => {
       });
     }
 
-    if (order.status !== "PENDING") {
+    if (order.status !== "Pending") {
       return res.status(400).json({
         success: false,
         message: `Không thể hủy đơn hàng vì đơn đang ở trạng thái: ${order.status}`,
