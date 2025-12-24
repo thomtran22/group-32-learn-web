@@ -13,6 +13,7 @@ import ProductListPage from "./pages/ProductListPage";
 import ShipperMainLayout from "./pages/ShipperMainLayout";
 import UserProfile from "./pages/UserProfile";
 import ResetPassword from "./pages/ResetPassword";
+import AIChatWidget from "./components/AIChatWidget";
 
 import { CartProvider } from './context/CartContext'; 
 import "./assets/css/globals.css";
@@ -42,6 +43,7 @@ function App() {
           <Route path="/category/:categorySlug" element={<ProductListPage />} />
           <Route path="/reset-password" element={<ResetPassword />} />
         </Routes>
+        <AIChatWidget />
         <Contact/>
         <Footer />
       </CartProvider>
