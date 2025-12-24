@@ -7,79 +7,41 @@ import {
   FaTimes,
 } from "react-icons/fa";
 import axiosClient from "../../utils/axiosConfig";
+import "../../assets/css/userprofile.css";
 
 const ServiceHistory = () => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const fetchHistory = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await axiosClient.get("/user/service-history");
-      setHistory(res.data);
-    } catch (err) {
-      setError("Không thể tải lịch sử tương tác.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const res = await axiosClient.get("/user/service-history");
+        setHistory(res.data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchHistory();
   }, []);
 
-  const renderStatus = (status) => {
-    if (status === "COMPLETED" || status === "CLOSED")
-      return <span style={{ color: "#28a745" }}>Hoàn thành</span>;
-    if (status === "APPROVED")
-      return <span style={{ color: "#007bff" }}>Đã duyệt</span>;
-    if (status === "PENDING" || status === "PROCESSING")
-      return <span style={{ color: "#ffc107" }}>Đang xử lý</span>;
-    return <span style={{ color: "#6c757d" }}>Đã đóng</span>;
+  const getStatusClass = (status) => {
+    if (["COMPLETED", "CLOSED"].includes(status)) return "status-completed";
+    if (["PENDING", "PROCESSING"].includes(status)) return "status-pending";
+    return "";
   };
 
-  const renderIcon = (type) => {
-    if (type === "SUPPORT" || type === "TICKET")
-      return <FaReply color="#007bff" />;
-    if (type === "EXCHANGE" || type === "RETURN")
-      return <FaExchangeAlt color="#28a745" />;
-    if (type === "CANCELLATION")
-      return <FaTimes color="#dc3545" />;
-    return <FaTicketAlt />;
-  };
-
-  if (loading) {
-    return <p style={{ textAlign: "center" }}>Đang tải lịch sử...</p>;
-  }
-
-  if (error) {
-    return (
-      <p style={{ textAlign: "center", color: "red" }}>
-        {error}
-      </p>
-    );
-  }
+  if (loading) return <p>Đang tải...</p>;
 
   return (
     <div>
       {history.length === 0 ? (
-        <p style={{ textAlign: "center", color: "#777" }}>
-          Bạn chưa có yêu cầu hỗ trợ hoặc đổi trả.
-        </p>
+        <p style={{ textAlign: "center", color: "#777" }}>Trống.</p>
       ) : (
         history.map((item) => (
-          <div
-            key={item._id || item.id}
-            style={{
-              border: "1px solid #ddd",
-              padding: "15px",
-              borderRadius: "6px",
-              marginBottom: "15px",
-              backgroundColor: "#fff",
-            }}
-          >
+          <div key={item._id} className="info-card">
             <div
               style={{
                 display: "flex",
@@ -87,32 +49,23 @@ const ServiceHistory = () => {
                 marginBottom: "10px",
               }}
             >
-              <div style={{ fontWeight: "bold" }}>
-                {renderIcon(item.type)} {item.subject}
+              <div className="input-label">
+                <FaTicketAlt /> {item.subject}
               </div>
-              <div>{renderStatus(item.status)}</div>
+              <div className={`status-badge ${getStatusClass(item.status)}`}>
+                {item.status}
+              </div>
             </div>
-
-            <p style={{ fontSize: "0.9em", color: "#555" }}>
-              <FaCalendar style={{ marginRight: 5 }} />
-              {new Date(item.createdAt || item.date).toLocaleDateString("vi-VN")}
+            <p style={{ fontSize: "0.85em", color: "#666" }}>
+              <FaCalendar />{" "}
+              {new Date(item.createdAt).toLocaleDateString("vi-VN")}
             </p>
-
-            <p style={{ fontSize: "0.9em", color: "#777" }}>
-              {item.details}
-            </p>
-
+            <p style={{ margin: "10px 0" }}>{item.details}</p>
             <button
-              style={{
-                marginTop: "10px",
-                padding: "6px 12px",
-                border: "none",
-                borderRadius: "4px",
-                backgroundColor: "#e0e0e0",
-                cursor: "pointer",
-              }}
+              className="btn btn-secondary"
+              style={{ padding: "5px 10px", fontSize: "0.8em" }}
             >
-              Xem chi tiết / Phản hồi
+              Phản hồi
             </button>
           </div>
         ))

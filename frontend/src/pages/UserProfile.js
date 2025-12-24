@@ -1,18 +1,19 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import {
   FaUserCircle,
-  FaMapMarkedAlt,
   FaChartBar,
   FaGift,
   FaShoppingCart,
-  FaArrowLeft,
+  FaSignOutAlt,
 } from "react-icons/fa";
 import UserStatistics from "../components/UserStatistics";
 import PersonalInfo from "../components/userprofile/PersonalInfo";
-import AddressList from "../components/userprofile/AddressList";
 import VoucherWallet from "../components/userprofile/VoucherWallet";
 import OrderHistory from "../components/userprofile/OrderHistory";
+
+import "../assets/css/userprofile.css";
 
 const menuItems = [
   {
@@ -28,12 +29,6 @@ const menuItems = [
     component: OrderHistory,
   },
   {
-    id: "addresses",
-    name: "Sổ Địa chỉ",
-    icon: FaMapMarkedAlt,
-    component: AddressList,
-  },
-  {
     id: "stats",
     name: "Thống kê Mua sắm",
     icon: FaChartBar,
@@ -47,49 +42,14 @@ const menuItems = [
   },
 ];
 
-const containerStyle = {
-  maxWidth: "1200px",
-  margin: "40px auto",
-  padding: "0 15px",
-  fontFamily: "Arial, sans-serif",
-  display: "flex",
-  gap: "30px",
-};
-
-const sidebarStyle = {
-  flex: "0 0 250px",
-  padding: "10px",
-  backgroundColor: "#fff",
-  borderRight: "1px solid #ddd",
-};
-
-const contentStyle = {
-  flexGrow: 1,
-  padding: "20px",
-  backgroundColor: "#fff",
-  borderRadius: "8px",
-  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
-};
-
 const SidebarItem = ({ item, isActive, onClick }) => {
   const Icon = item.icon;
-  const itemStyle = {
-    padding: "12px 15px",
-    margin: "5px 0",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontWeight: isActive ? "bold" : "normal",
-    color: isActive ? "#c90000" : "#333",
-    backgroundColor: isActive ? "#fff0f0" : "transparent",
-    display: "flex",
-    alignItems: "center",
-    transition: "background-color 0.3s",
-    border: isActive ? "1px solid #c90000" : "1px solid transparent",
-  };
-
   return (
-    <div style={itemStyle} onClick={() => onClick(item.id)}>
-      <Icon style={{ marginRight: "10px", fontSize: "1.2em" }} />
+    <div
+      className={`sidebar-item ${isActive ? "active" : ""}`}
+      onClick={() => onClick(item.id)}
+    >
+      <Icon className="sidebar-item-icon" />
       {item.name}
     </div>
   );
@@ -98,77 +58,69 @@ const SidebarItem = ({ item, isActive, onClick }) => {
 const UserProfile = () => {
   const [activeTab, setActiveTab] = useState("info");
   const navigate = useNavigate();
-
-  const handleGoBack = () => {
-    navigate(-1);
-  };
+  const userRole = localStorage.getItem("role");
+  useEffect(() => {
+    if (userRole !== "customer") {
+      toast.info("Bạn không có quyền truy cập trang này!");
+      navigate("/");
+    }
+  }, [userRole, navigate]);
 
   const ActiveComponent = menuItems.find(
     (item) => item.id === activeTab
   )?.component;
   const ActiveTitle = menuItems.find((item) => item.id === activeTab)?.name;
 
-  const navButtonStyle = {
-    width: "100%",
-    padding: "10px 15px",
-    margin: "10px 0",
-    backgroundColor: "#007bff",
-    color: "white",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontWeight: "bold",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    transition: "background-color 0.3s",
-  };
-
-  const backButtonStyle = {
-    ...navButtonStyle,
-    backgroundColor: "#6c757d",
+  const handleLogout = () => {
+    if (window.confirm("Bạn có chắc chắn muốn đăng xuất?")) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      sessionStorage.clear();
+      navigate("/login");
+    }
   };
 
   return (
-    <div style={containerStyle}>
-      <div style={sidebarStyle}>
-        <button style={backButtonStyle} onClick={handleGoBack}>
-          <FaArrowLeft style={{ marginRight: "10px" }} />
-          Quay lại
-        </button>
-
-        <h3
+    <div className="user-profile-container">
+      <div className="user-profile-sidebar">
+        <h3 className="sidebar-title">Quản lý Tài khoản</h3>
+        <div
           style={{
-            borderBottom: "1px solid #ddd",
-            paddingBottom: "10px",
-            marginTop: "20px",
-            marginBottom: "15px",
-            color: "#333",
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
+            justifyContent: "space-between",
           }}
         >
-          Quản lý Tài khoản
-        </h3>
-        {menuItems.map((item) => (
-          <SidebarItem
-            key={item.id}
-            item={item}
-            isActive={activeTab === item.id}
-            onClick={setActiveTab}
-          />
-        ))}
+          <div>
+            {menuItems.map((item) => (
+              <SidebarItem
+                key={item.id}
+                item={item}
+                isActive={activeTab === item.id}
+                onClick={setActiveTab}
+              />
+            ))}
+          </div>
+
+          <div
+            className="sidebar-item"
+            onClick={handleLogout}
+            style={{
+              marginTop: "20px",
+              color: "var(--primary-color)",
+              borderTop: "1px solid #eee",
+            }}
+          >
+            <FaSignOutAlt className="sidebar-item-icon" />
+            Đăng xuất
+          </div>
+        </div>
       </div>
 
-      <div style={contentStyle}>
-        <h2 style={{ marginBottom: "20px", color: "#c90000" }}>
-          {ActiveTitle}
-        </h2>
-        <hr
-          style={{
-            border: "none",
-            borderTop: "1px dashed #ddd",
-            marginBottom: "30px",
-          }}
-        />
+      <div className="user-profile-content">
+        <h2 className="content-title">{ActiveTitle}</h2>
+        <hr className="content-divider" />
         {ActiveComponent && <ActiveComponent />}
       </div>
     </div>

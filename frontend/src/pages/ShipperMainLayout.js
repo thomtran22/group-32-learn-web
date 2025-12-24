@@ -1,6 +1,5 @@
-import React, { lazy, Suspense } from "react";
-import { useLocation, NavLink, Link } from "react-router-dom";
-import Header from "../components/header/Header";
+import React, { lazy, Suspense, useEffect } from "react";
+import { useLocation, useNavigate, NavLink } from "react-router-dom";
 import {
   FaTachometerAlt,
   FaChartLine,
@@ -8,6 +7,8 @@ import {
   FaSignOutAlt,
   FaClipboardList,
 } from "react-icons/fa";
+import "../assets/css/shipper.css";
+import { toast } from "react-toastify";
 
 const ShipperDashboardContent = lazy(() =>
   import("../components/ship/ShipperDashboardContent")
@@ -22,133 +23,85 @@ const ShipperActiveOrdersContent = lazy(() =>
   import("../components/ship/ShipperActiveOrdersContent")
 );
 
-const HEADER_HEIGHT = "0px";
+const ShipperSidebar = ({ onLogout }) => (
+  <div className="shipper-sidebar">
+    <div className="sidebar-menu-header">MENU</div>
+    <nav>
+      <NavLink
+        to="/shipper"
+        end
+        className={({ isActive }) =>
+          `shipper-nav-link ${isActive ? "active" : ""}`
+        }
+      >
+        <FaTachometerAlt style={{ marginRight: "10px" }} /> Dashboard
+      </NavLink>
+      <NavLink
+        to="/shipper/orders/active"
+        className={({ isActive }) =>
+          `shipper-nav-link ${isActive ? "active" : ""}`
+        }
+      >
+        <FaClipboardList style={{ marginRight: "10px" }} /> Đơn hàng đang giao
+      </NavLink>
+      <NavLink
+        to="/shipper/stats"
+        className={({ isActive }) =>
+          `shipper-nav-link ${isActive ? "active" : ""}`
+        }
+      >
+        <FaChartLine style={{ marginRight: "10px" }} /> Thống kê Hiệu suất
+      </NavLink>
+      <NavLink
+        to="/shipper/profile"
+        className={({ isActive }) =>
+          `shipper-nav-link ${isActive ? "active" : ""}`
+        }
+      >
+        <FaUserCircle style={{ marginRight: "10px" }} /> Hồ sơ Cá nhân
+      </NavLink>
 
-const containerStyle = {
-  maxWidth: "1200px",
-  margin: "40px auto",
-  padding: "0 15px",
-  fontFamily: "Arial, sans-serif",
-  display: "flex",
-  gap: "30px",
-};
-
-const sidebarWrapperStyle = {
-  flex: "0 0 250px",
-  padding: "10px",
-  backgroundColor: "#fff",
-  borderRight: "1px solid #ddd",
-  borderRadius: "8px",
-  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
-  minHeight: "calc(100vh - 100px - 80px)",
-  alignSelf: "flex-start",
-};
-
-const contentStyle = {
-  flexGrow: 1,
-  padding: "20px",
-  backgroundColor: "#fff",
-  borderRadius: "8px",
-  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
-};
-
-const ShipperSidebar = () => {
-  // --- Styles Inline ---
-  const sidebarInnerStyle = {
-    width: "100%",
-    backgroundColor: "transparent",
-    color: "#343a40",
-    paddingTop: "0",
-  };
-
-  const menuHeaderStyle = {
-    textAlign: "left",
-    padding: "15px 0",
-    fontSize: "1em",
-    marginBottom: "10px",
-    fontWeight: "bold",
-    color: "#6c757d",
-    textTransform: "uppercase",
-    borderBottom: "1px solid #eee",
-  };
-
-  const linkStyle = {
-    display: "flex",
-    alignItems: "center",
-    padding: "12px 10px",
-    justifyContent: "flex-start",
-    textDecoration: "none",
-    color: "#343a40",
-    transition: "background-color 0.3s",
-    fontSize: "0.95em",
-    borderLeft: "4px solid transparent",
-  };
-
-  const activeStyle = {
-    backgroundColor: "#e9ecef",
-    color: "#dc3545",
-    fontWeight: "bold",
-    borderLeft: "4px solid #dc3545",
-  };
-
-  return (
-    <div style={sidebarInnerStyle}>
-      <div style={menuHeaderStyle}>MENU</div>
-
-      <nav>
-        <NavLink
-          to="/shipper"
-          end
-          style={({ isActive }) => ({
-            ...linkStyle,
-            ...(isActive ? activeStyle : {}),
-          })}
+      {/* Nút Đăng xuất với hàm xử lý */}
+      <div style={{ marginTop: "50px" }}>
+        <div
+          className="shipper-nav-link"
+          onClick={onLogout}
+          style={{ cursor: "pointer" }}
         >
-          <FaTachometerAlt style={{ marginRight: "10px" }} /> Dashboard
-        </NavLink>
-
-        <NavLink
-          to="/shipper/orders/active"
-          style={({ isActive }) => ({
-            ...linkStyle,
-            ...(isActive ? activeStyle : {}),
-          })}
-        >
-          <FaClipboardList style={{ marginRight: "10px" }} /> Đơn hàng đang giao
-        </NavLink>
-
-        <NavLink
-          to="/shipper/stats"
-          style={({ isActive }) => ({
-            ...linkStyle,
-            ...(isActive ? activeStyle : {}),
-          })}
-        >
-          <FaChartLine style={{ marginRight: "10px" }} /> Thống kê Hiệu suất
-        </NavLink>
-
-        <NavLink
-          to="/shipper/profile"
-          style={({ isActive }) => ({
-            ...linkStyle,
-            ...(isActive ? activeStyle : {}),
-          })}
-        >
-          <FaUserCircle style={{ marginRight: "10px" }} /> Hồ sơ Cá nhân
-        </NavLink>
-
-        <div style={{ marginTop: "50px" }}>
-          <Link to="/" style={linkStyle}>
-            <FaSignOutAlt style={{ marginRight: "10px" }} /> Đăng Xuất
-          </Link>
+          <FaSignOutAlt style={{ marginRight: "10px" }} /> Đăng Xuất
         </div>
-      </nav>
-    </div>
-  );
-};
+      </div>
+    </nav>
+  </div>
+);
 
 const ShipperMainLayout = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const userRole = localStorage.getItem("role")?.toLowerCase();
+
+  useEffect(() => {
+    if (userRole !== "shipper") {
+      toast.info("Bạn không có quyền truy cập trang này!");
+      navigate("/");
+    }
+  }, [userRole, navigate]);
+
+  const handleLogout = () => {
+    const confirmLogout = window.confirm(
+      "Bạn có chắc chắn muốn đăng xuất tài khoản Shipper?"
+    );
+    if (confirmLogout) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      sessionStorage.clear();
+
+      toast.success("Đã đăng xuất thành công!");
+      navigate("/");
+    }
+  };
+  if (userRole !== "shipper") return null;
 
   const getActiveContent = (pathname) => {
     if (pathname.includes("/shipper/profile")) return <ShipperProfileContent />;
@@ -156,38 +109,15 @@ const ShipperMainLayout = () => {
       return <ShipperStatisticsContent />;
     if (pathname.includes("/shipper/orders/active"))
       return <ShipperActiveOrdersContent />;
-    if (pathname === "/shipper" || pathname.endsWith("/shipper/"))
-      return <ShipperDashboardContent />;
-    return <div>Không tìm thấy trang.</div>;
-  };
-
-  const globalWrapperStyle = {
-    backgroundColor: "#f4f7f9",
-    minHeight: "100vh",
-    paddingTop: HEADER_HEIGHT,
+    return <ShipperDashboardContent />;
   };
 
   return (
-    <div style={globalWrapperStyle}>
-      <div
-        style={{
-          position: "static",
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 1000,
-          backgroundColor: "white",
-          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-        }}
-      >
-      </div>
+    <div className="shipper-layout-wrapper">
+      <div className="shipper-container">
+        <ShipperSidebar onLogout={handleLogout} />
 
-      <div style={containerStyle}>
-        <div style={sidebarWrapperStyle}>
-          <ShipperSidebar />
-        </div>
-
-        <div style={contentStyle}>
+        <div className="shipper-content">
           <Suspense fallback={<div>Đang tải nội dung...</div>}>
             {getActiveContent(location.pathname)}
           </Suspense>

@@ -80,7 +80,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import logo from "../../assets/images/logo.svg";
-import LoginModal from '../login/LoginModal';
+import LoginModal from "../login/LoginModal";
 import { FaUser, FaShoppingCart, FaSearch } from "react-icons/fa";
 import { useCart } from '../../context/CartContext';
 import { motion, AnimatePresence } from 'framer-motion'; // Thêm Framer Motion cho badge

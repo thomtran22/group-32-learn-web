@@ -19,9 +19,10 @@ const ShipperInfoSchema = new mongoose.Schema(
     },
     vehicleType: {
       type: String,
-      enum: ["Motorbike", "Car", "Truck"],
+      enum: ["Motorbike", "Car"],
       default: "Motorbike",
     },
+    phoneNumber: { type: String, default: "" },
     licensePlate: { type: String, default: "" },
     workingArea: [{ type: String }],
     rating: { type: Number, default: 5 },

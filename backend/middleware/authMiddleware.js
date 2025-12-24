@@ -42,4 +42,12 @@ const isShipper = (req, res, next) => {
     });
   }
 };
+
+const isCustomer = (req, res, next) => {
+  if (req.user && req.user.role === "customer") {
+    next();
+  } else {
+    res.status(403).json({ message: "Chỉ khách hàng mới có quyền này" });
+  }
+};
 export { verifyToken, isAdmin, isShipper };
