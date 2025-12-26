@@ -13,12 +13,13 @@ const verifyToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // { userId, role }
+
+    req.user = decoded;
     next();
   } catch (e) {
-    return res.status(401).json({
+    return res.status(403).json({
       success: false,
-      message: "Token không hợp lệ hoặc đã hết hạn.",
+      message: "Token không hợp lệ.",
     });
   }
 };
@@ -40,6 +41,14 @@ const isShipper = (req, res, next) => {
     res.status(403).json({
       message: "Chỉ Shipper mới có quyền này",
     });
+  }
+};
+
+const isCustomer = (req, res, next) => {
+  if (req.user && req.user.role === "customer") {
+    next();
+  } else {
+    res.status(403).json({ message: "Chỉ khách hàng mới có quyền này" });
   }
 };
 export { verifyToken, isAdmin, isShipper };

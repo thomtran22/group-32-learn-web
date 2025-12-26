@@ -1,43 +1,54 @@
 import React from "react";
-
 import visaLogo from '../../assets/images/Visa_Inc._logo.svg.png';
 import mastercardLogo from '../../assets/images/Mastercard-logo.svg.webp';
 
 const OrderSummary = ({totalString, totalNumber, onCheckout, itemCount}) => {
-
-    // Nếu tổng >= 500k thì 0đ, ngược lại 30k
-    const shippingFee = (totalNumber >= 500000) ? 0 : 30000;
     
-    // Nếu chưa chọn gì (totalNumber = 0) thì phí hiển thị là 0 cho hợp lý
+    // Config mức Freeship
+    const FREE_SHIP_THRESHOLD = 500000;
+    const shippingFee = (totalNumber >= FREE_SHIP_THRESHOLD) ? 0 : 30000;
     const displayShipping = totalNumber === 0 ? 0 : shippingFee;
-    
     const finalTotal = totalNumber + displayShipping; 
+    
+    // Tính % cho thanh progress
+    const progressPercent = Math.min((totalNumber / FREE_SHIP_THRESHOLD) * 100, 100);
+    const missingAmount = FREE_SHIP_THRESHOLD - totalNumber;
 
     const shippingFeeString = displayShipping === 0 ? "Miễn phí" : `${displayShipping.toLocaleString('vi-VN')} VND`;
     const finalTotalString = finalTotal.toLocaleString('vi-VN');
 
-    // Xác định trạng thái Freeship để dùng cho class và icon
-    // (Chỉ coi là Freeship "thành công" nếu có mua hàng VÀ phí ship = 0)
-    const isFreeShip = totalNumber > 0 && displayShipping === 0;
-
     return (
         <aside className="order-summary">
+            {/* --- NEW: FREE SHIPPING PROGRESS BAR --- */}
+            <div className="freeship-progress-box">
+                <div className="progress-title">
+                    {totalNumber >= FREE_SHIP_THRESHOLD ? (
+                        <span className="success-text"><i className="fas fa-check-circle"></i> Bạn đã được <strong>Freeship</strong>!</span>
+                    ) : (
+                        <span>Mua thêm <strong>{missingAmount.toLocaleString('vi-VN')}đ</strong> để được Freeship</span>
+                    )}
+                </div>
+                <div className="progress-bar-bg">
+                    <div 
+                        className="progress-bar-fill" 
+                        style={{width: `${progressPercent}%`}}
+                    >
+                        {progressPercent > 10 && <i className="fas fa-shipping-fast truck-icon"></i>}
+                    </div>
+                </div>
+            </div>
+            {/* --------------------------------------- */}
+
             <h2>Tóm tắt đơn hàng</h2>
             
             <div className="summary-row">
-                <span>Đã chọn</span>
-                <span>{itemCount} sản phẩm</span>
-            </div>
-
-            <div className="summary-row">
-                <span>Tạm tính</span>
+                <span>Tạm tính ({itemCount} sản phẩm)</span>
                 <span>{totalString} VND</span>
             </div>
 
             <div className="summary-row">
                 <span>Phí vận chuyển</span>
-                {/* Nếu chưa chọn món nào thì không hiện chữ "Miễn phí" màu xanh để tránh hiểu lầm, chỉ hiện 0đ hoặc Miễn phí màu thường */}
-                <span className={`shipping-fee ${isFreeShip ? 'free' : ''}`}>
+                <span className={`shipping-fee ${displayShipping === 0 ? 'free' : ''}`}>
                     {itemCount === 0 ? "0 VND" : shippingFeeString}
                 </span>
             </div>
@@ -53,38 +64,26 @@ const OrderSummary = ({totalString, totalNumber, onCheckout, itemCount}) => {
                 className="btn-checkout" 
                 onClick={onCheckout}
                 disabled={itemCount === 0} 
-                style={{ opacity: itemCount === 0 ? 0.6 : 1, cursor: itemCount === 0 ? 'not-allowed' : 'pointer' }}
             >
-                MUA HÀNG ({itemCount})
+                THANH TOÁN NGAY
+                <i className="fas fa-arrow-right" style={{marginLeft: '10px'}}></i>
             </button>
 
             <div className="coupon-section">
-                <p className="coupon-title">Mã giảm giá</p>
                 <div className="coupon-input">
-                    <input type="text" placeholder="Coupon code"/>
+                    <i className="fas fa-ticket-alt coupon-icon"></i>
+                    <input type="text" placeholder="Nhập mã giảm giá"/>
                     <button>Áp dụng</button>
                 </div>
             </div>
             
-            {/* Chỉ hiện thông báo Shipping Alert khi ĐÃ CÓ sản phẩm được chọn */}
-            {totalNumber > 0 && (
-                <div className={`shipping-alert ${isFreeShip ? 'success' : 'warning'}`}>
-                    {isFreeShip ? (
-                        <p>
-                            <i className="fas fa-check-circle"></i> Đơn hàng được <strong>Freeship</strong>!
-                        </p>
-                    ) : (
-                        <p>
-                            Mua thêm <strong>{(500000 - totalNumber).toLocaleString('vi-VN')}đ</strong> để được Freeship.
-                        </p>
-                    )}
-                </div>
-            )}
-
             <div className="payment-methods">
-                <p>Chúng tôi chấp nhận</p>
-                <img src={visaLogo} alt="Visa" height="20" />
-                <img src={mastercardLogo} alt="Mastercard" height="20" />
+                <p>Chấp nhận thanh toán</p>
+                <div className="logos">
+                    <img src={visaLogo} alt="Visa" />
+                    <img src={mastercardLogo} alt="Mastercard" />
+                </div>
+                <p className="security-note"><i className="fas fa-shield-alt"></i> Bảo mật thanh toán 100%</p>
             </div>
         </aside>
     );

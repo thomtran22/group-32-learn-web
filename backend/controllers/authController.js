@@ -89,15 +89,9 @@ export const forgotPassword = async (req, res) => {
       });
     }
 
-    if (
-      user.resetPasswordExpires &&
-      user.resetPasswordExpires > Date.now() - 10 * 60 * 1000
-    ) {
-      return res.json({
-        message: "Nếu email tồn tại, link khôi phục đã được gửi",
-      });
+    if (!user.email) {
+      return res.status(400).json({ message: "Email người dùng không hợp lệ" });
     }
-
     const resetToken = randomBytes(32).toString("hex");
     const hashedToken = createHash("sha256").update(resetToken).digest("hex");
 
@@ -106,7 +100,7 @@ export const forgotPassword = async (req, res) => {
 
     await user.save();
 
-    const frontendUrl = process.env.FRONTEND_URL;
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
     const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
 
     await sendPasswordResetEmail(user.email, resetUrl);

@@ -1,44 +1,57 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+
 import { FaArrowLeft } from "react-icons/fa";
-import { 
-    apiViewOrders, 
-    apiGetOrderDetail, 
-    apiCancelOrder, 
-    apiReceiveOrder 
+import { toast } from "react-toastify";
+import {
+  apiViewOrders,
+  apiGetOrderDetail,
+  apiCancelOrder,
+  apiReceiveOrder,
 } from "../../services/orderApi";
-import OrderTabs from "../order/OrderTabs";     
+
+import { apiAddToCart } from "../../services/cartApi";
+import OrderTabs from "../order/OrderTabs";
 import OrderSearch from "../order/OrderSearch";
 import OrderCard from "../order/OrderCard";
 import EmptyState from "../order/EmptyState";
-import ShippingInformation from "../ShippingInformation"; 
+import ShippingInformation from "./ShippingInformation";
+import "../../assets/css/userprofile.css";
 
 const OrderHistory = () => {
-  // --- STATE QUẢN LÝ LIST & FILTER (Từ Orders.js) ---
   const [orders, setOrders] = useState([]);
-  const [activeTab, setActiveTab] = useState('ALL');
-  const [searchText, setSearchText] = useState('');
-  
-  // --- STATE QUẢN LÝ VIEW (Từ OrderHistory.js cũ) ---
-  const [view, setView] = useState("list"); // 'list' | 'detail'
+  const [activeTab, setActiveTab] = useState("ALL");
+  const [searchText, setSearchText] = useState("");
+  const [view, setView] = useState("list");
   const [selectedOrder, setSelectedOrder] = useState(null);
-  
-  // --- STATE CHUNG ---
   const [loading, setLoading] = useState(true);
-  
-  // 1. Tải danh sách đơn hàng
+  const navigate = useNavigate();
+
+  const handleCancelOrder = async (orderId) => {
+    if (window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) {
+      try {
+        await apiCancelOrder(orderId);
+        toast.success("Hủy đơn hàng thành công!");
+        fetchOrders();
+      } catch (err) {
+        console.error(err);
+        toast.error(
+          err.response?.data?.message || "Không thể hủy đơn hàng lúc này."
+        );
+      }
+    }
+  };
+
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
       const data = await apiViewOrders();
-      if (data.success || Array.isArray(data)) { // Tuỳ API trả về object hay array
-        // Nếu API trả về { success: true, orders: [] } thì dùng data.orders
-        // Nếu API trả về luôn mảng [] thì dùng data
-        const list = data.orders || data; 
-        // Sắp xếp mới nhất lên đầu
-        setOrders(list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
-      }
+      const list = data.orders || data;
+      setOrders(
+        list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      );
     } catch (err) {
-      console.error("Lỗi tải đơn hàng:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -48,147 +61,178 @@ const OrderHistory = () => {
     fetchOrders();
   }, [fetchOrders]);
 
-  // 2. Logic Filter & Search (Từ Orders.js)
-  const filteredOrders = useMemo(() => {
-    return orders.filter(order => {
-        // Lọc theo Tab
-        let matchTab = false;
-        switch (activeTab) {
-            case 'ALL': matchTab = true; break;
-            case 'PENDING': matchTab = order.status === 'Pending'; break;
-            case 'PROCESSING': matchTab = ['Processing', 'Shipping'].includes(order.status); break;
-            case 'DELIVERED': matchTab = order.status === 'Delivered'; break;
-            case 'CANCELLED': matchTab = order.status === 'Cancelled'; break;
-            default: matchTab = true;
-        }
+  const handleReorder = async (order) => {
+    // 1. Hiển thị thông báo đang xử lý (Loading)
+    const toastId = toast.loading("Đang thêm sản phẩm vào giỏ hàng...");
 
-        // Lọc theo Search
-        let matchSearch = true;
-        if (searchText) {
-            const keyword = searchText.toLowerCase();
-            const orderIdMatch = order._id.toLowerCase().includes(keyword);
-            const productNameMatch = order.orderItems.some(item => 
-                item.name.toLowerCase().includes(keyword)
-            );
-            matchSearch = orderIdMatch || productNameMatch;
-        }
-        return matchTab && matchSearch;
-    });
-  }, [orders, activeTab, searchText]);
-
-  // Các hành động (Cancel, Receive)
-  const handleCancelOrder = async (orderId) => {
-    if (!window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này?")) return;
     try {
-        const res = await apiCancelOrder(orderId);
-        // Giả sử API trả về success
-        setOrders(prev => prev.map(o => o._id === orderId ? { ...o, status: 'Cancelled' } : o));
-        alert("Đã hủy đơn hàng.");
-    } catch (error) {
-        alert("Lỗi hủy đơn: " + (error.message || "Lỗi server"));
+      const items = order.orderItems;
+
+      if (!items || items.length === 0) {
+        toast.update(toastId, {
+          render: "Đơn hàng không có dữ liệu sản phẩm!",
+          type: "error",
+          isLoading: false,
+          autoClose: 3000,
+        });
+        return;
+      }
+
+      const cartPromises = items.map((item) =>
+        apiAddToCart({
+          productId: item.product,
+          quantity: item.quantity,
+          color: item.color,
+          size: item.size,
+        })
+      );
+
+      await Promise.all(cartPromises);
+      toast.update(toastId, {
+        render: "Đã thêm toàn bộ sản phẩm vào giỏ hàng! 🛒",
+        type: "success",
+        isLoading: false,
+        autoClose: 2000,
+      });
+
+      setTimeout(() => {
+        navigate("/cart");
+      }, 1500);
+    } catch (err) {
+      console.error("Lỗi mua lại:", err);
+      const errorMsg =
+        err.response?.data?.message ||
+        "Một số sản phẩm không còn tồn tại hoặc hết hàng.";
+
+      toast.update(toastId, {
+        render: `Mua lại thất bại: ${errorMsg}`,
+        type: "error",
+        isLoading: false,
+        autoClose: 3000,
+      });
     }
   };
 
   const handleConfirmReceived = async (orderId) => {
-    if (!window.confirm("Xác nhận đã nhận được hàng?")) return;
-    try {
-        const res = await apiReceiveOrder(orderId);
-        setOrders(prev => prev.map(o => o._id === orderId ? { ...o, status: 'Delivered' } : o));
-        alert("Xác nhận thành công!");
-    } catch (error) {
-        console.error(error);
+    if (
+      window.confirm(
+        "Bạn xác nhận đã nhận được hàng và muốn hoàn thành đơn hàng này?"
+      )
+    ) {
+      try {
+        await apiReceiveOrder(orderId);
+
+        toast.success("Cập nhật trạng thái Hoàn thành thành công!");
+
+        await fetchOrders();
+        setActiveTab("COMPLETED");
+      } catch (err) {
+        console.error("Lỗi khi xác nhận nhận hàng:", err);
+        toast.error(
+          err.response?.data?.message ||
+            "Không thể cập nhật trạng thái đơn hàng."
+        );
+      }
     }
   };
 
-  // Xử lý Xem chi tiết
+  const filteredOrders = useMemo(() => {
+    return orders.filter((order) => {
+      let matchTab = false;
+
+      switch (activeTab) {
+        case "ALL":
+          matchTab = true;
+          break;
+        case "PENDING":
+          matchTab = order.status === "Pending";
+          break;
+        case "PROCESSING":
+          matchTab = order.status === "Processing";
+          break;
+        case "SHIPPING":
+          matchTab =
+            order.status === "Shipping" || order.status === "Delivered";
+          break;
+        case "COMPLETED":
+          matchTab = order.status === "Completed";
+          break;
+        case "CANCELLED":
+          matchTab = order.status === "Cancelled";
+          break;
+        default:
+          matchTab = true;
+      }
+
+      let matchSearch =
+        !searchText ||
+        order._id.toLowerCase().includes(searchText.toLowerCase()) ||
+        order.orderItems.some((item) =>
+          item.name.toLowerCase().includes(searchText.toLowerCase())
+        );
+      return matchTab && matchSearch;
+    });
+  }, [orders, activeTab, searchText]);
+
   const handleViewDetail = async (orderId) => {
-    // Chuyển sang view detail ngay lập tức để UI phản hồi nhanh
     setView("detail");
-    setLoading(true); 
+    setLoading(true);
     try {
-      const data = await apiGetOrderDetail(orderId);
-      setSelectedOrder(data);
+      const res = await apiGetOrderDetail(orderId);
+
+      setSelectedOrder(res.order || res);
     } catch (err) {
-      alert("Không thể tải chi tiết đơn hàng");
-      setView("list"); // Quay lại nếu lỗi
+      console.error("Lỗi lấy chi tiết đơn:", err);
+      setView("list");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleBackToList = () => {
-    setView("list");
-    setSelectedOrder(null);
-  };
-
-  if (loading && view === 'list' && orders.length === 0) {
-      return <div style={{padding: 20}}>Đang tải dữ liệu...</div>;
-  }
+  if (loading && view === "list" && orders.length === 0)
+    return <div className="user-profile-content">Đang tải dữ liệu...</div>;
 
   return (
-    <div className="order-history-container" style={{ fontFamily: "Arial, sans-serif" }}>
-      
-      {/* HEADER: Tiêu đề thay đổi dựa trên View */}
-      <h2 style={{ color: "#c90000", borderBottom: "2px solid #c90000", paddingBottom: 10 }}>
-        {view === "list" ? "Lịch sử Đơn hàng" : `Chi tiết Đơn hàng`}
-      </h2>
-
-      {view === "list" && (
+    <div className="order-history-container">
+      {view === "list" ? (
         <>
-          {/* Tabs */}
           <OrderTabs activeTab={activeTab} onTabChange={setActiveTab} />
-          
-          {/* Search */}
-          <div style={{ marginTop: 15, marginBottom: 15 }}>
+          <div style={{ margin: "15px 0" }}>
             <OrderSearch onSearch={setSearchText} />
           </div>
-
-          {/* List Cards */}
           {filteredOrders.length === 0 ? (
-             <EmptyState />
+            <EmptyState />
           ) : (
             <div className="order-list">
-                {filteredOrders.map((order) => (
-                    <OrderCard 
-                        key={order._id} 
-                        order={order} 
-                        // Truyền các hàm xử lý
-                        onCancelOrder={handleCancelOrder}
-                        onConfirmReceived={handleConfirmReceived}
-                        // Truyền hàm này để chặn navigate mặc định
-                        onOrderClick={handleViewDetail} 
-                    />
-                ))}
+              {filteredOrders.map((order) => (
+                <OrderCard
+                  key={order._id}
+                  order={order}
+                  onOrderClick={handleViewDetail}
+                  onCancelOrder={handleCancelOrder}
+                  onConfirmReceived={handleConfirmReceived}
+                  onReorder={handleReorder}
+                />
+              ))}
             </div>
           )}
         </>
-      )}
-
-      {view === "detail" && (
+      ) : (
         <div className="order-detail-view">
-            <button
-                onClick={handleBackToList}
-                style={{
-                background: "none",
-                border: "none",
-                color: "#007bff",
-                cursor: "pointer",
-                marginBottom: 15,
-                fontWeight: "bold",
-                display: "flex", alignItems: "center"
-                }}
-            >
-                <FaArrowLeft style={{ marginRight: 5 }} />
-                Quay lại Danh sách
-            </button>
-
-            {loading ? (
-                <p>Đang tải chi tiết...</p>
-            ) : selectedOrder ? (
-                <ShippingInformation orderDetail={selectedOrder} />
-            ) : (
-                <p style={{ color: "red" }}>Không tìm thấy thông tin đơn hàng.</p>
-            )}
+          <button
+            onClick={() => setView("list")}
+            className="btn-link"
+            style={{ marginBottom: 15 }}
+          >
+            <FaArrowLeft /> Quay lại Danh sách
+          </button>
+          {loading ? (
+            <p>Đang tải chi tiết...</p>
+          ) : selectedOrder ? (
+            <ShippingInformation orderId={selectedOrder?._id} />
+          ) : (
+            <p className="status-badge status-error">Lỗi dữ liệu.</p>
+          )}
         </div>
       )}
     </div>

@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import Header from "./components/header/Header";
 import Footer from "./components/footer/Footer";
 import Contact from "./components/contact/Contact";
@@ -7,34 +9,47 @@ import Home from "./pages/Home";
 import Cart from "./pages/Cart";
 import Login from "./pages/Login";
 import Checkout from "./pages/Checkout";
-import PaymentResult from './pages/PaymentResult'; 
-import ProductDetail from './pages/ProductDetail';
+import PaymentResult from "./pages/PaymentResult";
+import ProductDetail from "./pages/ProductDetail";
 import ProductListPage from "./pages/ProductListPage";
 import ShipperMainLayout from "./pages/ShipperMainLayout";
 import UserProfile from "./pages/UserProfile";
 import ResetPassword from "./pages/ResetPassword";
 import AIChatWidget from "./components/AIChatWidget";
 
-import { CartProvider } from './context/CartContext'; 
+import { CartProvider } from "./context/CartContext";
 import "./assets/css/globals.css";
 import "./assets/css/style.css";
 import "./assets/css/cart.css";
 import "./assets/css/checkout.css";
 import "./assets/css/orders.css";
 import "./assets/css/payment-result.css";
-import "./assets/css/detail.css"
-import './App.css';
+import "./assets/css/detail.css";
+import "./App.css";
 
 function App() {
   return (
-     <Router>
+    <Router>
       <CartProvider>
         <Toaster position="top-right" />
         <Header />
+
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />}/>
+          <Route path="/checkout" element={<Checkout />} />
           <Route path="/login" element={<Login />} />
           <Route path="/payment-result" element={<PaymentResult />} />
           <Route path="/profile" element={<UserProfile />} />

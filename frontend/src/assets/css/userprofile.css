@@ -1,0 +1,400 @@
+/* UserProfile.css */
+:root {
+  --primary-color: #c90000;
+  --secondary-color: #007bff;
+  --gray-color: #6c757d;
+  --success-color: #28a745;
+  --warning-color: #ffc107;
+  --border-color: #ddd;
+  --bg-light: #f9f9f9;
+  --bg-active: #fff0f0;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --text-main: #333;
+}
+
+/* Layout chính */
+.user-profile-container {
+  max-width: 1200px;
+  margin: 30px auto 90px;
+  padding: 0 15px;
+  font-family: Arial, sans-serif;
+  display: flex;
+  gap: 30px;
+}
+
+/* Sidebar */
+.user-profile-sidebar {
+  flex: 0 0 250px;
+  padding: 10px;
+  background-color: #fff;
+  border-right: 1px solid var(--border-color);
+}
+
+.sidebar-title {
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+  margin-top: 20px;
+  margin-bottom: 15px;
+  color: var(--text-main);
+}
+
+.sidebar-item {
+  padding: 12px 15px;
+  margin: 5px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s;
+  border: 1px solid transparent;
+  color: var(--text-main);
+}
+
+.sidebar-item:hover {
+  background-color: #f5f5f5;
+}
+
+.sidebar-item.active {
+  font-weight: bold;
+  color: var(--primary-color);
+  background-color: var(--bg-active);
+  border: 1px solid var(--primary-color);
+}
+
+.sidebar-item-icon {
+  margin-right: 10px;
+  font-size: 1.2em;
+}
+
+/* Nội dung bên phải */
+.user-profile-content {
+  flex-grow: 1;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.content-title {
+  margin-bottom: 20px;
+  color: var(--primary-color);
+}
+
+.content-divider {
+  border: none;
+  border-top: 1px dashed var(--border-color);
+  margin-bottom: 30px;
+}
+
+/* Form & Inputs */
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+}
+
+.input-group {
+  margin-bottom: 15px;
+}
+
+.input-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  font-size: 0.95em;
+}
+
+.profile-input {
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  width: 100%;
+  outline: none;
+  background-color: #fff;
+  box-sizing: border-box;
+  transition: border-color 0.3s;
+}
+
+.profile-input:focus {
+  border-color: var(--secondary-color);
+}
+
+.profile-input:disabled {
+  background-color: var(--bg-light);
+  cursor: not-allowed;
+}
+
+/* Buttons */
+.btn {
+  padding: 10px 20px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: opacity 0.3s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+.btn-secondary {
+  background-color: var(--gray-color);
+  color: white;
+}
+.btn-success {
+  background-color: var(--success-color);
+  color: white;
+}
+.btn-blue {
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--secondary-color);
+  text-decoration: underline;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: normal;
+}
+
+/* Modal Popup */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 30px;
+  border-radius: 10px;
+  width: 400px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1.2em;
+}
+
+/* Cards (Dùng cho Voucher, History...) */
+.info-card {
+  border: 1px solid var(--border-color);
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  background-color: #fff;
+  transition: box-shadow 0.3s;
+}
+
+.info-card:hover {
+  box-shadow: var(--shadow);
+}
+
+.status-badge {
+  font-weight: bold;
+  font-size: 0.9em;
+}
+
+.status-completed {
+  color: var(--success-color);
+}
+.status-pending {
+  color: var(--warning-color);
+}
+.status-processing {
+  color: var(--secondary-color);
+}
+
+/* Voucher & Tabs */
+.tab-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tab-btn {
+  padding: 8px 15px;
+  border: 1px solid var(--border-color);
+  background: #fff;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.tab-btn.active {
+  background: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
+
+/* Style cho nút ẩn hiện mật khẩu */
+.password-toggle-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  z-index: 10;
+}
+
+.password-toggle-btn:hover {
+  color: var(--primary-color);
+}
+
+.input-group div[style*="position: relative"] {
+  width: 100%;
+}
+
+/* --- Shipping Information Styles --- */
+.ship-info-container {
+  padding: 25px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background-color: #fff;
+  box-shadow: var(--shadow);
+  margin-bottom: 30px;
+}
+
+.ship-info-header {
+  font-size: 1.25em;
+  font-weight: bold;
+  color: var(--text-main);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 2px solid var(--bg-light);
+  padding-bottom: 10px;
+}
+
+.ship-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-bottom: 25px;
+}
+
+.ship-info-section-title {
+  font-weight: bold;
+  font-size: 0.9em;
+  color: var(--primary-color);
+  margin-bottom: 15px;
+  text-transform: uppercase;
+}
+
+.ship-info-detail-item {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.ship-info-label {
+  font-size: 0.85em;
+  color: var(--gray-color);
+  margin: 0;
+}
+
+.ship-info-value {
+  font-size: 0.95em;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.ship-info-icon {
+  color: var(--primary-color);
+  margin-top: 3px;
+}
+
+/* Danh sách sản phẩm */
+.ship-info-product-list {
+  border-top: 1px solid var(--border-color);
+  padding-top: 20px;
+  margin-top: 10px;
+}
+
+.ship-info-product-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--border-color);
+}
+
+.ship-info-product-detail {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.ship-info-product-img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  borderradius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.ship-info-total-section {
+  margin-top: 20px;
+  text-align: right;
+  padding: 15px;
+  background-color: var(--bg-light);
+  border-radius: 8px;
+}
+
+.ship-info-total-label {
+  font-size: 0.9em;
+  color: var(--gray-color);
+  margin-right: 10px;
+}
+
+.ship-info-total-price {
+  font-size: 1.3em;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+/* Responsive cho mobile */
+@media (max-width: 768px) {
+  .ship-info-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
