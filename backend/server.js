@@ -14,6 +14,7 @@ import userRoutes from './routes/userRoutes.js';
 import shipperRoutes from './routes/shipperRoutes.js';
 import addressRoutes from './routes/addressRoutes.js';
 import voucherRoutes from './routes/voucherRoutes.js';
+import aiRoutes from "./routes/aiRoutes.js";
 dotenv.config();
 
 const app = express();
@@ -43,8 +44,6 @@ app.get('/', (req, res) => {
 
 
 app.use('/api/auth', authRoutes);
-
-
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/orders', orderRoutes);
@@ -53,6 +52,7 @@ app.use("/api/address", addressRoutes);
 app.use("/api/vouchers", voucherRoutes);
 app.use("/api/shipper", shipperRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/ai", aiRoutes);
 
 app.get('/api/test/get-token/:userId', (req, res) => {
     const { userId } = req.params;
