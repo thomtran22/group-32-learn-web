@@ -1,8 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
+import { Toaster } from "react-hot-toast";
 import Header from "./components/header/Header";
 import Footer from "./components/footer/Footer";
 import Contact from "./components/contact/Contact";
@@ -15,6 +12,8 @@ import ProductDetail from "./pages/ProductDetail";
 import ProductListPage from "./pages/ProductListPage";
 import ShipperMainLayout from "./pages/ShipperMainLayout";
 import UserProfile from "./pages/UserProfile";
+import ResetPassword from "./pages/ResetPassword";
+import AIChatWidget from "./components/AIChatWidget";
 
 import { CartProvider } from "./context/CartContext";
 import "./assets/css/globals.css";
@@ -30,6 +29,7 @@ function App() {
   return (
     <Router>
       <CartProvider>
+        <Toaster position="top-right" />
         <Header />
 
         <ToastContainer
@@ -54,7 +54,9 @@ function App() {
           <Route path="/shipper/*" element={<ShipperMainLayout />} />
           <Route path="/products/:sku" element={<ProductDetail />} />
           <Route path="/category/:categorySlug" element={<ProductListPage />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Routes>
+        <AIChatWidget />
         <Contact />
         <Footer />
       </CartProvider>

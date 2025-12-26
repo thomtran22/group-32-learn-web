@@ -16,6 +16,8 @@ import cartRoutes from "./routes/cartRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import shipperRoutes from "./routes/shipperRoutes.js";
 import voucherRoutes from "./routes/voucherRoutes.js";
+import voucherRoutes from "./routes/voucherRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT;
@@ -44,6 +46,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 
+app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/orders", orderRoutes);
@@ -51,6 +54,7 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/vouchers", voucherRoutes);
 app.use("/api/shipper", shipperRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/ai", aiRoutes);
 
 app.get("/api/test/get-token/:userId", (req, res) => {
   const { userId } = req.params;
