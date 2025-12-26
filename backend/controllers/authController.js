@@ -1,7 +1,7 @@
 import User from "../models/UserModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { randomBytes, createHash } from "crypto";
+import { randomBytes, createHash } from "node:crypto";
 import { sendPasswordResetEmail } from "../services/emailService.js";
 
 export const register = async (req, res) => {
@@ -30,6 +30,7 @@ export const register = async (req, res) => {
 
     res.status(201).json({ message: "Đăng ký thành công" });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Lỗi server" });
   }
 };
@@ -67,6 +68,7 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Lỗi server" });
   }
 };
@@ -75,38 +77,46 @@ export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
+    if (!email) {
+      return res.status(400).json({ message: "Thiếu email" });
+    }
+
     const user = await User.findOne({ email });
+
     if (!user) {
       return res.json({
-        message: "Nếu email tồn tại, link khôi phục đã được gửi.",
+        message: "Nếu email tồn tại, link khôi phục đã được gửi",
       });
     }
 
-    // ✅ SỬA: randomBytes / createHash thay vì crypto.randomBytes / crypto.createHash
+    if (
+      user.resetPasswordExpires &&
+      user.resetPasswordExpires > Date.now() - 10 * 60 * 1000
+    ) {
+      return res.json({
+        message: "Nếu email tồn tại, link khôi phục đã được gửi",
+      });
+    }
+
     const resetToken = randomBytes(32).toString("hex");
+    const hashedToken = createHash("sha256").update(resetToken).digest("hex");
 
-    user.resetPasswordToken = createHash("sha256")
-      .update(resetToken)
-      .digest("hex");
-
+    user.resetPasswordToken = hashedToken;
     user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
 
     await user.save();
 
-    const resetLink = `http://localhost:5173/reset-password?token=${resetToken}`;
+    const frontendUrl = process.env.FRONTEND_URL;
+    const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
 
-    await sendPasswordResetEmail({
-      recipientEmail: user.email,
-      recipientName: user.fullName,
-      resetLink,
-    });
+    await sendPasswordResetEmail(user.email, resetUrl);
 
-    res.json({
-      message: "Nếu email tồn tại, link khôi phục đã được gửi.",
+    return res.json({
+      message: "Nếu email tồn tại, link khôi phục đã được gửi",
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Lỗi server" });
+    return res.status(500).json({ message: "Lỗi server" });
   }
 };
 
