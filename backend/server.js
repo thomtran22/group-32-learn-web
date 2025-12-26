@@ -16,7 +16,6 @@ import cartRoutes from "./routes/cartRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import shipperRoutes from "./routes/shipperRoutes.js";
 import voucherRoutes from "./routes/voucherRoutes.js";
-import voucherRoutes from "./routes/voucherRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 
 const app = express();

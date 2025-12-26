@@ -58,7 +58,7 @@ const SidebarItem = ({ item, isActive, onClick }) => {
 const UserProfile = () => {
   const [activeTab, setActiveTab] = useState("info");
   const navigate = useNavigate();
-  const userRole = localStorage.getItem("role");
+  const userRole = localStorage.getItem("userRole");
   useEffect(() => {
     if (userRole !== "customer") {
       toast.info("Bạn không có quyền truy cập trang này!");
@@ -74,9 +74,9 @@ const UserProfile = () => {
   const handleLogout = () => {
     if (window.confirm("Bạn có chắc chắn muốn đăng xuất?")) {
       localStorage.removeItem("token");
-      localStorage.removeItem("role");
+      localStorage.removeItem("userRole");
       sessionStorage.clear();
-      navigate("/login");
+      navigate("/");
     }
   };
 

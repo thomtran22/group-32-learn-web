@@ -77,21 +77,20 @@
 //   );
 // }
 //  export default Header;
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import logo from "../../assets/images/logo.svg";
 import LoginModal from "../login/LoginModal";
 import { FaUser, FaShoppingCart, FaSearch } from "react-icons/fa";
-import { useCart } from '../../context/CartContext';
-import { motion, AnimatePresence } from 'framer-motion'; // Thêm Framer Motion cho badge
+import { useCart } from "../../context/CartContext";
+import { motion, AnimatePresence } from "framer-motion";
 
 function Header() {
   const { cartCount } = useCart();
 
-  // Menu link với hiệu ứng gạch chân mượt mà hơn
   const [isModalOpen, setIsModalOpen] = useState(false);
   const closeModal = () => setIsModalOpen(false);
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   const navLinkClass = ({ isActive }) =>
     `relative text-sm md:text-base font-semibold tracking-[0.1em] transition-all duration-300 uppercase py-2 ${
@@ -102,9 +101,16 @@ function Header() {
 
   const handleUserClick = () => {
     const token = localStorage.getItem("token");
+    const userRole = localStorage.getItem("userRole");
 
     if (token) {
-      navigate("/profile"); // đúng route của Anh
+      if (userRole === "shipper") {
+        navigate("/shipper");
+      } else if (userRole === "customer") {
+        navigate("/profile");
+      } else {
+        navigate("/");
+      }
     } else {
       setIsModalOpen(true);
     }
@@ -125,7 +131,10 @@ function Header() {
           <div className="inner-wrap py-4 lg:py-6">
             <div className="flex items-center justify-between gap-10">
               {/* Logo */}
-              <Link to="/" className="shrink-0 transition-transform duration-300 hover:scale-105">
+              <Link
+                to="/"
+                className="shrink-0 transition-transform duration-300 hover:scale-105"
+              >
                 <img src={logo} alt="Logo" className="w-[120px] md:w-[150px]" />
               </Link>
 
@@ -141,9 +150,12 @@ function Header() {
 
               {/* Actions */}
               <div className="flex items-center gap-2 md:gap-5">
-                <Link to="/cart" className="p-2 text-gray-700 hover:text-red-600 transition-colors relative group">
+                <Link
+                  to="/cart"
+                  className="p-2 text-gray-700 hover:text-red-600 transition-colors relative group"
+                >
                   <FaShoppingCart className="text-2xl transition-transform group-hover:scale-110" />
-                  
+
                   {/* Badge số lượng với hiệu ứng nảy số */}
                   <AnimatePresence mode="popLayout">
                     {cartCount > 0 && (
@@ -152,7 +164,11 @@ function Header() {
                         initial={{ scale: 0.5, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 0.5, opacity: 0 }}
-                        transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 500,
+                          damping: 15,
+                        }}
                         className="absolute top-0 right-0 bg-red-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold shadow-md ring-2 ring-white"
                       >
                         {cartCount}
@@ -160,7 +176,7 @@ function Header() {
                     )}
                   </AnimatePresence>
                 </Link>
-              
+
                 {/* User – CHỈ ĐỔI onClick */}
                 <div
                   className="flex items-center gap-2 group p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 cursor-pointer"
@@ -182,13 +198,28 @@ function Header() {
             {/* Navigation */}
             <nav className="mt-6 border-t border-gray-50 pt-4">
               <ul className="flex justify-between items-center gap-10 list-none p-0 m-0">
-                <li><NavLink to="/" end className={navLinkClass}>Trang chủ</NavLink></li>
-                <li><NavLink to="/category/ao-nam" className={navLinkClass}>Áo Nam</NavLink></li>
-                <li><NavLink to="/category/quan-nam" className={navLinkClass}>Quần Nam</NavLink></li>
-                <li><NavLink to="/category/phu-kien" className={navLinkClass}>Phụ kiện</NavLink></li>
+                <li>
+                  <NavLink to="/" end className={navLinkClass}>
+                    Trang chủ
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/category/ao-nam" className={navLinkClass}>
+                    Áo Nam
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/category/quan-nam" className={navLinkClass}>
+                    Quần Nam
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/category/phu-kien" className={navLinkClass}>
+                    Phụ kiện
+                  </NavLink>
+                </li>
               </ul>
             </nav>
-
           </div>
         </div>
       </header>

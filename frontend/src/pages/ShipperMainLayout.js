@@ -79,7 +79,7 @@ const ShipperMainLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const userRole = localStorage.getItem("role")?.toLowerCase();
+  const userRole = localStorage.getItem("userRole")?.toLowerCase();
 
   useEffect(() => {
     if (userRole !== "shipper") {
@@ -94,7 +94,7 @@ const ShipperMainLayout = () => {
     );
     if (confirmLogout) {
       localStorage.removeItem("token");
-      localStorage.removeItem("role");
+      localStorage.removeItem("userRole");
       sessionStorage.clear();
 
       toast.success("Đã đăng xuất thành công!");
