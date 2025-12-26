@@ -77,3 +77,29 @@ export const getProductBySku = asyncHandler(async (req, res) => {
         throw new Error('Product not found');
     }
 });
+
+
+// Thêm vào productController.js
+export const searchProducts = async (req, res) => {
+  try {
+    const keyword = req.query.q; // Lấy từ khóa người dùng gõ từ URL ?q=...
+
+    if (!keyword) {
+      return res.status(200).json([]);
+    }
+
+    // Tìm kiếm trong database bằng Regex (không phân biệt hoa thường)
+    const products = await Product.find({
+      $or: [
+        { name: { $regex: keyword, $options: 'i' } },
+        { sku: { $regex: keyword, $options: 'i' } }
+      ]
+    })
+    .select('name price images sku') // Chỉ lấy các trường cần thiết để load nhanh
+    .limit(8); // Chỉ lấy tối đa 8 kết quả cho gợi ý nhanh
+
+    res.status(200).json(products);
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi Server", error: error.message });
+  }
+};

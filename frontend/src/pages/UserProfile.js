@@ -1,18 +1,20 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import axios from "axios";
 import {
   FaUserCircle,
-  FaMapMarkedAlt,
   FaChartBar,
   FaGift,
   FaShoppingCart,
-  FaArrowLeft,
+  FaSignOutAlt,
 } from "react-icons/fa";
 import UserStatistics from "../components/UserStatistics";
 import PersonalInfo from "../components/userprofile/PersonalInfo";
-import AddressList from "../components/userprofile/AddressList";
 import VoucherWallet from "../components/userprofile/VoucherWallet";
 import OrderHistory from "../components/userprofile/OrderHistory";
+import LoginModal from "../components/login/LoginModal"; // Import LoginModal
+import "../assets/css/userprofile.css";
 
 const menuItems = [
   {
@@ -28,12 +30,6 @@ const menuItems = [
     component: OrderHistory,
   },
   {
-    id: "addresses",
-    name: "Sổ Địa chỉ",
-    icon: FaMapMarkedAlt,
-    component: AddressList,
-  },
-  {
     id: "stats",
     name: "Thống kê Mua sắm",
     icon: FaChartBar,
@@ -47,49 +43,14 @@ const menuItems = [
   },
 ];
 
-const containerStyle = {
-  maxWidth: "1200px",
-  margin: "40px auto",
-  padding: "0 15px",
-  fontFamily: "Arial, sans-serif",
-  display: "flex",
-  gap: "30px",
-};
-
-const sidebarStyle = {
-  flex: "0 0 250px",
-  padding: "10px",
-  backgroundColor: "#fff",
-  borderRight: "1px solid #ddd",
-};
-
-const contentStyle = {
-  flexGrow: 1,
-  padding: "20px",
-  backgroundColor: "#fff",
-  borderRadius: "8px",
-  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
-};
-
 const SidebarItem = ({ item, isActive, onClick }) => {
   const Icon = item.icon;
-  const itemStyle = {
-    padding: "12px 15px",
-    margin: "5px 0",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontWeight: isActive ? "bold" : "normal",
-    color: isActive ? "#c90000" : "#333",
-    backgroundColor: isActive ? "#fff0f0" : "transparent",
-    display: "flex",
-    alignItems: "center",
-    transition: "background-color 0.3s",
-    border: isActive ? "1px solid #c90000" : "1px solid transparent",
-  };
-
   return (
-    <div style={itemStyle} onClick={() => onClick(item.id)}>
-      <Icon style={{ marginRight: "10px", fontSize: "1.2em" }} />
+    <div
+      className={`sidebar-item ${isActive ? "active" : ""}`}
+      onClick={() => onClick(item.id)}
+    >
+      <Icon className="sidebar-item-icon" />
       {item.name}
     </div>
   );
@@ -97,80 +58,153 @@ const SidebarItem = ({ item, isActive, onClick }) => {
 
 const UserProfile = () => {
   const [activeTab, setActiveTab] = useState("info");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false); // Thêm state cho modal
   const navigate = useNavigate();
 
-  const handleGoBack = () => {
-    navigate(-1);
+  const handleCloseLoginModal = () => {
+    setIsModalOpen(false);
+    // Sau khi đóng modal, nếu user vẫn chưa có token hoặc role không đúng, chuyển hướng về trang chủ
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/");
+      toast.error("Vui lòng đăng nhập để tiếp tục.");
+      return;
+    }
+    // Hoặc nếu token có nhưng role vẫn không phải customer (có thể user login bằng tài khoản khác)
+    axios.get("http://localhost:4000/api/user/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then(response => {
+      if (response.data.role !== "customer") {
+        toast.warning("Bạn không có quyền truy cập trang này.");
+        if (response.data.role === "admin") navigate("/admin");
+        else if (response.data.role === "shipper") navigate("/shipper");
+        else navigate("/"); // Fallback
+      } else {
+        // Nếu đã đúng customer, tắt loading
+        setIsLoading(false);
+      }
+    }).catch(() => {
+      localStorage.removeItem("token");
+      toast.error("Phiên đăng nhập hết hạn.");
+      navigate("/");
+    });
   };
+
+
+  useEffect(() => {
+    const checkPermission = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        // Nếu không có token, mở modal đăng nhập
+        setIsModalOpen(true);
+        setIsLoading(false); // Dừng loading để modal có thể hiển thị
+        return;
+      }
+
+      try {
+        const response = await axios.get("http://localhost:4000/api/user/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const { role } = response.data;
+
+        if (role !== "customer") {
+          toast.info("Trang này chỉ dành cho khách hàng.");
+          // Chuyển hướng về trang phù hợp với role nếu có
+          if (role === "admin") navigate("/admin");
+          else if (role === "shipper") navigate("/shipper");
+          else navigate("/");
+        } else {
+          setIsLoading(false); // Nếu đúng là customer thì tắt loading
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        localStorage.removeItem("token"); // Xóa token lỗi
+        toast.error("Phiên đăng nhập hết hạn.");
+        setIsModalOpen(true); // Mở modal đăng nhập
+        setIsLoading(false); // Dừng loading
+      }
+    };
+
+    checkPermission();
+  }, [navigate]);
 
   const ActiveComponent = menuItems.find(
     (item) => item.id === activeTab
   )?.component;
   const ActiveTitle = menuItems.find((item) => item.id === activeTab)?.name;
 
-  const navButtonStyle = {
-    width: "100%",
-    padding: "10px 15px",
-    margin: "10px 0",
-    backgroundColor: "#007bff",
-    color: "white",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontWeight: "bold",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    transition: "background-color 0.3s",
+  const handleLogout = () => {
+    if (window.confirm("Bạn có chắc chắn muốn đăng xuất?")) {
+      localStorage.removeItem("token");
+      sessionStorage.clear();
+      navigate("/");
+      toast.success("Đã đăng xuất thành công");
+    }
   };
 
-  const backButtonStyle = {
-    ...navButtonStyle,
-    backgroundColor: "#6c757d",
-  };
+  // Hiển thị màn hình chờ hoặc null trong khi đang check quyền hoặc modal đang mở
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg font-semibold text-gray-600">
+          Đang tải thông tin...
+        </div>
+      </div>
+    );
+  }
+
+  // Nếu modal đang mở, không hiển thị nội dung trang profile
+  if (isModalOpen) {
+    return <LoginModal closeModal={handleCloseLoginModal} />;
+  }
 
   return (
-    <div style={containerStyle}>
-      <div style={sidebarStyle}>
-        <button style={backButtonStyle} onClick={handleGoBack}>
-          <FaArrowLeft style={{ marginRight: "10px" }} />
-          Quay lại
-        </button>
-
-        <h3
+    <div className="user-profile-container">
+      <div className="user-profile-sidebar">
+        <h3 className="sidebar-title">Quản lý Tài khoản</h3>
+        <div
           style={{
-            borderBottom: "1px solid #ddd",
-            paddingBottom: "10px",
-            marginTop: "20px",
-            marginBottom: "15px",
-            color: "#333",
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
+            justifyContent: "space-between",
           }}
         >
-          Quản lý Tài khoản
-        </h3>
-        {menuItems.map((item) => (
-          <SidebarItem
-            key={item.id}
-            item={item}
-            isActive={activeTab === item.id}
-            onClick={setActiveTab}
-          />
-        ))}
+          <div>
+            {menuItems.map((item) => (
+              <SidebarItem
+                key={item.id}
+                item={item}
+                isActive={activeTab === item.id}
+                onClick={setActiveTab}
+              />
+            ))}
+          </div>
+
+          <div
+            className="sidebar-item"
+            onClick={handleLogout}
+            style={{
+              marginTop: "20px",
+              color: "var(--primary-color)",
+              borderTop: "1px solid #eee",
+            }}
+          >
+            <FaSignOutAlt className="sidebar-item-icon" />
+            Đăng xuất
+          </div>
+        </div>
       </div>
 
-      <div style={contentStyle}>
-        <h2 style={{ marginBottom: "20px", color: "#c90000" }}>
-          {ActiveTitle}
-        </h2>
-        <hr
-          style={{
-            border: "none",
-            borderTop: "1px dashed #ddd",
-            marginBottom: "30px",
-          }}
-        />
+      <div className="user-profile-content">
+        <h2 className="content-title">{ActiveTitle}</h2>
+        <hr className="content-divider" />
         {ActiveComponent && <ActiveComponent />}
       </div>
+      {/* {isModalOpen && <LoginModal closeModal={handleCloseLoginModal} />} */} {/* Đã di chuyển lên trên */}
     </div>
   );
 };

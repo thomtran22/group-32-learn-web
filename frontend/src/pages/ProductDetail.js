@@ -1,145 +1,206 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
-import axios from 'axios'; 
+import axios from 'axios';
+import { motion, AnimatePresence } from "framer-motion";
+import toast from 'react-hot-toast';
 import ProductSection from "../components/sections/ProductSection";
-import { apiAddToCart } from "../services/cartApi";
+import { useCart } from "../context/CartContext";
 
 function ProductDetail() {
-  const { sku } = useParams(); 
-  
+  const { sku } = useParams();
+  // Lấy hàm addToCart từ Context
+  const { addToCart } = useCart();
+
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedColor, setSelectedColor] = useState(null); 
-  const [selectedSize, setSelectedSize] = useState(null); 
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [adding, setAdding] = useState(false);
+  const [activeImage, setActiveImage] = useState("");
+
+  // State cho hiệu ứng bay
+  const [isFlying, setIsFlying] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [sku]);
 
   useEffect(() => {
     const fetchProduct = async () => {
       setLoading(true);
       try {
         const { data } = await axios.get(`http://localhost:4000/api/products/${sku}`);
-        
-        // Danh sách Màu và Size duy nhất
+
         const uniqueColors = data.variants ? [...new Set(data.variants.map(v => v.color))] : [];
         const uniqueSizes = data.variants ? [...new Set(data.variants.map(v => v.size))] : [];
 
-        // Gộp dữ liệu đã xử lý vào state product
         setProduct({
           ...data,
           displayColors: uniqueColors,
           displaySizes: uniqueSizes
         });
 
-        // Tự động chọn giá trị đầu tiên nếu có
+        if (data.images && data.images.length > 0) {
+          setActiveImage(data.images[0]);
+        }
+
         if (uniqueColors.length > 0) setSelectedColor(uniqueColors[0]);
         if (uniqueSizes.length > 0) setSelectedSize(uniqueSizes[0]);
 
       } catch (error) {
         console.error(`Lỗi khi fetch sản phẩm ${sku}:`, error);
-        setProduct(null); 
+        setProduct(null);
       } finally {
         setLoading(false);
       }
     };
     if (sku) {
-        fetchProduct();
+      fetchProduct();
     }
   }, [sku]);
 
-  // Hàm xử lý thêm vào giỏ hàng
   const handleAddToCart = async () => {
+    // Kiểm tra biến thể đã chọn chưa
     if (!selectedColor || !selectedSize) {
-      alert("Vui lòng chọn màu sắc và kích cỡ!");
+      toast.error("Vui lòng chọn màu sắc và kích cỡ!", {
+        style: { borderRadius: '10px', background: '#333', color: '#fff' }
+      });
       return;
+    }
+
+    // Kiểm tra token (Nếu chưa đăng nhập thì dừng animation, để Context mở Modal)
+    const token = localStorage.getItem("token");
+    if (!token) {
+        // Gọi addToCart để nó tự kích hoạt Modal Login bên trong Context
+        addToCart({ ...product, color: selectedColor, size: selectedSize, quantity: quantity });
+        return; // Dừng hàm tại đây, không chạy animation
     }
 
     setAdding(true);
     try {
-      const cartData = {
-        productId: product._id,
-        quantity: quantity,
+      // Gọi hàm thêm vào giỏ (Chờ server phản hồi OK)
+      await addToCart({
+        ...product,
         color: selectedColor,
-        size: selectedSize
-      };
+        size: selectedSize,
+        quantity: quantity
+      });
 
-      await apiAddToCart(cartData);
-      alert("Đã thêm vào giỏ hàng thành công!");
+      // Nếu thành công -> Kích hoạt hiệu ứng bay
+      setIsFlying(true);
+
+      // Hiển thị Popup thông báo đẹp mắt
+      toast.success((t) => (
+        <div className="flex items-center gap-3">
+          <img src={activeImage} alt="product" className="w-12 h-12 object-cover rounded" />
+          <div>
+            <p className="font-bold text-sm">Đã thêm vào giỏ hàng!</p>
+            <p className="text-xs text-gray-500">{product.name} ({selectedSize})</p>
+          </div>
+        </div>
+      ), { duration: 3000, position: 'top-right' });
+
+      // Reset hiệu ứng bay sau 0.8s
+      setTimeout(() => setIsFlying(false), 800);
+
     } catch (error) {
       console.error("Lỗi thêm vào giỏ hàng:", error);
-      alert(error.response?.data?.message || "Vui lòng đăng nhập để thực hiện thao tác này!");
+    
     } finally {
       setAdding(false);
     }
   };
 
-  if (loading) {
-    return <div style={{ padding: "50px", textAlign: "center" }}>Đang tải chi tiết sản phẩm...</div>;
-  }
-  
-  if (!product) {
-    return <div style={{ padding: "50px", textAlign: "center" }}>Không tìm thấy sản phẩm! (SKU: {sku})</div>;
-  }
-
-  const mainProductImage = product.images?.[0] || 'https://via.placeholder.com/400';
+  if (loading) return <div className="py-20 text-center text-gray-500">Đang tải chi tiết sản phẩm...</div>;
+  if (!product) return <div className="py-20 text-center text-red-500">Không tìm thấy sản phẩm! (SKU: {sku})</div>;
 
   return (
-    <div className="product-detail-page container" style={{ padding: '20px 0' }}>
-      <div className="breadcrumb" style={{ fontSize: '12px', marginBottom: '20px' }}>
-          Trang chủ / Sản phẩm / {product.name}
-      </div>
+    <div className="container mx-auto px-4 py-8 relative" ref={containerRef}>
 
-      <div className="product-info-wrap" style={{ display: 'flex', gap: '40px' }}>
-        {/* Cột 1: Ảnh */}
-        <div className="product-images" style={{ width: '45%' }}>
-            <img 
-                src={mainProductImage} 
-                alt={product.name} 
-                style={{ width: '100%', maxWidth: '400px', borderRadius: '8px' }} 
+      <nav className="text-xs text-gray-500 mb-6 uppercase tracking-wider">
+        Trang chủ / Sản phẩm / {product.name}
+      </nav>
+
+      <div className="flex flex-col md:flex-row gap-10 mb-16">
+        {/* Cột 1: Hình ảnh */}
+        <div className="w-full md:w-[45%] flex flex-col gap-4">
+          <div className="w-full aspect-square rounded-lg overflow-hidden border border-gray-100 shadow-sm bg-white relative">
+            <img
+              src={activeImage || product.images?.[0]}
+              alt={product.name}
+              className="w-full h-full object-cover transition-all duration-300"
             />
+
+            {/* Animation */}
+            <AnimatePresence>
+              {isFlying && (
+                <motion.img
+                  src={activeImage}
+                  initial={{ top: "20%", left: "20%", opacity: 1, scale: 0.8 }}
+                  animate={{
+                    top: "-100px",
+                    left: "100%", 
+                    scale: 0.1,
+                    opacity: 0,
+                    rotate: 45
+                  }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.8, ease: "easeInOut" }}
+                  className="absolute z-[999] w-40 h-40 object-cover rounded-full shadow-2xl pointer-events-none"
+                />
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            {product.images?.map((img, index) => (
+              <button
+                key={index}
+                onClick={() => setActiveImage(img)}
+                className={`relative flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-all 
+                                    ${activeImage === img ? 'border-red-600 ring-2 ring-red-100' : 'border-gray-200 hover:border-gray-400'}`}
+              >
+                <img src={img} alt="thumbnail" className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Cột 2: Thông tin chi tiết */}
-        <div className="product-details" style={{ width: '50%' }}>
-          <h2>{product.name}</h2>
-          <div style={{ fontSize: '30px', color: '#D50000', fontWeight: 'bold', margin: '15px 0' }}>
+        <div className="w-full md:w-[55%] space-y-6">
+          <h1 className="text-3xl font-bold text-gray-800">{product.name}</h1>
+          <div className="text-3xl font-bold text-red-600">
             {product.price?.toLocaleString('vi-VN')} VNĐ
           </div>
-          <div className="color-selection" style={{ marginBottom: '20px' }}>
-            <p style={{ fontWeight: 'bold' }}>Màu Sắc</p>
-            <div style={{ display: 'flex', gap: '10px' }}>
+
+          <hr className="border-gray-100" />
+
+          <div className="space-y-3">
+            <p className="font-semibold uppercase text-sm">Màu Sắc: <span className="text-gray-500">{selectedColor}</span></p>
+            <div className="flex flex-wrap gap-2">
               {product.displayColors?.map((color) => (
-                <div 
+                <button
                   key={color}
                   onClick={() => setSelectedColor(color)}
-                  style={{ 
-                    padding: '5px 15px', 
-                    border: color === selectedColor ? '2px solid black' : '1px solid #ccc', 
-                    cursor: 'pointer',
-                    borderRadius: '4px'
-                  }}
+                  className={`px-4 py-2 text-sm rounded border transition-all ${color === selectedColor ? 'border-black bg-black text-white' : 'border-gray-300 bg-white hover:border-black'}`}
                 >
                   {color}
-                </div>
+                </button>
               ))}
             </div>
           </div>
 
-          {/* Lựa chọn Cỡ */}
-          <div className="size-selection" style={{ marginBottom: '20px' }}>
-            <p style={{ fontWeight: 'bold' }}>Cỡ</p>
-            <div style={{ display: 'flex', gap: '10px' }}>
+          <div className="space-y-3">
+            <p className="font-semibold uppercase text-sm">Kích cỡ: <span className="text-gray-500">{selectedSize}</span></p>
+            <div className="flex flex-wrap gap-2">
               {product.displaySizes?.map((size) => (
-                <button 
+                <button
                   key={size}
                   onClick={() => setSelectedSize(size)}
-                  style={{ 
-                    padding: '8px 15px', 
-                    border: size === selectedSize ? '2px solid black' : '1px solid #ccc', 
-                    cursor: 'pointer',
-                    backgroundColor: 'white',
-                    minWidth: '50px'
-                  }}
+                  className={`min-w-[50px] px-4 py-2 text-sm font-medium border transition-all
+                                        ${size === selectedSize ? 'border-black bg-black text-white' : 'border-gray-300 bg-white hover:border-black'}`}
                 >
                   {size}
                 </button>
@@ -147,53 +208,41 @@ function ProductDetail() {
             </div>
           </div>
 
-          {/* Số lượng và Button */}
-          <div className="quantity-and-cart" style={{ marginBottom: '30px', display: 'flex', alignItems: 'flex-end', gap: '20px' }}>
-            <div>
-                <p style={{ fontWeight: 'bold', marginBottom: '5px' }}>Số lượng</p>
-                <input 
-                    type="number" 
-                    min="1"
-                    value={quantity} 
-                    onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                    style={{ width: '60px', padding: '10px', textAlign: 'center' }}
-                />
+          <div className="flex flex-col gap-6 pt-6">
+            <div className="w-full sm:w-auto">
+              <p className="font-semibold uppercase text-sm mb-2">Số lượng</p>
+              <input
+                type="number"
+                min="1"
+                value={quantity}
+                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-full sm:w-20 border border-gray-300 p-3 text-center focus:outline-none focus:border-black"
+              />
             </div>
-            
-            <button 
-                onClick={handleAddToCart}
-                disabled={adding}
-                style={{ 
-                    flex: 1,
-                    padding: '15px', 
-                    backgroundColor: adding ? '#666' : 'black', 
-                    color: 'white', 
-                    border: 'none',
-                    fontWeight: 'bold',
-                    cursor: adding ? 'not-allowed' : 'pointer'
-                }}
+
+            <button
+              onClick={handleAddToCart}
+              disabled={adding}
+              className={`flex-1 w-full py-4 px-8 font-bold text-white transition-all uppercase tracking-widest relative overflow-hidden
+                                ${adding ? 'bg-gray-400 cursor-not-allowed' : 'bg-black hover:bg-gray-800 active:scale-95 shadow-lg'}`}
             >
-              {adding ? 'ĐANG THÊM...' : 'THÊM VÀO GIỎ HÀNG'}
+              {adding ? 'Đang xử lý...' : 'Thêm vào giỏ hàng'}
             </button>
           </div>
-          
-          {/* Mô tả */}
-          <div className="product-description" style={{ borderTop: '1px solid #eee', paddingTop: '20px' }}>
-            <h4 style={{ fontWeight: 'bold' }}>Mô tả sản phẩm</h4>
-            <ul style={{ paddingLeft: '20px' }}>
+
+          <div className="pt-8 border-t border-gray-100">
+            <h4 className="text-lg font-bold mb-4 uppercase">Mô tả sản phẩm</h4>
+            <ul className="space-y-2 text-gray-600 list-disc pl-5">
               {product.description?.map((line, index) => (
-                <li key={index} style={{ marginBottom: '5px' }}>{line}</li>
+                <li key={index}>{line}</li>
               ))}
             </ul>
           </div>
         </div>
       </div>
 
-      {product.category && product.category.slug ? (
-        <ProductSection 
-          title="SẢN PHẨM LIÊN QUAN" 
-          initialSlug={product.category.slug} 
-        />
+      {product.category?.slug ? (
+        <ProductSection title="SẢN PHẨM LIÊN QUAN" initialSlug={product.category.slug} />
       ) : (
         <ProductSection title="SẢN PHẨM MỚI" initialSlug="ao-nam" />
       )}

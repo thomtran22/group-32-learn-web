@@ -1,6 +1,8 @@
 import React, { createContext, useState, useContext, useEffect, useRef } from "react";
 import { apiAddToCart, apiViewCart, apiUpdateCart, apiRemoveItem, apiClearCart } from "../services/cartApi";
 import { useNavigate } from "react-router-dom";
+import LoginModal from "../components/login/LoginModal"; // 1. Import LoginModal trực tiếp
+import axios from "axios"; // Import axios để check role nếu cần (hoặc chỉ cần check token tồn tại)
 
 import Swal from 'sweetalert2';
 import { toast } from 'react-toastify';
@@ -18,9 +20,15 @@ export const CartProvider = ({ children }) => {
     const [cartItems, setCartItems] = useState([]);
     const [isCartLoaded, setIsCartLoaded] = useState(false);
     const [selectedItems, setSelectedItems] = useState([]);
+    
+    // 2. State quản lý Modal Login ngay tại Context
+    const [isModalOpen, setIsModalOpen] = useState(false); 
 
     const isUpdateActionRef = useRef(false);
-    const isLoggedIn = !!localStorage.getItem('token');
+    
+    // Check token để biết trạng thái đăng nhập
+    const token = localStorage.getItem('token');
+    const isLoggedIn = !!token;
 
     const selectedTotal = cartItems.reduce((total, item) => {
         return selectedItems.includes(item.itemId)
@@ -37,6 +45,13 @@ export const CartProvider = ({ children }) => {
     const onCheckoutClick = () => {
         handleCheckout(selectedItems);
     }
+
+    // Hàm đóng modal
+    const closeModal = () => {
+        setIsModalOpen(false);
+        // Sau khi đăng nhập thành công và đóng modal, load lại giỏ hàng của user đó
+        loadCart(); 
+    };
 
     const handleToggleSelect = (itemId) => {
         if (selectedItems.includes(itemId)) {
@@ -63,7 +78,6 @@ export const CartProvider = ({ children }) => {
             return;
         }
 
-        // Hiện Popup xác nhận đẹp
         const result = await Swal.fire({
             title: 'Bạn chắc chắn chứ?',
             text: `Bạn muốn xóa ${selectedItems.length} sản phẩm đã chọn khỏi giỏ hàng?`,
@@ -71,13 +85,12 @@ export const CartProvider = ({ children }) => {
             showCancelButton: true,
             confirmButtonColor: '#d33',
             cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Vâng, xóa đi!',
-            cancelButtonText: 'Thôi, giữ lại'
+            confirmButtonText: 'Xóa!',
+            cancelButtonText: 'Hủy'
         });
 
         if (result.isConfirmed) {
-            // Thực hiện xóa
-            selectedItems.forEach(id => handleRemoveItem(id, true)); // Thêm tham số true để không hiện thông báo lẻ tẻ
+            selectedItems.forEach(id => handleRemoveItem(id, true));
             setSelectedItems([]);
             
             Swal.fire(
@@ -88,7 +101,6 @@ export const CartProvider = ({ children }) => {
         }
     };
 
-    // Hàm xử lý url ảnh
     const getFullImageUrl = (productObj) => {
         let imgUrl = '';
         if (productObj.images && productObj.images.length > 0) {
@@ -98,9 +110,15 @@ export const CartProvider = ({ children }) => {
         return imgUrl;
     };
 
-    // Load giỏ hàng
+    // --- LOAD CART (Chỉ load từ API, không load localStorage) ---
     const loadCart = async () => {
-        if (!isLoggedIn) return;
+        // Nếu không có token, xóa cartItems về rỗng (bảo mật và logic)
+        if (!localStorage.getItem('token')) {
+            setCartItems([]);
+            setIsCartLoaded(true);
+            return;
+        }
+
         try {
             const data = await apiViewCart();
             if (data.success && data.cart) {
@@ -139,32 +157,22 @@ export const CartProvider = ({ children }) => {
         } catch (error) {
             console.error("Lỗi tải giỏ hàng:", error);
             if (error.response && (error.response.status === 403 || error.response.status === 401)) {
-                // Không cần toast ở đây vì nó sẽ spam nếu user chưa login
-                console.log("Token hết hạn. Đang đăng xuất...");
+                // Token hết hạn -> Clear token, Clear cart
                 localStorage.removeItem('token');
-                window.location.href = '/login';
+                setCartItems([]);
+                // Không tự động bật modal ở đây để tránh phiền khi vừa vào trang
             }
         }
     };
 
+    // Load lại cart khi trạng thái login thay đổi
     useEffect(() => {
-        if (isLoggedIn) {
-            loadCart();
-        } else {
-            const savedCart = localStorage.getItem('cartItems');
-            if (savedCart) setCartItems(JSON.parse(savedCart));
-            setIsCartLoaded(true);
-        }
+        loadCart();
     }, [isLoggedIn]);
 
+    // Update số lượng (Sync server)
     useEffect(() => {
-        if (!isLoggedIn && isCartLoaded) {
-            localStorage.setItem('cartItems', JSON.stringify(cartItems));
-        }
-    }, [cartItems, isLoggedIn, isCartLoaded])
-
-    // Update số lượng
-    useEffect(() => {
+        // Chỉ chạy khi đã login
         if (!isLoggedIn || !isCartLoaded || !isUpdateActionRef.current) return;
 
         const timeout = setTimeout(async () => {
@@ -180,16 +188,26 @@ export const CartProvider = ({ children }) => {
                 isUpdateActionRef.current = false;
             } catch (error) {
                 console.error("Lỗi cập nhật giỏ hàng:", error);
-                toast.error("Không thể cập nhật số lượng với server.");
             }
         }, 800);
 
         return () => clearTimeout(timeout);
     }, [cartItems, isLoggedIn, isCartLoaded]);
 
+    // --- ADD TO CART (Logic mới: Bắt buộc Login) ---
     const addToCart = async (product) => {
+        const currentToken = localStorage.getItem('token');
+
+        // Kiểm tra Token: Nếu chưa đăng nhập -> Mở Modal
+        if (!currentToken) {
+            setIsModalOpen(true);
+            return;
+        }
+
+        // 2. Nếu đã đăng nhập -> Thực hiện Add to Cart
         isUpdateActionRef.current = false;
 
+        // Optimistic Update (Cập nhật UI trước cho mượt)
         setCartItems(prevItems => {
             const existingItem = prevItems.find(
                 item => item.productId === product._id &&
@@ -203,18 +221,8 @@ export const CartProvider = ({ children }) => {
                 );
             }
 
-            let extractedColors = [];
-            let extractedSizes = [];
-            if (product.variants && product.variants.length > 0) {
-                extractedColors = [...new Set(product.variants.map(v => v.color))];
-                extractedSizes = [...new Set(product.variants.map(v => v.size))];
-            } else {
-                extractedColors = product.colors || [];
-                extractedSizes = product.sizes || [];
-            }
-
             const newItem = {
-                itemId: Date.now().toString(),
+                itemId: Date.now().toString(), // Temp ID
                 productId: product._id,
                 name: product.name,
                 price: product.price,
@@ -222,63 +230,59 @@ export const CartProvider = ({ children }) => {
                 color: product.color,
                 size: product.size,
                 quantity: product.quantity,
-                availableColors: extractedColors,
-                availableSizes: extractedSizes,
-                variants: product.variants || []
+                availableColors: [],
+                availableSizes: [],
+                variants: []
             };
             return [...prevItems, newItem];
         });
 
         toast.success(`Đã thêm "${product.name}" vào giỏ!`);
 
-        if (isLoggedIn) {
-            try {
-                await apiAddToCart({
-                    productId: product._id,
-                    quantity: product.quantity,
-                    color: product.color,
-                    size: product.size
-                });
-
-                await loadCart();
-            } catch (error) {
-                console.error("Lỗi add server:", error);
-                toast.error("Có lỗi khi đồng bộ giỏ hàng với server.");
-            }
-        } else {
-            setCartItems(newCart => {
-                localStorage.setItem('cartItems', JSON.stringify(newCart));
-                return newCart;
+        try {
+            await apiAddToCart({
+                productId: product._id,
+                quantity: product.quantity,
+                color: product.color,
+                size: product.size
             });
+
+            // Đồng bộ lại ID thật từ server
+            await loadCart();
+        } catch (error) {
+            console.error("Lỗi add server:", error);
+            toast.error("Lỗi khi thêm vào giỏ hàng (Check quyền hoặc Server)");
+            // Nếu lỗi 403 (Admin không được mua) hoặc 401
+            if (error.response?.status === 403) {
+                 // Rollback UI nếu cần
+                 await loadCart();
+            }
         }
     };
 
     // Remove
     const handleRemoveItem = async (itemId, isBulkDelete = false) => {
+        if (!isLoggedIn) return; // Không login thì không có gì để xóa
+
         isUpdateActionRef.current = false;
         const prevCart = [...cartItems];
         setCartItems(prev => prev.filter(item => item.itemId !== itemId));
 
-        if (isLoggedIn) {
-            try {
-                await apiRemoveItem(itemId);
-                if(!isBulkDelete) {
-                    toast.success("Đã xóa sản phẩm khỏi giỏ hàng");
-                }
-            } catch (error) {
-                console.error("Lỗi xóa sản phẩm:", error);
-                toast.error("Không thể xóa sản phẩm lúc này.");
-                setCartItems(prevCart);
-            }
-        } else {
+        try {
+            await apiRemoveItem(itemId);
             if(!isBulkDelete) {
                 toast.success("Đã xóa sản phẩm khỏi giỏ hàng");
             }
+        } catch (error) {
+            console.error("Lỗi xóa sản phẩm:", error);
+            toast.error("Không thể xóa sản phẩm lúc này.");
+            setCartItems(prevCart);
         }
     };
 
-    // Update quantity
+    // Update quantity (UI)
     const handleUpdateQuantity = (itemId, newQuantity) => {
+        if (!isLoggedIn) return;
         if (newQuantity < 1) return;
         isUpdateActionRef.current = true;
         setCartItems(prev => prev.map(item =>
@@ -286,7 +290,9 @@ export const CartProvider = ({ children }) => {
         ));
     };
 
+    // Update variant
     const updateItemVariant = (itemId, newVariant) => {
+        if (!isLoggedIn) return;
         isUpdateActionRef.current = true;
         setCartItems(prevItems => {
             const currentItem = prevItems.find(item => item.itemId === itemId);
@@ -319,25 +325,24 @@ export const CartProvider = ({ children }) => {
 
     // Clear
     const clearCart = async () => {
+        if (!isLoggedIn) return;
         isUpdateActionRef.current = false;
         setCartItems([]);
-        if (isLoggedIn) {
-            try { await apiClearCart(); } catch (error) { }
-        } else {
-            localStorage.removeItem('cartItems');
-        }
+        try { await apiClearCart(); } catch (error) { }
     };
 
     const removePurchasedItems = (itemIds) => {
         setCartItems(prev => prev.filter(item => !itemIds.includes(item.itemId)));
         setSelectedItems(prev => prev.filter(id => !itemIds.includes(id)));
-        if (!isLoggedIn) {
-            const remainingItems = cartItems.filter(item => !itemIds.includes(item.itemId));
-            localStorage.setItem('cartItems', JSON.stringify(remainingItems));
-        }
     };
 
     const handleCheckout = (selectedIds = []) => {
+        const currentToken = localStorage.getItem('token');
+        if (!currentToken) {
+            setIsModalOpen(true);
+            return;
+        }
+
         if (!selectedIds || selectedIds.length === 0) {
             toast.warn("Vui lòng chọn sản phẩm để thanh toán!", {
                 position: "top-center"
@@ -386,6 +391,7 @@ export const CartProvider = ({ children }) => {
     return (
         <CartContext.Provider value={value}>
             {children}
+            {isModalOpen && <LoginModal closeModal={closeModal} />}
         </CartContext.Provider>
     )
 };

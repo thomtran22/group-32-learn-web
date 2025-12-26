@@ -77,7 +77,7 @@ export const ProductSection = ({ title, initialSlug, parentSlug }) => {
     return (
         <div className="mt-[50px]">
             <div className="container mx-auto max-w-[1180px] p-4">
-                <h2 className="text-center text-[36px] font-bold mt-[50px] mb-5 uppercase">
+                <h2 className="text-center text-[36px] font-bold mt-4 mb-3 uppercase">
                     {title} 
                 </h2>
 

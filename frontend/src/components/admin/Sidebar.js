@@ -4,15 +4,15 @@ import {
     FaTachometerAlt, FaShoppingCart, FaBoxes, 
     FaWarehouse, FaTruck, FaUsers, FaSignOutAlt
 } from 'react-icons/fa';
+import toast from "react-hot-toast";
 
 const Sidebar = () => {
     const navigate = useNavigate();
 
     const handleLogout = () => {
-        if (window.confirm('Bạn có chắc muốn đăng xuất?')) {
-            localStorage.removeItem('token');
-            navigate('/login');
-        }
+        localStorage.removeItem('token');
+        toast.success('Đã đăng xuất thành công!');
+        navigate('/');
     };
 
     const navItemClass = ({ isActive }) =>

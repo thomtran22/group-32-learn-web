@@ -1,93 +1,169 @@
-import React, { useState } from 'react';
-import { Link, NavLink } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import logo from "../../assets/images/logo.svg";
-import LoginModal from '../login/LoginModal';
-import { FaUser, FaShoppingCart, FaSearch } from "react-icons/fa";
-import { useCart } from '../../context/CartContext';
+import LoginModal from "../login/LoginModal";
+import { FaUser, FaShoppingCart } from "react-icons/fa";
+import { useCart } from "../../context/CartContext";
+import { motion, AnimatePresence } from "framer-motion";
+import Search from "../search/Search";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 function Header() {
   const { cartCount } = useCart();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const closeModal = () => setIsModalOpen(false);
+  const navigate = useNavigate();
+
   const navLinkClass = ({ isActive }) =>
-    `text-xl md:text-lg font-bold tracking-widest transition duration-150 uppercase border-b-2 pb-1 ${isActive
-      ? "text-red-600 border-red-600"
-      : "text-gray-800 border-transparent hover:text-red-600"
-    }`;
+    `relative text-sm font-semibold tracking-[0.1em] transition-all duration-300 uppercase py-1 ${
+      isActive
+        ? "text-red-600 after:w-full"
+        : "text-gray-600 hover:text-red-600 after:w-0"
+    } after:content-[''] after:absolute after:bottom-0 after:left-0 after:h-[2px] after:bg-red-600 after:transition-all after:duration-300 hover:after:w-full`;
+
+  const handleUserClick = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setIsModalOpen(true);
+      return;
+    }
+    try {
+      const response = await axios.get("http://localhost:4000/api/user/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const { role } = response.data;
+      switch (role) {
+        case "admin": navigate("/admin"); break;
+        case "shipper": navigate("/shipper"); break;
+        default: navigate("/profile"); break;
+      }
+    } catch (error) {
+      console.error("Token verification failed:", error);
+      localStorage.removeItem("token");
+      toast.error("Phiên đăng nhập đã hết hạn.");
+      setIsModalOpen(true);
+    }
+  };
+
+  const handleCartClick = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setIsModalOpen(true);
+      return;
+    }
+    try {
+      const response = await axios.get("http://localhost:4000/api/user/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const { role } = response.data;
+      if (role === "customer") {
+        navigate("/cart");
+      } else {
+        toast.error("Tài khoản quản trị/shipper không thể mua hàng.");
+      }
+    } catch (error) {
+      console.error("Cart token check failed:", error);
+      localStorage.removeItem("token");
+      toast.error("Phiên đăng nhập hết hạn.");
+      setIsModalOpen(true);
+    }
+  };
+
   return (
     <>
-      {/* Top Header */}
-      <div className="bg-[#F5F5F5] py-4 md:py-[6px] text-center text-xl md:text-base font-['Inter_Tight']">
-        <div className="container mx-auto px-4 md:px-[15px] max-w-[1180px]">
-          <div className="inner-title">
-            Hotline Mua Hàng: **0973 285 886** | Hotline CSKH: **1900 886 803** - Ext 1 | Email CSKH: **360boutique.vn@gmail.com**
-          </div>
-        </div>
-      </div>
+      {/* Top Header*/}
+      {/* <div className="bg-[#111] py-2.5 text-center text-[11px] text-gray-300 font-light tracking-widest uppercase">
+  <div className="container mx-auto px-4">
+    Free shipping cho đơn hàng từ 500k • Hotline: 0973 285 886
+  </div>
+</div> */}
 
       {/* Main Header */}
-      <header className="sticky py-5 shadow-md md:py-[5px] lg:pb-[25px]">
-        <div className="container mx-auto px-4 md:px-[15px] max-w-[1180px]">
-          <div className="inner-wrap">
-            {/* Header Top Section */}
-            <div className="inner-top flex items-end gap-[8%] pb-6 border-b border-[#E6D7D7]">
-              {/* Logo */}
-              <Link to="/" className="inner-logo shrink-0">
-                <img src={logo} alt="Logo" className="max-w-[140px]" />
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)]">
+        <div className="container mx-auto px-4 md:px-6 max-w-[1200px]">
+          <div className="inner-wrap py-2">
+            
+            {/* Hàng 1: Logo - Search - Icon */}
+            <div className="flex items-center justify-between gap-4 md:gap-10">
+              <Link
+                to="/"
+                className="shrink-0 transition-transform duration-300 hover:scale-105"
+              >
+                <img src={logo} alt="Logo" className="w-[100px] md:w-[120px]" />
               </Link>
 
-              {/* Search Form */}
-              <form className="inner-form flex-1 h-10">
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm sản phẩm..."
-                  className="w-full border-none outline-none py-2 px-4 lg:pl-[100px] bg-[#F5F5F5] text-xl md:text-lg placeholder-gray-500"
-                />
-              </form>
+              {/* Search */}
+              <div className="hidden md:block flex-1 max-w-xl">
+                <Search />
+              </div>
 
-              {/* Actions (Cart & Login) */}
-              <div className="header-actions flex items-center gap-4 shrink-0">
-                {/* Giỏ hàng */}
-                <Link to="/cart" className="relative group p-2 hover:bg-gray-100 rounded-full transition-all duration-300">
-                  <FaShoppingCart className="text-2xl text-gray-700 group-hover:text-red-600" />
+              {/* Actions */}
+              <div className="flex items-center gap-2 md:gap-5">
+                {/* CART ICON */}
+                <div
+                  onClick={handleCartClick}
+                  className="p-2 text-gray-700 hover:text-red-600 transition-colors relative group cursor-pointer"
+                >
+                  <FaShoppingCart className="text-xl md:text-2xl transition-transform group-hover:scale-110" />
+                  <AnimatePresence mode="popLayout">
+                    {cartCount > 0 && (
+                      <motion.span
+                        key={cartCount}
+                        initial={{ scale: 0.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.5, opacity: 0 }}
+                        className="absolute top-0 right-0 bg-red-600 text-white text-[10px] w-4 h-4 md:w-5 md:h-5 flex items-center justify-center rounded-full font-bold shadow-md ring-2 ring-white"
+                      >
+                        {cartCount}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </div>
 
-                  {/* Hiển thị số lượng: Chỉ hiện khi lớn hơn 0 */}
-                  {cartCount > 0 && (
-                    <span className="absolute top-0 right-0 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">
-                      {cartCount}
-                    </span>
-                  )}
-                </Link>
-
-                {/* Người dùng */}
-                <Link to="/profile" className="flex items-center gap-2 group p-2 hover:bg-gray-100 rounded-lg transition-all duration-300">
-                  <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 group-hover:bg-red-100 transition-colors">
-                    <FaUser className="text-xl text-gray-600 group-hover:text-red-600" />
+                {/* User Icon */}
+                <div
+                  className="flex items-center gap-2 group p-1 md:p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 cursor-pointer"
+                  onClick={handleUserClick}
+                >
+                  <div className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-gray-200 group-hover:bg-red-100 transition-colors">
+                    <FaUser className="text-sm md:text-xl text-gray-600 group-hover:text-red-600" />
                   </div>
-                </Link>
+                </div>
               </div>
             </div>
 
-            {/* Navigation*/}
-            <nav className="inner-bottom mt-4">
-              <ul className="flex justify-between items-center list-none p-0 m-0">
+            {/* Navigation: Hàng 2 */}
+            <nav className="mt-1 border-t border-gray-100 pt-1">
+              <ul className="flex justify-between items-center gap-4 md:gap-10 list-none p-0 m-0">
                 <li>
-                  <NavLink to="/" end className={navLinkClass}>TRANG CHỦ</NavLink>
+                  <NavLink to="/" end className={navLinkClass}>
+                    Trang chủ
+                  </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/category/ao-nam" className={navLinkClass}>ÁO NAM</NavLink>
+                  <NavLink to="/category/ao-nam" className={navLinkClass}>
+                    Áo Nam
+                  </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/category/quan-nam" className={navLinkClass}>QUẦN NAM</NavLink>
+                  <NavLink to="/category/quan-nam" className={navLinkClass}>
+                    Quần Nam
+                  </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/category/phu-kien" className={navLinkClass}>PHỤ KIỆN</NavLink>
+                  <NavLink to="/category/phu-kien" className={navLinkClass}>
+                    Phụ kiện
+                  </NavLink>
                 </li>
               </ul>
             </nav>
+            
           </div>
         </div>
       </header>
+      {isModalOpen && <LoginModal closeModal={closeModal} />}
     </>
   );
 }
-
 export default Header;

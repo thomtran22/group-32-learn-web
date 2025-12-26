@@ -11,6 +11,13 @@ const addToCart = async (req, res) => {
         });
     }
 
+    if (req.user?.role !== "customer") {
+        return res.status(403).json({
+            success: false,
+            message: "Chỉ khách hàng mới được sử dụng giỏ hàng"
+        });
+    }
+
     const userId = req.user.id;
     const { productId, quantity, color, size } = req.body;
 
@@ -90,6 +97,13 @@ const addToCart = async (req, res) => {
 
 // GET /api/cart
 const viewCart = async (req, res) => {
+    if (req.user?.role !== "customer") {
+        return res.status(403).json({
+            success: false,
+            message: "Chỉ khách hàng mới được sử dụng giỏ hàng"
+        });
+    }
+
     const userId = req.user.id;
 
     try {
@@ -122,6 +136,13 @@ const viewCart = async (req, res) => {
 
 // PUT /api/cart/
 const updateCart = async (req, res) => {
+    if (req.user?.role !== "customer") {
+        return res.status(403).json({
+            success: false,
+            message: "Chỉ khách hàng mới được sử dụng giỏ hàng"
+        });
+    }
+
     const userId = req.user.id;
     const { items } = req.body; 
 
@@ -181,6 +202,13 @@ const updateCart = async (req, res) => {
 
 // DELETE /api/cart/:itemId
 const removeCartItem = async (req, res) => {
+    if (req.user?.role !== "customer") {
+        return res.status(403).json({
+            success: false,
+            message: "Chỉ khách hàng mới được sử dụng giỏ hàng"
+        });
+    }
+
     const userId = req.user.id;
     const { itemId } = req.params; 
 
@@ -216,6 +244,13 @@ const removeCartItem = async (req, res) => {
 };
 
 const clearCart = async (req, res) => {
+    if (req.user?.role !== "customer") {
+        return res.status(403).json({
+            success: false,
+            message: "Chỉ khách hàng mới được sử dụng giỏ hàng"
+        });
+    }
+
     const userId = req.user.id;
     try {
         await Cart.findOneAndDelete({ userId });

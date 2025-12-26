@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaTruck, FaMotorcycle, FaStar, FaCarSide } from 'react-icons/fa';
+import { FaSearch, FaMotorcycle, FaCarSide } from 'react-icons/fa';
 import { apiGetAllShippers, apiUpdateShipperStatus } from '../../services/adminApi';
 
 const ShipperManagement = () => {
@@ -53,14 +53,6 @@ const ShipperManagement = () => {
             case 'BUSY': return 'bg-orange-100 text-orange-800 border-orange-200';
             default: return 'bg-gray-100 text-gray-800';
         }
-    };
-
-    const getVehicleIcon = (type) => {
-        const lowerType = type?.toLowerCase() || '';
-        if (lowerType.includes('car') || lowerType.includes('truck') || lowerType.includes('tải')) {
-            return <FaCarSide className="text-blue-500" />;
-        }
-        return <FaMotorcycle className="text-purple-500" />;
     };
 
     const filteredShippers = shippers.filter(shipper => 

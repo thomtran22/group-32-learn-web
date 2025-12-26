@@ -8,6 +8,10 @@ export const register = async (req, res) => {
   try {
     const { fullName, email, password, role, gender, dateOfBirth } = req.body;
 
+    if (!password || password.length < 6) {
+      return res.status(400).json({ message: "Mật khẩu phải có ít nhất 6 ký tự" });
+    }
+    
     if (role === "admin") {
       return res.status(403).json({ message: "Không được tạo admin" });
     }
@@ -39,6 +43,14 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+      return res.status(400).json({ message: "Vui lòng nhập email và mật khẩu" });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Mật khẩu phải có ít nhất 6 ký tự" });
+    }
+
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({ message: "Sai email hoặc mật khẩu" });
@@ -59,14 +71,7 @@ export const login = async (req, res) => {
       }
     );
 
-    res.json({
-      token,
-      role: user.role,
-      user: {
-        fullName: user.fullName,
-        email: user.email,
-      },
-    });
+    res.json({ token });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Lỗi server" });
@@ -76,8 +81,6 @@ export const login = async (req, res) => {
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-
-    console.log("🔥 forgotPassword HIT", email);
 
     if (!email) {
       return res.status(400).json({ message: "Thiếu email" });
@@ -94,7 +97,6 @@ export const forgotPassword = async (req, res) => {
     if (!user.email) {
       return res.status(400).json({ message: "Email người dùng không hợp lệ" });
     }
-
     const resetToken = randomBytes(32).toString("hex");
     const hashedToken = createHash("sha256").update(resetToken).digest("hex");
 
@@ -123,6 +125,10 @@ export const resetPassword = async (req, res) => {
 
     if (!token || !newPassword) {
       return res.status(400).json({ message: "Thiếu thông tin" });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "Mật khẩu mới phải có ít nhất 6 ký tự" });
     }
 
     const hashedToken = createHash("sha256").update(token).digest("hex");
