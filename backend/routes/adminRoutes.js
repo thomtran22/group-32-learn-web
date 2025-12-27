@@ -6,7 +6,6 @@ import {
     getRevenueStats,
     getAllOrders,
     updateOrderStatus,
-    getInventoryStatus,
     getAllProducts,
     createProduct,
     updateProduct,
@@ -14,7 +13,8 @@ import {
     getAllShippers,
     updateShipperStatus,
     getAllUsers,
-    updateUserStatus
+    updateUserStatus,
+    getSignature
 } from '../controllers/adminController.js';
 
 // Tất cả routes yêu cầu đăng nhập và là Admin
@@ -28,9 +28,6 @@ router.get('/revenue', getRevenueStats);
 router.get('/orders', getAllOrders);
 router.put('/orders/:orderId/status', updateOrderStatus);
 
-// Inventory Management
-router.get('/inventory', getInventoryStatus);
-
 // Product Management
 router.get('/products', getAllProducts);
 router.post('/products', createProduct);
@@ -39,10 +36,11 @@ router.delete('/products/:productId', deleteProduct);
 
 // Shipper Management
 router.get('/shippers', getAllShippers);
-router.put('/shippers/:shipperId/status', updateShipperStatus);
 
 // User Management
 router.get('/users', getAllUsers);
-router.put('/users/:userId/status', updateUserStatus);
+
+// Chỉ Admin mới được lấy chữ ký để up ảnh sản phẩm
+router.get('/sign-cloudinary', getSignature);// /api/admin/sign-cloudinary
 
 export default router;

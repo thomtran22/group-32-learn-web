@@ -71,24 +71,9 @@ export const apiDeleteProduct = async (productId) => {
     return response.data;
 };
 
-// --- INVENTORY ---
-export const apiGetInventoryStatus = async (params) => {
-    // params: { lowStock, page, limit }
-    const response = await axios.get(`${API_URL}/inventory`, {
-        ...getAuthConfig(),
-        params
-    });
-    return response.data;
-};
-
 // --- SHIPPERS ---
 export const apiGetAllShippers = async () => {
     const response = await axios.get(`${API_URL}/shippers`, getAuthConfig());
-    return response.data;
-};
-
-export const apiUpdateShipperStatus = async (shipperId, status) => {
-    const response = await axios.put(`${API_URL}/shippers/${shipperId}/status`, { status }, getAuthConfig());
     return response.data;
 };
 
@@ -102,7 +87,4 @@ export const apiGetAllUsers = async (params) => {
     return response.data;
 };
 
-export const apiUpdateUserStatus = async (userId, isActive) => {
-    const response = await axios.put(`${API_URL}/users/${userId}/status`, { isActive }, getAuthConfig());
-    return response.data;
-};
+

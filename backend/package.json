@@ -27,6 +27,7 @@
     "cheerio-select": "^2.1.0",
     "chromium-bidi": "^11.0.0",
     "cliui": "^8.0.1",
+    "cloudinary": "^2.8.0",
     "color-convert": "^2.0.1",
     "color-name": "^1.1.4",
     "colors": "^1.4.0",

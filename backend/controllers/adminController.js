@@ -2,6 +2,7 @@ import Order from '../models/OrderModel.js';
 import Product from '../models/ProductModel.js';
 import User from '../models/UserModel.js';
 import ShipperInfo from '../models/ShipperInfo.js';
+import { generateUploadSignature } from '../services/cloudinaryService.js';
 import { differenceInDays, startOfDay, endOfDay } from 'date-fns';
 import mongoose from 'mongoose';
 
@@ -203,43 +204,7 @@ export const updateOrderStatus = async (req, res) => {
     }
 };
 
-// --- PRODUCTS & INVENTORY ---
-export const getInventoryStatus = async (req, res) => {
-    try {
-        const { lowStock = 10, limit = 50 } = req.query;
-
-        const products = await Product.find({
-            'variants.quantity': { $lt: parseInt(lowStock) }
-        }).select('name sku variants').limit(parseInt(limit));
-
-        let totalLowStockVariants = 0;
-        const formattedProducts = products.map(p => {
-            const lowVariants = p.variants.filter(v => v.quantity < parseInt(lowStock));
-            totalLowStockVariants += lowVariants.length;
-            
-            const totalStock = p.variants.reduce((sum, v) => sum + v.quantity, 0);
-
-            return {
-                _id: p._id,
-                name: p.name,
-                sku: p.sku,
-                totalStock,
-                variants: p.variants
-            };
-        });
-
-        res.json({
-            success: true,
-            data: {
-                total: products.length,
-                lowStock: totalLowStockVariants,
-                products: formattedProducts
-            }
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
+// --- PRODUCTS  ---
 
 export const getAllProducts = async (req, res) => {
     try {
@@ -265,9 +230,63 @@ export const getAllProducts = async (req, res) => {
 
 export const createProduct = async (req, res) => {
     try {
-        const newProduct = new Product(req.body);
-        await newProduct.save();
-        res.json({ success: true, message: 'Tạo sản phẩm thành công', product: newProduct });
+        const { sku, variants, images, description, name, price, category } = req.body;
+
+        // Kiểm tra xem sản phẩm có SKU này đã tồn tại chưa
+        let existingProduct = await Product.findOne({ sku });
+
+        if (existingProduct) {
+            // --- SẢN PHẨM ĐÃ TỒN TẠI ---
+            
+            // Gộp biến thể (Variants)
+            // Duyệt qua các biến thể mới được gửi lên
+            variants.forEach(newVar => {
+                // Kiểm tra xem cặp màu + size này đã có trong DB chưa
+                const duplicateIndex = existingProduct.variants.findIndex(
+                    v => v.color === newVar.color && v.size === newVar.size
+                );
+
+                if (duplicateIndex > -1) {
+                    // Nếu đã có (VD: Đỏ - L), thì cộng dồn số lượng
+                    existingProduct.variants[duplicateIndex].quantity += newVar.quantity;
+                } else {
+                    // Nếu chưa có (VD: Xanh - M), thì push vào mảng
+                    existingProduct.variants.push(newVar);
+                }
+            });
+
+            // Gộp hình ảnh
+            // Lọc ra những ảnh chưa có trong mảng cũ
+            if (images && images.length > 0) {
+                 const newImages = images.filter(img => !existingProduct.images.includes(img));
+                 existingProduct.images = [...existingProduct.images, ...newImages];
+            }
+            
+            // Cập nhật các thông tin khác (Tùy chọn: có thể cập nhật đè hoặc giữ nguyên)
+            // VCập nhật giá mới nhất nếu admin đổi giá
+            existingProduct.price = price;
+            existingProduct.name = name;
+            if(description) existingProduct.description = description;
+
+            await existingProduct.save();
+            
+            return res.json({ 
+                success: true, 
+                message: 'Đã cập nhật thêm biến thể vào sản phẩm cũ!', 
+                product: existingProduct 
+            });
+
+        } else {
+            // --- SP MỚI ---
+            const newProduct = new Product(req.body);
+            await newProduct.save();
+            return res.json({ 
+                success: true, 
+                message: 'Tạo sản phẩm mới thành công', 
+                product: newProduct 
+            });
+        }
+
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -381,4 +400,21 @@ export const getAllUsers = async (req, res) => {
 
 export const updateUserStatus = async (req, res) => {
     res.json({ success: true, message: 'Tính năng đang phát triển' });
+};
+
+export const getSignature = (req, res) => {
+    try {
+        // Có thể lấy folder từ query nếu muốn linh động (VD: ?folder=avatars)
+        const folder = req.query.folder || 'products';
+        
+        const signatureData = generateUploadSignature(folder);
+        
+        res.status(200).json({
+            success: true,
+            data: signatureData
+        });
+    } catch (error) {
+        console.error("Lỗi tạo chữ ký:", error);
+        res.status(500).json({ success: false, message: "Không thể tạo chữ ký upload" });
+    }
 };

@@ -39,9 +39,6 @@ const Sidebar = () => {
                 <NavLink to="/admin/products" className={navItemClass}>
                     <FaBoxes /> Sản phẩm
                 </NavLink>
-                <NavLink to="/admin/inventory" className={navItemClass}>
-                    <FaWarehouse /> Tồn kho
-                </NavLink>
                 <NavLink to="/admin/shippers" className={navItemClass}>
                     <FaTruck /> Shipper
                 </NavLink>

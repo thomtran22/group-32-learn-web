@@ -21,9 +21,10 @@ export const CartProvider = ({ children }) => {
     const [isCartLoaded, setIsCartLoaded] = useState(false);
     const [selectedItems, setSelectedItems] = useState([]);
     
-    // 2. State quản lý Modal Login ngay tại Context
+    // State quản lý Modal Login ngay tại Context
     const [isModalOpen, setIsModalOpen] = useState(false); 
 
+    const [userRole, setUserRole] = useState(null);
     const isUpdateActionRef = useRef(false);
     
     // Check token để biết trạng thái đăng nhập
@@ -51,6 +52,26 @@ export const CartProvider = ({ children }) => {
         setIsModalOpen(false);
         // Sau khi đăng nhập thành công và đóng modal, load lại giỏ hàng của user đó
         loadCart(); 
+    };
+
+     const fetchUserRole = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            setUserRole(null);
+            return null;
+        }
+
+        try {
+            const response = await axios.get('http://localhost:4000/api/user/me', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setUserRole(response.data.role);
+            return response.data.role;
+        } catch (error) {
+            console.error('Không thể lấy thông tin user:', error);
+            setUserRole(null);
+            return null;
+        }
     };
 
     const handleToggleSelect = (itemId) => {
@@ -119,6 +140,15 @@ export const CartProvider = ({ children }) => {
             return;
         }
 
+        const role = userRole || await fetchUserRole();
+
+        if (role !== 'customer') {
+            console.log(`User role: ${role} - Không load giỏ hàng`);
+            setCartItems([]);
+            setIsCartLoaded(true);
+            return;
+        }
+
         try {
             const data = await apiViewCart();
             if (data.success && data.cart) {
@@ -156,18 +186,32 @@ export const CartProvider = ({ children }) => {
             }
         } catch (error) {
             console.error("Lỗi tải giỏ hàng:", error);
-            if (error.response && (error.response.status === 403 || error.response.status === 401)) {
-                // Token hết hạn -> Clear token, Clear cart
+            if (error.response?.status === 401) {
+                // Token thật sự hết hạn hoặc không hợp lệ
                 localStorage.removeItem('token');
                 setCartItems([]);
-                // Không tự động bật modal ở đây để tránh phiền khi vừa vào trang
+            } else if (error.response?.status === 403) {
+                // Admin/Shipper không có quyền dùng giỏ hàng
+                // KHÔNG xóa token, chỉ set cart rỗng
+                console.log('User không có quyền sử dụng giỏ hàng (Admin/Shipper)');
+                setCartItems([]);
             }
+        } finally {
+            setIsCartLoaded(true);
         }
     };
 
     // Load lại cart khi trạng thái login thay đổi
     useEffect(() => {
-        loadCart();
+        if (isLoggedIn) {
+            fetchUserRole().then(() => {
+                loadCart();
+            });
+        } else {
+            setCartItems([]);
+            setUserRole(null);
+            setIsCartLoaded(true);
+        }
     }, [isLoggedIn]);
 
     // Update số lượng (Sync server)

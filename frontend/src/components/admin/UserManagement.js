@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaUserCheck, FaUserTimes, FaSearch } from 'react-icons/fa';
-import { apiGetAllUsers, apiUpdateUserStatus } from '../../services/adminApi';
+import { apiGetAllUsers } from '../../services/adminApi';
 
 const UserManagement = () => {
     const [users, setUsers] = useState([]);
@@ -16,17 +16,6 @@ const UserManagement = () => {
             if (res.success) setUsers(res.users);
         } catch (error) {
             console.error(error);
-        }
-    };
-
-    const toggleStatus = async (user) => {
-        if(window.confirm(`Bạn muốn ${user.isActive ? 'khóa' : 'mở khóa'} user này?`)) {
-            try {
-                await apiUpdateUserStatus(user._id, !user.isActive);
-                fetchUsers();
-            } catch (error) {
-                alert("Lỗi cập nhật");
-            }
         }
     };
 
@@ -52,7 +41,6 @@ const UserManagement = () => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vai trò</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hành động</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -70,14 +58,6 @@ const UserManagement = () => {
                                         ? <span className="text-green-600 flex items-center gap-1"><FaUserCheck /> Active</span>
                                         : <span className="text-red-600 flex items-center gap-1"><FaUserTimes /> Locked</span>
                                     }
-                                </td>
-                                <td className="px-6 py-4">
-                                    <button 
-                                        onClick={() => toggleStatus(user)}
-                                        className={`px-3 py-1 rounded text-sm border ${user.isActive ? 'text-red-600 border-red-200 hover:bg-red-50' : 'text-green-600 border-green-200 hover:bg-green-50'}`}
-                                    >
-                                        {user.isActive ? 'Khóa' : 'Mở khóa'}
-                                    </button>
                                 </td>
                             </tr>
                         ))}

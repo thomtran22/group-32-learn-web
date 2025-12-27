@@ -194,9 +194,9 @@ const Dashboard = () => {
                         />
                     </div>
                 </div>
-                <div className="h-[400px]">
+                <div className="h-[400px] w-full min-w-0">
                     {loadingChart ? <div className="text-center pt-20">Đang tải biểu đồ...</div> : 
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                         <LineChart data={revenueData}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
                             <XAxis dataKey="name" axisLine={false} tickLine={false} dy={10} fontSize={12} />
@@ -218,8 +218,8 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white p-6 rounded-lg shadow-sm">
                     <h3 className="text-lg font-bold text-gray-700 mb-4">Trạng thái đơn hàng</h3>
-                    <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
+                    <div className="h-[300px] w-full min-w-0">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                             <PieChart>
                                 <Pie data={orderStatusData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
                                     {orderStatusData.map((entry, index) => (

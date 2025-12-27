@@ -1,27 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaSearch, FaTimes } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaTimes, FaCloudUploadAlt, FaSpinner } from 'react-icons/fa';
 import { apiGetAllProductsAdmin, apiCreateProduct, apiDeleteProduct } from '../../services/adminApi';
+import axios from 'axios'; // Import axios
 
 const ProductManagement = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     
-    // Form State khớp với Product Model
+    // --- 1. MỚI: State lưu danh sách danh mục ---
+    const [categories, setCategories] = useState([]); 
+
+    const [uploading, setUploading] = useState(false);
+
     const [formData, setFormData] = useState({
         name: '', 
         sku: '', 
         price: 0, 
-        images: '', // Nhập 1 link ảnh đại diện cho đơn giản, khi submit sẽ convert sang array
-        description: '', // Nhập text, submit sẽ convert thành array 1 phần tử
+        images: [], 
+        description: '', 
+        category: '', // --- 2. MỚI: Thêm trường category vào form ---
         variants: [] 
     });
     
-    // State tạm cho việc thêm biến thể
     const [tempVariant, setTempVariant] = useState({ color: '', size: '', quantity: 0 });
 
     useEffect(() => {
         fetchProducts();
+        fetchCategories(); // --- 3. MỚI: Gọi hàm lấy danh mục khi component load ---
     }, []);
 
     const fetchProducts = async () => {
@@ -36,28 +42,98 @@ const ProductManagement = () => {
         }
     };
 
+    // --- 4. MỚI: Hàm lấy danh mục từ API public ---
+    const fetchCategories = async () => {
+        try {
+            // Gọi vào route có sẵn: /api/categories
+            const res = await axios.get('http://localhost:4000/api/categories');
+            
+            // Tùy vào cấu trúc trả về của controller getCategories
+            // Nếu trả về { success: true, categories: [...] } hoặc mảng trực tiếp
+            if (res.data.success) {
+                setCategories(res.data.categories || []); 
+            } else if (Array.isArray(res.data)) {
+                setCategories(res.data);
+            } else {
+                // Fallback nếu API trả về data nằm thẳng trong res.data (tùy controller viết thế nào)
+                setCategories(res.data.categories || res.data || []); 
+            }
+        } catch (error) {
+            console.error("Lỗi lấy danh mục:", error);
+        }
+    };
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setUploading(true);
+        try {
+            const token = localStorage.getItem('token'); 
+            const signatureRes = await axios.get('http://localhost:4000/api/admin/sign-cloudinary', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            const { timestamp, signature, apiKey, cloudName, folder } = signatureRes.data.data;
+
+            const uploadData = new FormData();
+            uploadData.append('file', file);
+            uploadData.append('api_key', apiKey);
+            uploadData.append('timestamp', timestamp);
+            uploadData.append('signature', signature);
+            uploadData.append('folder', folder);
+
+            const res = await axios.post(
+                `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, 
+                uploadData
+            );
+
+            const imageUrl = res.data.secure_url;
+            setFormData(prev => ({
+                ...prev, 
+                images: [...prev.images, imageUrl]
+            }));
+            
+        } catch (error) {
+            console.error("Lỗi upload ảnh:", error);
+            alert("Upload thất bại! Kiểm tra lại quyền Admin hoặc Server.");
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const handleCreateProduct = async () => {
-        // Validate cơ bản
-        if (!formData.name || !formData.sku || formData.variants.length === 0) {
+        let finalVariants = [...formData.variants];
+
+        if (tempVariant.color && tempVariant.size) {
+            finalVariants.push(tempVariant);
+        }
+
+        // --- 5. Validate thêm category ---
+        if (!formData.name || !formData.sku || finalVariants.length === 0) {
             alert("Vui lòng nhập tên, SKU và ít nhất 1 biến thể");
             return;
         }
 
         try {
-            // Chuẩn bị payload khớp với Schema
             const payload = {
                 ...formData,
-                images: [formData.images], // Convert string to array
-                description: [formData.description] // Convert string to array
+                variants: finalVariants,
+                images: formData.images, 
+                description: [formData.description]
+                // category đã có sẵn trong formData do bind với thẻ select
             };
 
-            await apiCreateProduct(payload);
-            alert("Tạo sản phẩm thành công!");
-            setShowModal(false);
-            fetchProducts();
+            const res = await apiCreateProduct(payload);
             
-            // Reset form
-            setFormData({ name: '', sku: '', price: 0, images: '', description: '', variants: [] });
+            if (res.success) {
+                alert(res.message);
+                setShowModal(false);
+                fetchProducts();
+                // Reset form
+                setFormData({ name: '', sku: '', price: 0, images: [], description: '', category: '', variants: [] });
+                setTempVariant({ color: '', size: '', quantity: 0 });
+            } 
         } catch (error) {
             alert("Lỗi khi tạo sản phẩm: " + (error.response?.data?.message || error.message));
         }
@@ -97,11 +173,9 @@ const ProductManagement = () => {
                 <h1 className="text-2xl font-bold text-gray-800">Quản lý Sản phẩm</h1>
                 <button
                     onClick={() => setShowModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-white border border-green-200 text-green-700 font-medium rounded-lg hover:bg-green-50 hover:border-green-300 hover:text-green-800 transition-colors shadow-sm"
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-green-200 text-green-700 font-medium rounded-lg hover:bg-green-50 shadow-sm"
                 >
-                    <div className="bg-green-100 p-1 rounded-md">
-                        <FaPlus size={12} />
-                    </div>
+                    <div className="bg-green-100 p-1 rounded-md"><FaPlus size={12} /></div>
                     Thêm sản phẩm mới
                 </button>
             </div>
@@ -127,6 +201,7 @@ const ProductManagement = () => {
                                         <img src={p.images[0] || 'https://via.placeholder.com/40'} alt="" className="w-10 h-10 rounded object-cover border" />
                                         <div>
                                             <div className="font-medium text-gray-900">{p.name}</div>
+                                            {/* Hiển thị tên danh mục nếu có */}
                                             <div className="text-xs text-gray-500">{p.category?.name || 'Chưa phân loại'}</div>
                                         </div>
                                     </div>
@@ -135,7 +210,6 @@ const ProductManagement = () => {
                                 <td className="px-6 py-4 text-sm font-bold text-gray-800">{p.price?.toLocaleString()}đ</td>
                                 <td className="px-6 py-4">
                                     <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-bold">
-                                        {/* Tính tổng tồn kho từ mảng variants */}
                                         {p.variants?.reduce((sum, v) => sum + v.quantity, 0) || 0}
                                     </span>
                                 </td>
@@ -161,6 +235,25 @@ const ProductManagement = () => {
                                 <label className="block text-sm font-medium mb-1">Tên sản phẩm</label>
                                 <input type="text" className={inputClass} value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                             </div>
+
+                            {/* --- 6. MỚI: Dropdown chọn Danh mục --- */}
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Danh mục</label>
+                                <select 
+                                    className={inputClass} 
+                                    value={formData.category} 
+                                    onChange={e => setFormData({...formData, category: e.target.value})}
+                                >
+                                    <option value="">-- Chọn danh mục --</option>
+                                    {categories.map((cat) => (
+                                        <option key={cat._id} value={cat._id}>
+                                            {cat.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            {/* ------------------------------------- */}
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-1">SKU (Mã SP)</label>
@@ -171,10 +264,43 @@ const ProductManagement = () => {
                                     <input type="number" className={inputClass} value={formData.price} onChange={e => setFormData({...formData, price: Number(e.target.value)})} />
                                 </div>
                             </div>
+
+                            {/* --- UPLOAD ẢNH --- */}
                             <div>
-                                <label className="block text-sm font-medium mb-1">Link Ảnh (URL)</label>
-                                <input type="text" className={inputClass} value={formData.images} onChange={e => setFormData({...formData, images: e.target.value})} placeholder="https://..." />
+                                <label className="block text-sm font-medium mb-1">Hình ảnh sản phẩm</label>
+                                <div className="flex flex-wrap items-center gap-4">
+                                    <label className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200 transition h-16">
+                                        <FaCloudUploadAlt className="text-gray-600" />
+                                        <span className="text-sm font-medium text-gray-700">Thêm ảnh</span>
+                                        <input 
+                                            type="file" 
+                                            className="hidden" 
+                                            accept="image/*"
+                                            onChange={handleImageUpload}
+                                            disabled={uploading}
+                                        />
+                                    </label>
+                                    
+                                    {uploading && <div className="flex items-center text-blue-600"><FaSpinner className="animate-spin mr-2"/> Đang tải...</div>}
+                                    
+                                    {formData.images.map((img, index) => (
+                                        <div key={index} className="relative group">
+                                            <img src={img} alt="Preview" className="w-16 h-16 object-cover rounded border border-gray-300" />
+                                            <button 
+                                                onClick={() => {
+                                                    const newImages = formData.images.filter((_, i) => i !== index);
+                                                    setFormData({...formData, images: newImages});
+                                                }}
+                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow hover:bg-red-600"
+                                            >
+                                                <FaTimes size={10} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                                {formData.images.length === 0 && !uploading && <p className="text-xs text-gray-400 mt-1">Chưa có ảnh nào được chọn.</p>}
                             </div>
+
                             <div>
                                 <label className="block text-sm font-medium mb-1">Mô tả ngắn</label>
                                 <textarea className={inputClass} rows="2" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})}></textarea>
@@ -202,7 +328,13 @@ const ProductManagement = () => {
                         </div>
                         <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
                             <button onClick={() => setShowModal(false)} className="px-4 py-2 border rounded hover:bg-gray-100">Hủy</button>
-                            <button onClick={handleCreateProduct} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Lưu sản phẩm</button>
+                            <button 
+                                onClick={handleCreateProduct} 
+                                disabled={uploading} 
+                                className={`px-4 py-2 text-white rounded ${uploading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                            >
+                                Lưu sản phẩm
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaMotorcycle, FaCarSide } from 'react-icons/fa';
-import { apiGetAllShippers, apiUpdateShipperStatus } from '../../services/adminApi';
+import { FaSearch } from 'react-icons/fa';
+import { apiGetAllShippers} from '../../services/adminApi';
 
 const ShipperManagement = () => {
     const [shippers, setShippers] = useState([]);
@@ -21,29 +21,6 @@ const ShipperManagement = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const updateShipperStatus = async (shipperId, newStatus) => {
-        // Optimistic update
-        const originalShippers = [...shippers];
-        setShippers(shippers.map(s => 
-            s._id === shipperId 
-                ? { ...s, info: { ...s.info, status: newStatus } } 
-                : s
-        ));
-
-        try {
-            await apiUpdateShipperStatus(shipperId, newStatus);
-        } catch (error) {
-            alert('Cập nhật thất bại');
-            setShippers(originalShippers);
-        }
-    };
-
-    // ... (Giữ nguyên các hàm helper calculateSuccessRate, getVehicleIcon, filteredShippers từ file cũ)
-    const calculateSuccessRate = (performance) => {
-        if (!performance || !performance.totalDeliveries) return 0;
-        return ((performance.successfulDeliveries / performance.totalDeliveries) * 100).toFixed(1);
     };
 
     const getStatusColor = (status) => {
@@ -88,7 +65,6 @@ const ShipperManagement = () => {
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thông tin</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hành động</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -102,17 +78,6 @@ const ShipperManagement = () => {
                                     <span className={`px-2 py-1 rounded text-xs ${getStatusColor(shipper.info?.status)}`}>
                                         {shipper.info?.status || 'N/A'}
                                     </span>
-                                </td>
-                                <td className="px-6 py-4">
-                                     <select
-                                        value={shipper.info?.status || 'INACTIVE'}
-                                        onChange={(e) => updateShipperStatus(shipper._id, e.target.value)}
-                                        className="border rounded p-1 text-sm"
-                                    >
-                                        <option value="ACTIVE">Active</option>
-                                        <option value="BUSY">Busy</option>
-                                        <option value="INACTIVE">Inactive</option>
-                                    </select>
                                 </td>
                             </tr>
                         ))}

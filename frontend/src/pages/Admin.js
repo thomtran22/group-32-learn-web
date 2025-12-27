@@ -4,7 +4,6 @@ import Sidebar from '../components/admin/Sidebar';
 import Dashboard from '../components/admin/Dashboard';
 import OrderManagement from '../components/admin/OrderManagement';
 import ProductManagement from '../components/admin/ProductManagement';
-import Inventory from '../components/admin/Inventory';
 import UserManagement from '../components/admin/UserManagement';
 import ShipperManagement from '../components/admin/ShipperManagement';
 
@@ -20,7 +19,6 @@ const Admin = () => {
                     <Route path="/" element={<Dashboard />} />
                     <Route path="orders" element={<OrderManagement />} />
                     <Route path="products" element={<ProductManagement />} />
-                    <Route path="inventory" element={<Inventory />} />
                     <Route path="users" element={<UserManagement />} />
                     <Route path="shippers" element={<ShipperManagement />} />
                     {/* Redirect các route lạ về dashboard */}
