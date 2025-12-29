@@ -13,7 +13,6 @@ const verifyToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
     req.user = decoded;
     next();
   } catch (e) {
@@ -24,31 +23,69 @@ const verifyToken = (req, res, next) => {
   }
 };
 
+// MIDDLEWARE CHỈ CHO PHÉP ADMIN
 const isAdmin = (req, res, next) => {
   if (req.user?.role === "admin") {
     next();
   } else {
     res.status(403).json({
-      message: "Bạn không có quyền truy cập (Yêu cầu Admin)",
+      success: false,
+      message: "Truy cập bị từ chối. Chỉ Admin mới có quyền này.",
     });
   }
 };
 
+// MIDDLEWARE CHỈ CHO PHÉP SHIPPER
 const isShipper = (req, res, next) => {
-  if (req.user?.role === "shipper" || req.user?.role === "admin") {
+  if (req.user?.role === "shipper") {
     next();
   } else {
     res.status(403).json({
-      message: "Chỉ Shipper mới có quyền này",
+      success: false,
+      message: "Truy cập bị từ chối. Chỉ Shipper mới có quyền này.",
     });
   }
 };
 
+// MIDDLEWARE CHỈ CHO PHÉP CUSTOMER
 const isCustomer = (req, res, next) => {
-  if (req.user && req.user.role === "customer") {
+  if (req.user?.role === "customer") {
     next();
   } else {
-    res.status(403).json({ message: "Chỉ khách hàng mới có quyền này" });
+    res.status(403).json({
+      success: false,
+      message: "Truy cập bị từ chối. Chỉ khách hàng mới có quyền này.",
+    });
   }
 };
-export { verifyToken, isAdmin, isShipper };
+
+// MIDDLEWARE CHỈ CHẶN SHIPPER (cho phép admin và customer)
+const blockShipper = (req, res, next) => {
+  if (req.user?.role === "shipper") {
+    return res.status(403).json({
+      success: false,
+      message: "Shipper không được phép truy cập tính năng này.",
+    });
+  }
+  next();
+};
+
+// MIDDLEWARE CHỈ CHẶN ADMIN (cho phép shipper và customer)
+const blockAdmin = (req, res, next) => {
+  if (req.user?.role === "admin") {
+    return res.status(403).json({
+      success: false,
+      message: "Admin không được phép truy cập tính năng này.",
+    });
+  }
+  next();
+};
+
+export { 
+  verifyToken, 
+  isAdmin, 
+  isShipper, 
+  isCustomer,
+  blockShipper,
+  blockAdmin
+};

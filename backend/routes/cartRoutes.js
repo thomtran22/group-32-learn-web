@@ -1,12 +1,12 @@
 import express from 'express';
 const router = express.Router();
 
-import {verifyToken} from '../middleware/authMiddleware.js';
+import {verifyToken, isCustomer} from '../middleware/authMiddleware.js';
 import { addToCart, viewCart, updateCart, removeCartItem, clearCart } from '../controllers/cartController.js';
 import { validate, addToCartRules, updateCartRules } from '../middleware/cartValidator.js';
 
 // Tất cả các route giỏ hàng đều yêu cầu đăng nhập
-router.use(verifyToken);
+router.use(verifyToken, isCustomer);
 
 // Thêm sản phẩm vào giỏ hàng
 router.post('/',addToCartRules(), validate, addToCart);

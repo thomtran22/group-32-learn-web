@@ -7,7 +7,9 @@ import User from "../models/UserModel.js";
 import Product from "../models/ProductModel.js";
 import { verifyToken, isShipper } from "../middleware/authMiddleware.js";
 
-router.get("/orders/new", verifyToken, isShipper, async (req, res) => {
+router.use(verifyToken, isShipper);
+
+router.get("/orders/new", async (req, res) => {
   try {
     const orders = await Order.find({
       shipperId: req.user.id,
@@ -24,7 +26,7 @@ router.get("/orders/new", verifyToken, isShipper, async (req, res) => {
   }
 });
 
-router.get("/orders/active", verifyToken, isShipper, async (req, res) => {
+router.get("/orders/active", async (req, res) => {
   try {
     const orders = await Order.find({
       shipperId: req.user.id,
@@ -41,11 +43,7 @@ router.get("/orders/active", verifyToken, isShipper, async (req, res) => {
   }
 });
 
-router.put(
-  "/orders/:orderId/status",
-  verifyToken,
-  isShipper,
-  async (req, res) => {
+router.put("/orders/:orderId/status", async (req, res) => {
     const { newStatus, note, location } = req.body;
     // Thêm "Shipping" vào danh sách trạng thái hợp lệ
     const allowedStatuses = ["Delivered", "Cancelled", "Shipping"];
@@ -140,7 +138,7 @@ router.put(
   }
 );
 
-router.get("/stats", verifyToken, isShipper, async (req, res) => {
+router.get("/stats", async (req, res) => {
   try {
     const shipperId = req.user.id;
 
@@ -179,7 +177,7 @@ router.get("/stats", verifyToken, isShipper, async (req, res) => {
   }
 });
 
-router.get("/info", verifyToken, isShipper, async (req, res) => {
+router.get("/info", async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
     const shipperInfo = await ShipperInfo.findOne({ userId: req.user.id });
@@ -195,7 +193,7 @@ router.get("/info", verifyToken, isShipper, async (req, res) => {
   }
 });
 
-router.put("/info", verifyToken, isShipper, async (req, res) => {
+router.put("/info", async (req, res) => {
   const {
     fullName,
     email,
