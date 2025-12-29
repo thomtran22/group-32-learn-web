@@ -101,7 +101,6 @@ function RegisterForm({ formData, handleChange, handleSubmit, toggleForm }) {
 
         <div
           className="inline-flex w-full items-center justify-center rounded-xl border-2 border-black
-                     border-2 border-black
                      bg-white px-4 py-3 text-base font-semibold cursor-pointer select-none
                      transition
                      hover:bg-gray-50
@@ -136,7 +135,7 @@ function RegisterForm({ formData, handleChange, handleSubmit, toggleForm }) {
           className={inputClassName}
           type="password"
           name="password"
-          placeholder="Tối thiểu 8 ký tự"
+          placeholder="Tối thiểu 6 ký tự"
           value={formData.password}
           onChange={handleChange}
           required

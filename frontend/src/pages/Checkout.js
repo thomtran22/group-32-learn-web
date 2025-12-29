@@ -3,31 +3,33 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useCart } from '../context/CartContext';
 import CheckoutForm from '../components/checkout/CheckoutForm';
 import CheckoutSummary from '../components/checkout/CheckoutSummary';
-
-
 import { apiCreateOrder, apiCreatePaymentUrl } from '../services/orderApi';
+
+// 1. Import Toastify
+import { toast } from 'react-toastify';
 
 const Checkout = () => {
 
-    const { cartItems, clearCart, selectedItems, removePurchasedItems } = useCart();
+    const { cartItems, selectedItems, removePurchasedItems } = useCart();
 
-    //Lấy state được gửi từ trang Cart (chứa các sản phẩm đã chọn)
+    // Lấy state được gửi từ trang Cart (chứa các sản phẩm đã chọn - Buy Now)
     const location = useLocation();
     const navigate = useNavigate();
 
     const itemsFromLocation = location.state?.items;
 
-    // Lấy items từ Context (trường hợp người dùng F5 hoặc điều hướng bình thường từ giỏ)
+    // Lấy items từ Context (trường hợp người dùng chọn checkbox trong giỏ rồi bấm Checkout)
     const itemsFromContext = cartItems.filter(item => selectedItems.includes(item.itemId)); 
 
-    // 3. Logic gộp: Ưu tiên Location, nếu không có thì lấy Context
+    // Logic gộp: Ưu tiên Location, nếu không có thì lấy Context
     const itemsToCheckout = (itemsFromLocation && itemsFromLocation.length > 0) 
                             ? itemsFromLocation 
                             : itemsFromContext;
 
-    // 4. Nếu vẫn rỗng (người dùng gõ thẳng URL /checkout mà chưa chọn gì), về trang chủ hoặc giỏ hàng
+    // Validate: Nếu rỗng thì đá về giỏ hàng
     useEffect(() => {
         if (itemsToCheckout.length === 0) {
+            toast.warning("Vui lòng chọn sản phẩm để thanh toán."); // Thêm thông báo cho user hiểu
             navigate('/cart');
         }
     }, [itemsToCheckout, navigate]);
@@ -50,55 +52,60 @@ const Checkout = () => {
     });
 
     const handleChange = (e) => {
-        // e.target chính là thẻ input/select/textarea đang được thay đổi
         const { name, value } = e.target;
-        
-        // Cập nhật lại state
         setFormData(prevState => ({
-            ...prevState, // Giữ lại tất cả các giá trị cũ
-            [name]: value // Chỉ cập nhật thuộc tính có `name` tương ứng với giá trị `value` mới
+            ...prevState,
+            [name]: value
         }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!formData.fullname || !formData.phone) {
-            alert('Vui lòng điền đầy đủ Họ tên và Số điện thoại.');
-            return; // Dừng lại nếu thiếu thông tin
+        // --- 2. VALIDATION DÙNG TOAST ---
+        // Kiểm tra từng trường một để báo lỗi cụ thể
+        if (!formData.fullname.trim()) {
+            toast.error('Vui lòng nhập Họ tên người nhận.');
+            return;
+        }
+        if (!formData.phone.trim()) {
+            toast.error('Vui lòng nhập Số điện thoại.');
+            return;
+        }
+        // Regex đơn giản để check số điện thoại VN (tùy chọn)
+        const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
+        if (!phoneRegex.test(formData.phone)) {
+             toast.warning('Số điện thoại không đúng định dạng.');
+             return;
         }
 
-        if (!formData.district || !formData.ward || !formData.street) {
-            alert('Vui lòng điền đầy đủ địa chỉ giao hàng.');
+        if (!formData.city || !formData.district || !formData.ward || !formData.street.trim()) {
+            toast.error('Vui lòng điền đầy đủ địa chỉ giao hàng.');
             return;
         }
 
-        // Validate email format nếu có nhập
         if (formData.email && !formData.email.includes('@')) {
-            alert('Email không hợp lệ.');
+            toast.error('Email không hợp lệ.');
             return;
         }
 
         setIsLoading(true);
 
-        // Mapping lại địa chỉ theo cấu trúc Schema Backend
+        // Mapping lại địa chỉ
         const shippingAddress = {
             fullName: formData.fullname,
             phone: formData.phone,
             email: formData.email,
-            city: formData.city, // Giá trị mặc định hoặc từ form
+            city: formData.city, 
             district: formData.district,
             ward: formData.ward,
             streetAddress: formData.street
         };
 
         const orderData = {
-            orderItems: itemsToCheckout,    // Thông tin sản phẩm từ giỏ hàng
+            orderItems: itemsToCheckout,
             shippingAddress: shippingAddress,
             paymentMethod: paymentMethod,
-            // itemsPrice: checkoutTotal,
-            // shippingPrice: 0, // Hardcode freeship hoặc tính toán
-            // totalPrice: checkoutTotal,
             orderNotes: formData.ordernotes
         };
 
@@ -106,61 +113,60 @@ const Checkout = () => {
             const response = await apiCreateOrder(orderData);
 
             if (response.success) {
-
                 const createdOrder = response.order;
-                
                 const boughtItemIds = itemsToCheckout.map(item => item.itemId);
-                if (paymentMethod === 'VNPAY') {
-                    console.log("Đang tạo URL thanh toán VNPay...");
+                
+                // Xóa sản phẩm đã mua khỏi giỏ hàng (Context)
+                removePurchasedItems(boughtItemIds);
 
-                    removePurchasedItems(boughtItemIds);
+                if (paymentMethod === 'VNPAY') {
+                    // --- Case VNPay ---
+                    toast.loading("Đang chuyển hướng sang VNPay..."); // Hiện loading
 
                     const vnpayData = {
-                        orderId: createdOrder._id, // Dùng ID đơn hàng vừa tạo làm mã giao dịch
-                        amount: checkoutTotal,     // Số tiền
+                        orderId: createdOrder._id,
+                        amount: checkoutTotal,
                         language: 'vn'
                     };
 
                     const vnpayResponse = await apiCreatePaymentUrl(vnpayData);
 
                     if (vnpayResponse.success) {
-                        // Chuyển hướng người dùng sang VNPay Gateway
                         window.location.href = vnpayResponse.url;
                     } else {
-                        alert('Lỗi tạo URL thanh toán');
+                        toast.dismiss(); // Tắt loading
+                        toast.error('Lỗi tạo URL thanh toán VNPay');
                     }
                 } else {
-                    // COD
-                    removePurchasedItems(boughtItemIds);
+                    // --- Case COD ---
+                    toast.success("Đặt hàng thành công! 🎉");
                     
-                    // Điều hướng tới trang Cảm ơn hoặc Lịch sử đơn hàng
-                    // Truyền theo orderId để hiển thị chi tiết
-                    // replace: true để user không back lại trang checkout được
-                    navigate('/orders', { replace: true });
+                    // Chuyển hướng sau 1 chút để user kịp đọc thông báo (tùy chọn)
+                    setTimeout(() => {
+                        navigate('/profile', { replace: true });
+                    }, 1000);
                 }
             } else {
-                alert(response.message || 'Tạo đơn hàng thất bại');
+                toast.error(response.message || 'Tạo đơn hàng thất bại');
             }
         } catch (error) {
             console.error(error);
-            alert(error.message || 'Có lỗi xảy ra kết nối server');
+            toast.error(error.response?.data?.message || 'Có lỗi kết nối server');
         } finally {
-            setIsLoading(false);
+            // Chỉ tắt loading nếu KHÔNG PHẢI là VNPay (vì VNPay sẽ chuyển trang)
+            if (paymentMethod !== 'VNPAY') {
+                setIsLoading(false);
+            }
         }
     };
 
     return (
         <>
-            <div className="container">
-
-                <div className="coupon-banner">
-                    Have a coupon? <a href="#">Click here to enter your code</a>
-                </div>
-
+            <div className="checkout-wrapper">
                 <div className="checkout-layout">
                     <CheckoutForm formData={formData} handleChange={handleChange}/>
                     <CheckoutSummary 
-                        items={itemsToCheckout} // Truyền đúng biến itemsToCheckout
+                        items={itemsToCheckout} 
                         totalAmountFormatted={checkoutTotalFormatted} 
                         totalAmount={checkoutTotal}
                         onSubmit={handleSubmit}

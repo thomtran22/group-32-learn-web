@@ -1,251 +1,335 @@
 import React, { useState, useEffect } from "react";
-import { FaUserEdit, FaLock } from "react-icons/fa";
+import {
+  FaUserEdit,
+  FaLock,
+  FaUser,
+  FaEnvelope,
+  FaTransgender,
+  FaBirthdayCake,
+  FaTimes,
+  FaEye,
+  FaEyeSlash,
+} from "react-icons/fa";
 import axiosClient from "../../utils/axiosConfig";
+import "../../assets/css/userprofile.css";
+import { toast } from "react-toastify";
 
 const PersonalInfo = () => {
   const [userInfo, setUserInfo] = useState({
-    firstName: "",
-    lastName: "",
+    fullName: "",
     email: "",
-    phoneNumber: "",
+    gender: "",
     dateOfBirth: "",
   });
-
   const [originalUserInfo, setOriginalUserInfo] = useState({});
   const [isEditing, setIsEditing] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
   const [password, setPassword] = useState({
     current: "",
     new: "",
     confirm: "",
   });
+  const [showPassword, setShowPassword] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
 
-  const fetchUserInfo = async () => {
-    setIsLoading(true);
-    try {
-      const res = await axiosClient.get("/user/me");
-      const data = res.data;
-
-      if (data.dateOfBirth) {
-        data.dateOfBirth = data.dateOfBirth.split("T")[0];
-      }
-
-      setUserInfo(data);
-      setOriginalUserInfo(data);
-    } catch (error) {
-      console.error("Lỗi tải thông tin:", error);
-      alert("Không thể tải thông tin cá nhân.");
-    } finally {
-      setIsLoading(false);
-    }
+  const togglePasswordVisibility = (field) => {
+    setShowPassword((prev) => ({
+      ...prev,
+      [field]: !prev[field],
+    }));
   };
 
+  const today = new Date().toISOString().split("T")[0];
+
   useEffect(() => {
+    const fetchUserInfo = async () => {
+      setIsLoading(true);
+      try {
+        const res = await axiosClient.get("/user/me");
+        setUserInfo(res.data);
+        setOriginalUserInfo(res.data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
     fetchUserInfo();
   }, []);
 
-  /* ================= UPDATE INFO ================= */
-  const handleSaveInfo = async () => {
-    if (!userInfo.firstName || !userInfo.phoneNumber) {
-      alert("Họ và Tên, Số điện thoại không được để trống.");
-      return;
-    }
+  const getFormattedDate = () => {
+    if (!userInfo.birthYear || !userInfo.birthMonth || !userInfo.birthDay)
+      return "";
+    const y = userInfo.birthYear;
+    const m = String(userInfo.birthMonth).padStart(2, "0");
+    const d = String(userInfo.birthDay).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
 
+  const handleDateChange = (e) => {
+    setUserInfo({
+      ...userInfo,
+      dateOfBirth: e.target.value, // e.target.value của input type="date" luôn là "YYYY-MM-DD"
+    });
+  };
+
+  const handleSaveInfo = async () => {
     setIsLoading(true);
     try {
-      const payload = {
-        firstName: userInfo.firstName,
-        lastName: userInfo.lastName,
-        phoneNumber: userInfo.phoneNumber,
-        dateOfBirth: userInfo.dateOfBirth,
-      };
+      const res = await axiosClient.put("/user/me", userInfo);
 
-      const res = await axiosClient.put("/user/me", payload);
-      const updated = res.data;
-
-      if (updated.dateOfBirth) {
-        updated.dateOfBirth = updated.dateOfBirth.split("T")[0];
+      if (res.data.user) {
+        setUserInfo(res.data.user);
+        setOriginalUserInfo(res.data.user);
+      } else {
+        setOriginalUserInfo(userInfo);
       }
-
-      setUserInfo(updated);
-      setOriginalUserInfo(updated);
       setIsEditing(false);
-      alert("Cập nhật thông tin thành công!");
+      toast.success("Cập nhật thành công!");
     } catch (error) {
-      console.error("Lỗi cập nhật:", error);
-      alert(error.response?.data?.message || "Cập nhật thất bại.");
+      console.error("Luu that bai", error);
+      toast.error(error.response?.data?.message || "Cập nhật thất bại!");
     } finally {
       setIsLoading(false);
     }
   };
 
-  /* ================= CHANGE PASSWORD ================= */
   const handleChangePassword = async () => {
-    if (password.new !== password.confirm) {
-      alert("Xác nhận mật khẩu không khớp.");
-      return;
-    }
-
-    if (password.new.length < 6) {
-      alert("Mật khẩu mới phải ≥ 6 ký tự.");
-      return;
-    }
-
+    if (password.new !== password.confirm)
+      return toast.error("Mật khẩu không khớp");
     setIsLoading(true);
     try {
-      await axiosClient.post("/auth/change-password", {
+      await axiosClient.put("/user/change-password", {
         currentPassword: password.current,
         newPassword: password.new,
       });
-
-      alert("Đổi mật khẩu thành công!");
+      toast.success("Đổi mật khẩu thành công!");
+      setIsPasswordModalOpen(false);
       setPassword({ current: "", new: "", confirm: "" });
     } catch (error) {
-      console.error("Lỗi đổi mật khẩu:", error);
-      alert(error.response?.data?.message || "Mật khẩu hiện tại không đúng.");
+      toast.error(error.response?.data?.message || "Lỗi đổi mật khẩu!");
     } finally {
       setIsLoading(false);
     }
   };
+  const formatDateForInput = (dateStr) => {
+    if (!dateStr) return "";
+    return dateStr.split("T")[0];
+  };
 
-  const inputStyle = {
-    padding: "10px",
-    border: "1px solid #ddd",
-    borderRadius: "4px",
-    width: "100%",
+  const renderPasswordModal = () => {
+    if (!isPasswordModalOpen) return null;
+
+    return (
+      <div className="modal-overlay">
+        <div className="modal-content">
+          <button
+            onClick={() => setIsPasswordModalOpen(false)}
+            className="modal-close"
+          >
+            <FaTimes color="#999" />
+          </button>
+          <h3 className="content-title">Đổi mật khẩu</h3>
+
+          <div className="input-group">
+            <label className="input-label">Mật khẩu hiện tại</label>
+            <div style={{ position: "relative" }}>
+              <input
+                type={showPassword.current ? "text" : "password"}
+                className="profile-input"
+                style={{ paddingRight: "40px" }}
+                value={password.current}
+                onChange={(e) =>
+                  setPassword({ ...password, current: e.target.value })
+                }
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => togglePasswordVisibility("current")}
+              >
+                {showPassword.current ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">Mật khẩu mới</label>
+            <div style={{ position: "relative" }}>
+              <input
+                type={showPassword.new ? "text" : "password"}
+                className="profile-input"
+                style={{ paddingRight: "40px" }}
+                value={password.new}
+                onChange={(e) =>
+                  setPassword({ ...password, new: e.target.value })
+                }
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => togglePasswordVisibility("new")}
+              >
+                {showPassword.new ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">Xác nhận mật khẩu</label>
+            <div style={{ position: "relative" }}>
+              <input
+                type={showPassword.confirm ? "text" : "password"}
+                className="profile-input"
+                style={{ paddingRight: "40px" }}
+                value={password.confirm}
+                onChange={(e) =>
+                  setPassword({ ...password, confirm: e.target.value })
+                }
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => togglePasswordVisibility("confirm")}
+              >
+                {showPassword.confirm ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+          </div>
+
+          <div style={{ textAlign: "right", marginTop: "20px" }}>
+            <button
+              onClick={() => setIsPasswordModalOpen(false)}
+              className="btn btn-secondary"
+              style={{ marginRight: "10px" }}
+            >
+              Hủy
+            </button>
+            <button
+              onClick={handleChangePassword}
+              className="btn btn-primary"
+              disabled={isLoading}
+            >
+              {isLoading ? "Đang xử lý..." : "Xác nhận"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "40px" }}>
-      {/* ===== THÔNG TIN CÁ NHÂN ===== */}
-      <div
-        style={{
-          border: "1px solid #eee",
-          padding: "20px",
-          borderRadius: "8px",
-        }}
-      >
-        <h4 style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <FaUserEdit /> Thông tin cá nhân
+    <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
+      <div className="info-card" style={{ padding: "25px" }}>
+        <h4
+          className="input-label"
+          style={{ color: "var(--primary-color)", marginBottom: "25px" }}
+        >
+          <FaUserEdit /> Thông tin tài khoản
         </h4>
+        <div className="profile-grid">
+          <div className="input-group">
+            <label className="input-label">
+              <FaUser /> Họ và Tên
+            </label>
+            <input
+              className="profile-input"
+              value={userInfo.fullName || ""}
+              disabled={!isEditing}
+              onChange={(e) =>
+                setUserInfo({ ...userInfo, fullName: e.target.value })
+              }
+            />
+          </div>
+          <div className="input-group">
+            <label className="input-label">
+              <FaEnvelope /> Email
+            </label>
+            <input
+              className="profile-input"
+              value={userInfo.email || ""}
+              disabled
+            />
+          </div>
+          <div className="input-group">
+            <label className="input-label">
+              <FaTransgender /> Giới tính
+            </label>
+            <select
+              className="profile-input"
+              value={userInfo.gender || ""}
+              disabled={!isEditing}
+              onChange={(e) =>
+                setUserInfo({ ...userInfo, gender: e.target.value })
+              }
+            >
+              <option value="">Chọn giới tính</option>
+              <option value="Male">Nam</option>
+              <option value="Female">Nữ</option>
+            </select>
+          </div>
+          <div className="input-group">
+            <label className="input-label">
+              <FaBirthdayCake /> Ngày sinh
+            </label>
+            <input
+              type="date"
+              className="profile-input"
+              value={formatDateForInput(userInfo.dateOfBirth)}
+              disabled={!isEditing}
+              max={today}
+              onChange={handleDateChange}
+            />
+          </div>
+        </div>
 
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "20px",
+            marginTop: "30px",
+            textAlign: "right",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            borderTop: "1px solid #eee",
+            paddingTop: "20px",
           }}
         >
-          <input
-            style={inputStyle}
-            placeholder="Họ"
-            value={userInfo.firstName}
-            disabled={!isEditing}
-            onChange={(e) =>
-              setUserInfo({ ...userInfo, firstName: e.target.value })
-            }
-          />
-          <input
-            style={inputStyle}
-            placeholder="Tên"
-            value={userInfo.lastName}
-            disabled={!isEditing}
-            onChange={(e) =>
-              setUserInfo({ ...userInfo, lastName: e.target.value })
-            }
-          />
-          <input
-            style={{ ...inputStyle, background: "#f5f5f5" }}
-            disabled
-            value={userInfo.email}
-          />
-          <input
-            style={inputStyle}
-            placeholder="Số điện thoại"
-            value={userInfo.phoneNumber}
-            disabled={!isEditing}
-            onChange={(e) =>
-              setUserInfo({ ...userInfo, phoneNumber: e.target.value })
-            }
-          />
-          <input
-            type="date"
-            style={inputStyle}
-            value={userInfo.dateOfBirth}
-            disabled={!isEditing}
-            onChange={(e) =>
-              setUserInfo({ ...userInfo, dateOfBirth: e.target.value })
-            }
-          />
-        </div>
-
-        <div style={{ marginTop: "20px", textAlign: "right" }}>
-          {isEditing ? (
-            <>
-              <button onClick={handleSaveInfo} disabled={isLoading}>
-                Lưu
-              </button>
+          <button
+            onClick={() => setIsPasswordModalOpen(true)}
+            className="btn-link"
+          >
+            <FaLock /> Đổi mật khẩu đăng nhập?
+          </button>
+          {!isEditing ? (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="btn btn-primary"
+            >
+              Chỉnh sửa thông tin
+            </button>
+          ) : (
+            <div style={{ display: "flex", gap: "10px" }}>
               <button
                 onClick={() => {
-                  setUserInfo(originalUserInfo);
                   setIsEditing(false);
+                  setUserInfo(originalUserInfo);
                 }}
+                className="btn btn-secondary"
               >
                 Hủy
               </button>
-            </>
-          ) : (
-            <button onClick={() => setIsEditing(true)}>Chỉnh sửa</button>
+              <button onClick={handleSaveInfo} className="btn btn-success">
+                Lưu lại
+              </button>
+            </div>
           )}
         </div>
       </div>
-
-      {/* ===== ĐỔI MẬT KHẨU ===== */}
-      <div
-        style={{
-          border: "1px solid #eee",
-          padding: "20px",
-          borderRadius: "8px",
-        }}
-      >
-        <h4 style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <FaLock /> Đổi mật khẩu
-        </h4>
-
-        <input
-          type="password"
-          style={inputStyle}
-          placeholder="Mật khẩu hiện tại"
-          value={password.current}
-          onChange={(e) =>
-            setPassword({ ...password, current: e.target.value })
-          }
-        />
-        <input
-          type="password"
-          style={inputStyle}
-          placeholder="Mật khẩu mới"
-          value={password.new}
-          onChange={(e) => setPassword({ ...password, new: e.target.value })}
-        />
-        <input
-          type="password"
-          style={inputStyle}
-          placeholder="Xác nhận mật khẩu"
-          value={password.confirm}
-          onChange={(e) =>
-            setPassword({ ...password, confirm: e.target.value })
-          }
-        />
-
-        <button
-          onClick={handleChangePassword}
-          disabled={isLoading || !password.current || !password.new}
-        >
-          Đổi mật khẩu
-        </button>
-      </div>
+      {renderPasswordModal()}
     </div>
   );
 };

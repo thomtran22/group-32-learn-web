@@ -64,7 +64,5 @@ const VoucherSchema = new mongoose.Schema(
   }
 );
 
-VoucherSchema.index({ code: 1 });
-
 const Voucher = mongoose.model("Voucher", VoucherSchema);
 export default Voucher;

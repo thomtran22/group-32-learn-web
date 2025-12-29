@@ -39,21 +39,58 @@ function LoginModal({ closeModal }) {
 
     try {
       if (mode === "login") {
-        const response = await axios.post(
-          "http://localhost:4000/api/auth/login",
-          {
-            email: formData.email,
-            password: formData.password,
+        try {
+          // Đăng nhập để lấy token
+          const loginResponse = await axios.post(
+            "http://localhost:4000/api/auth/login",
+            {
+              email: formData.email,
+              password: formData.password,
+            }
+          );
+
+          // Chỉ nhận token từ response (theo đúng sửa đổi của bạn ở backend)
+          const { token } = loginResponse.data;
+
+          // Lưu token vào LocalStorage
+          localStorage.setItem("token", token);
+
+          // Dùng token để hỏi Server: "Tôi là ai?"
+          // Server sẽ verify token này hợp lệ không và trả về thông tin user (bao gồm role)
+          const userResponse = await axios.get("http://localhost:4000/api/user/me", {
+            headers: {
+              Authorization: `Bearer ${token}`, // Gửi token kèm header
+            },
+          });
+
+          const userData = userResponse.data;
+          const userRole = userData.role; // Lấy role từ database trả về
+
+          toast.success(`Chào mừng trở lại, ${userData.fullName}!`);
+          closeModal?.();
+
+          // Chuyển hướng dựa trên role thực tế từ Server
+          switch (userRole) {
+            case "admin":
+              navigate("/admin");
+              break;
+            case "shipper":
+              navigate("/shipper");
+              break;
+            default:
+              navigate("/");
+              break;
           }
-        );
 
-        localStorage.setItem("token", response.data.token);
-        localStorage.setItem("userRole", response.data.role || "");
-        localStorage.setItem("fullName", response.data.user?.fullName || "");
-
-        toast.success("Đăng nhập thành công!");
-        closeModal?.();
-        navigate("/");
+        } catch (error) {
+          console.error("Login process error:", error);
+          // Xử lý lỗi chi tiết hơn
+          if (error.response?.status === 401) {
+             toast.error("Sai email hoặc mật khẩu!");
+          } else {
+             toast.error(error.response?.data?.message || "Đăng nhập thất bại!");
+          }
+        }
       }
 
       if (mode === "register") {

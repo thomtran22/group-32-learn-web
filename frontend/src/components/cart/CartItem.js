@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useCart } from '../../context/CartContext'; // Import context để lấy hàm update
+import Swal from 'sweetalert2';
 
 const CartItem = ({ item, onRemove, onUpdateQuantity, isSelected, onToggleSelect }) => {
     const { updateItemVariant, cartItems } = useCart();
@@ -78,6 +79,25 @@ const CartItem = ({ item, onRemove, onUpdateQuantity, isSelected, onToggleSelect
         }
 
         return { disabled: false, reason: "" };
+    };
+
+    const handleDeleteClick = (e) => {
+        e.preventDefault(); // Chặn hành động mặc định của thẻ (nếu có)
+        
+        Swal.fire({
+            title: 'Bạn chắc chứ?',
+            text: `Bạn muốn xóa sản phẩm "${item.name}" khỏi giỏ hàng?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33', // Màu đỏ
+            cancelButtonColor: '#3085d6', // Màu xanh
+            confirmButtonText: 'Đúng, xóa nó!',
+            cancelButtonText: 'Không, giữ lại'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                onRemove(item.itemId); // Gọi hàm xóa từ Context truyền xuống
+            }
+        });
     };
 
     // Format tiền
@@ -175,18 +195,13 @@ const CartItem = ({ item, onRemove, onUpdateQuantity, isSelected, onToggleSelect
                             </div>
                         )}
                     </div>
-                    {/* Hết phân loại*/}
 
                     <button
                         className="remove-item-btn"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            if (window.confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
-                                onRemove(item.itemId);
-                            }
-                        }}
+                        onClick={handleDeleteClick}
                     >
-                        Xóa
+                        <i className="fas fa-trash-alt"></i> 
+                        <span>Xóa</span>
                     </button>
                 </div>
             </div>

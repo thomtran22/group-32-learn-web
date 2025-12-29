@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axios from 'axios';
 import { motion, AnimatePresence } from "framer-motion";
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import ProductSection from "../components/sections/ProductSection";
 import { useCart } from "../context/CartContext";
+
 function ProductDetail() {
   const { sku } = useParams();
-  //Lấy hàm addToCart từ Context
+  // Lấy hàm addToCart từ Context
   const { addToCart } = useCart();
 
   const [product, setProduct] = useState(null);
@@ -18,6 +19,7 @@ function ProductDetail() {
   const [adding, setAdding] = useState(false);
   const [activeImage, setActiveImage] = useState("");
 
+  // State cho hiệu ứng bay
   const [isFlying, setIsFlying] = useState(false);
   const containerRef = useRef(null);
 
@@ -58,7 +60,9 @@ function ProductDetail() {
       fetchProduct();
     }
   }, [sku]);
+
   const handleAddToCart = async () => {
+    // Kiểm tra biến thể đã chọn chưa
     if (!selectedColor || !selectedSize) {
       toast.error("Vui lòng chọn màu sắc và kích cỡ!", {
         style: { borderRadius: '10px', background: '#333', color: '#fff' }
@@ -66,8 +70,17 @@ function ProductDetail() {
       return;
     }
 
+    // Kiểm tra token (Nếu chưa đăng nhập thì dừng animation, để Context mở Modal)
+    const token = localStorage.getItem("token");
+    if (!token) {
+        // Gọi addToCart để nó tự kích hoạt Modal Login bên trong Context
+        addToCart({ ...product, color: selectedColor, size: selectedSize, quantity: quantity });
+        return; // Dừng hàm tại đây, không chạy animation
+    }
+
     setAdding(true);
     try {
+      // Gọi hàm thêm vào giỏ (Chờ server phản hồi OK)
       await addToCart({
         ...product,
         color: selectedColor,
@@ -75,10 +88,10 @@ function ProductDetail() {
         quantity: quantity
       });
 
-      // Kích hoạt hiệu ứng bay
+      // Nếu thành công -> Kích hoạt hiệu ứng bay
       setIsFlying(true);
 
-      // Hiển thị Popup thông báo có hình ảnh
+      // Hiển thị Popup thông báo đẹp mắt
       toast.success((t) => (
         <div className="flex items-center gap-3">
           <img src={activeImage} alt="product" className="w-12 h-12 object-cover rounded" />
@@ -94,7 +107,7 @@ function ProductDetail() {
 
     } catch (error) {
       console.error("Lỗi thêm vào giỏ hàng:", error);
-      toast.error("Vui lòng đăng nhập để thực hiện thao tác này!");
+    
     } finally {
       setAdding(false);
     }
@@ -105,7 +118,6 @@ function ProductDetail() {
 
   return (
     <div className="container mx-auto px-4 py-8 relative" ref={containerRef}>
-      <Toaster />
 
       <nav className="text-xs text-gray-500 mb-6 uppercase tracking-wider">
         Trang chủ / Sản phẩm / {product.name}
@@ -121,6 +133,7 @@ function ProductDetail() {
               className="w-full h-full object-cover transition-all duration-300"
             />
 
+            {/* Animation */}
             <AnimatePresence>
               {isFlying && (
                 <motion.img
@@ -128,8 +141,8 @@ function ProductDetail() {
                   initial={{ top: "20%", left: "20%", opacity: 1, scale: 0.8 }}
                   animate={{
                     top: "-100px",
-                    left: "100%",
-                    scale: 0,
+                    left: "100%", 
+                    scale: 0.1,
                     opacity: 0,
                     rotate: 45
                   }}
