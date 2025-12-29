@@ -224,7 +224,7 @@ const ProductManagement = () => {
 
             {/* Modal Create */}
             {showModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center p-6 border-b">
                             <h2 className="text-xl font-bold">Thêm sản phẩm mới</h2>
@@ -254,7 +254,7 @@ const ProductManagement = () => {
                             </div>
                             {/* ------------------------------------- */}
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-1">SKU (Mã SP)</label>
                                     <input type="text" className={inputClass} value={formData.sku} onChange={e => setFormData({...formData, sku: e.target.value})} />
@@ -309,7 +309,7 @@ const ProductManagement = () => {
                             {/* Variants Section */}
                             <div className="border rounded p-4 bg-gray-50">
                                 <label className="block text-sm font-medium mb-3 text-gray-700">Quản lý Biến thể (Màu/Size)</label>
-                                <div className="flex gap-2 mb-2">
+                                <div className="flex flex-col md:flex-row gap-2 mb-2">
                                     <input type="text" placeholder="Màu (VD: Đỏ)" className={`${inputClass} w-1/3`} value={tempVariant.color} onChange={e => setTempVariant({...tempVariant, color: e.target.value})} />
                                     <input type="text" placeholder="Size (VD: L)" className={`${inputClass} w-1/3`} value={tempVariant.size} onChange={e => setTempVariant({...tempVariant, size: e.target.value})} />
                                     <input type="number" placeholder="Số lượng" className={`${inputClass} w-1/3`} value={tempVariant.quantity} onChange={e => setTempVariant({...tempVariant, quantity: Number(e.target.value)})} />
