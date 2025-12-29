@@ -4,6 +4,7 @@ import Order from "../models/OrderModel.js";
 import ShipperInfo from "../models/ShipperInfo.js";
 import ShipperPerformance from "../models/ShipperPerformance.js";
 import User from "../models/UserModel.js";
+import Product from "../models/ProductModel.js";
 import { verifyToken, isShipper } from "../middleware/authMiddleware.js";
 
 router.get("/orders/new", verifyToken, isShipper, async (req, res) => {
@@ -46,12 +47,13 @@ router.put(
   isShipper,
   async (req, res) => {
     const { newStatus, note, location } = req.body;
-    const allowedStatuses = ["Delivered", "Cancelled"];
+    // Thêm "Shipping" vào danh sách trạng thái hợp lệ
+    const allowedStatuses = ["Delivered", "Cancelled", "Shipping"];
 
     if (!allowedStatuses.includes(newStatus)) {
       return res.status(400).json({
         message:
-          "Shipper chỉ có thể cập nhật trạng thái thành 'giao thanh cong' hoặc 'giao that bai/huy'",
+          "Shipper chỉ có thể cập nhật trạng thái thành 'Shipping', 'Delivered' hoặc 'Cancelled'",
       });
     }
 
@@ -74,7 +76,34 @@ router.put(
         });
       }
 
+      // Logic cập nhật trạng thái
       order.status = newStatus;
+
+      // Nếu chuyển sang trạng thái "Shipping" (Bắt đầu giao)
+      if (newStatus === "Shipping") {
+        // Có thể thêm logic nếu cần (VD: Gửi thông báo cho user)
+      }
+
+      // Xử lý khi hủy đơn (Hoàn lại kho)
+      if (newStatus === "Cancelled") {
+        const bulkUpdateOps = order.orderItems.map((item) => ({
+          updateOne: {
+            filter: {
+              _id: item.product,
+              "variants.color": item.color,
+              "variants.size": item.size,
+            },
+            update: {
+              $inc: { "variants.$.quantity": item.quantity },
+            },
+          },
+        }));
+
+        if (bulkUpdateOps.length > 0) {
+          await Product.bulkWrite(bulkUpdateOps);
+        }
+      }
+
       if (newStatus === "Delivered") {
         order.isDelivered = true;
         order.deliveredAt = Date.now();

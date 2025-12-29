@@ -38,7 +38,7 @@ const PublicLayout = () => {
         <Outlet />
       </main>
       <AIChatWidget /> {/* Đã thêm Chatbot vào đây */}
-      <Contact/>
+      <Contact />
       <Footer />
     </>
   );
@@ -48,17 +48,17 @@ function App() {
   return (
     <Router>
       <CartProvider>
-        <ToastContainer 
-            position="top-right" 
-            autoClose={3000} 
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="light"
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
         />
         <Routes>
           {/* ROUTE ADMIN - Không hiện Header/Footer/Chat của khách */}
@@ -71,13 +71,13 @@ function App() {
           <Route element={<PublicLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={<Checkout />}/>
+            <Route path="/checkout" element={<Checkout />} />
             <Route path="/login" element={<Login />} />
             <Route path="/payment-result" element={<PaymentResult />} />
             <Route path="/profile" element={<UserProfile />} />
             <Route path="/products/:sku" element={<ProductDetail />} />
             <Route path="/category/:categorySlug" element={<ProductListPage />} />
-            
+
             {/* Đã thêm trang Reset Password từ code mới vào đây */}
             <Route path="/reset-password" element={<ResetPassword />} />
           </Route>
