@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axios from 'axios';
 import { motion, AnimatePresence } from "framer-motion";
-import toast from 'react-hot-toast';
+import { toast } from 'react-toastify';
 import ProductSection from "../components/sections/ProductSection";
 import { useCart } from "../context/CartContext";
 
@@ -64,18 +64,16 @@ function ProductDetail() {
   const handleAddToCart = async () => {
     // Kiểm tra biến thể đã chọn chưa
     if (!selectedColor || !selectedSize) {
-      toast.error("Vui lòng chọn màu sắc và kích cỡ!", {
-        style: { borderRadius: '10px', background: '#333', color: '#fff' }
-      });
+      toast.error("Vui lòng chọn màu sắc và kích cỡ!");
       return;
     }
 
     // Kiểm tra token (Nếu chưa đăng nhập thì dừng animation, để Context mở Modal)
     const token = localStorage.getItem("token");
     if (!token) {
-        // Gọi addToCart để nó tự kích hoạt Modal Login bên trong Context
-        addToCart({ ...product, color: selectedColor, size: selectedSize, quantity: quantity });
-        return; // Dừng hàm tại đây, không chạy animation
+      // Gọi addToCart để nó tự kích hoạt Modal Login bên trong Context
+      addToCart({ ...product, color: selectedColor, size: selectedSize, quantity: quantity });
+      return; // Dừng hàm tại đây, không chạy animation
     }
 
     setAdding(true);
@@ -92,7 +90,7 @@ function ProductDetail() {
       setIsFlying(true);
 
       // Hiển thị Popup thông báo đẹp mắt
-      toast.success((t) => (
+      toast.success(
         <div className="flex items-center gap-3">
           <img src={activeImage} alt="product" className="w-12 h-12 object-cover rounded" />
           <div>
@@ -100,14 +98,14 @@ function ProductDetail() {
             <p className="text-xs text-gray-500">{product.name} ({selectedSize})</p>
           </div>
         </div>
-      ), { duration: 3000, position: 'top-right' });
+        , { autoClose: 3000, position: 'top-right' });
 
       // Reset hiệu ứng bay sau 0.8s
       setTimeout(() => setIsFlying(false), 800);
 
     } catch (error) {
       console.error("Lỗi thêm vào giỏ hàng:", error);
-    
+
     } finally {
       setAdding(false);
     }
@@ -141,7 +139,7 @@ function ProductDetail() {
                   initial={{ top: "20%", left: "20%", opacity: 1, scale: 0.8 }}
                   animate={{
                     top: "-100px",
-                    left: "100%", 
+                    left: "100%",
                     scale: 0.1,
                     opacity: 0,
                     rotate: 45

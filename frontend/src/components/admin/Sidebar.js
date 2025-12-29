@@ -1,10 +1,10 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-    FaTachometerAlt, FaShoppingCart, FaBoxes, 
+    FaTachometerAlt, FaShoppingCart, FaBoxes,
     FaTruck, FaUsers, FaSignOutAlt
 } from 'react-icons/fa';
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 
 const Sidebar = ({ onLinkClick }) => {
     const navigate = useNavigate();
@@ -21,10 +21,9 @@ const Sidebar = ({ onLinkClick }) => {
     };
 
     const navItemClass = ({ isActive }) =>
-        `flex items-center gap-3 px-6 py-4 transition-colors duration-200 ${
-            isActive 
-                ? 'bg-slate-700 border-l-4 border-blue-500 text-white' 
-                : 'text-gray-400 hover:bg-slate-800 hover:text-white'
+        `flex items-center gap-3 px-6 py-4 transition-colors duration-200 ${isActive
+            ? 'bg-slate-700 border-l-4 border-blue-500 text-white'
+            : 'text-gray-400 hover:bg-slate-800 hover:text-white'
         }`;
 
     return (
