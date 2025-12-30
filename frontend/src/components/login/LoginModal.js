@@ -42,7 +42,7 @@ function LoginModal({ closeModal, onLoginSuccess }) {
         try {
           // Đăng nhập để lấy token
           const loginResponse = await axios.post(
-            "http://localhost:4000/api/auth/login",
+            "https://group-32-learn-web-8hmv.onrender.com/api/auth/login",
             {
               email: formData.email,
               password: formData.password,
@@ -57,7 +57,7 @@ function LoginModal({ closeModal, onLoginSuccess }) {
 
           // Dùng token để hỏi Server: "Tôi là ai?"
           // Server sẽ verify token này hợp lệ không và trả về thông tin user (bao gồm role)
-          const userResponse = await axios.get("http://localhost:4000/api/user/me", {
+          const userResponse = await axios.get("https://group-32-learn-web-8hmv.onrender.com/api/user/me", {
             headers: {
               Authorization: `Bearer ${token}`, // Gửi token kèm header
             },
@@ -105,7 +105,7 @@ function LoginModal({ closeModal, onLoginSuccess }) {
 
       if (mode === "register") {
         await axios.post(
-          "http://localhost:4000/api/auth/register",
+          "https://group-32-learn-web-8hmv.onrender.com/api/auth/register",
           formData
         );
 

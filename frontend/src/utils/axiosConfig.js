@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
-axios.defaults.baseURL = 'http://localhost:4000/api';
+axios.defaults.baseURL = 'https://group-32-learn-web-8hmv.onrender.com/api';
 
 // REQUEST INTERCEPTOR
 // Lấy token gắn vào header

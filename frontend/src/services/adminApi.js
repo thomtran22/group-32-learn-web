@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Giả sử server chạy port 4000 và prefix là /api/admin
-const API_URL = 'http://localhost:4000/api/admin';
+const API_URL = 'https://group-32-learn-web-8hmv.onrender.com/api/admin';
 
 const getAuthConfig = () => {
     const token = localStorage.getItem('token');

@@ -31,7 +31,7 @@ function ResetPassword() {
       setLoading(true);
       setMessage("");
 
-      await axios.post("http://localhost:4000/api/auth/reset-password", {
+      await axios.post("https://group-32-learn-web-8hmv.onrender.com/api/auth/reset-password", {
         token,
         newPassword,
       });

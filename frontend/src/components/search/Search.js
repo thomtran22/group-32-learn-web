@@ -23,7 +23,7 @@ function Search() {
       if (searchTerm.trim().length > 1) {
         setLoading(true);
         try {
-          const response = await axios.get(`http://localhost:4000/api/products/search?q=${searchTerm}`);
+          const response = await axios.get(`https://group-32-learn-web-8hmv.onrender.com/api/products/search?q=${searchTerm}`);
           setResults(response.data);
           setIsOpen(true);
         } catch (error) {

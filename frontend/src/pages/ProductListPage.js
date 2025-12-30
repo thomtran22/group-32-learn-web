@@ -76,7 +76,7 @@ function ProductListPage() {
             if (!categorySlug || categorySlug === 'undefined') return;
             setLoading(true);
             try {
-                let url = `http://localhost:4000/api/products?category=${categorySlug}&page=${page}&limit=${PRODUCTS_PER_PAGE}&sort=${filters.sort}`;
+                let url = `https://group-32-learn-web-8hmv.onrender.com/api/products?category=${categorySlug}&page=${page}&limit=${PRODUCTS_PER_PAGE}&sort=${filters.sort}`;
                 if (filters.size) url += `&size=${filters.size}`;
                 if (filters.priceRange) url += `&priceRange=${filters.priceRange}`;
 

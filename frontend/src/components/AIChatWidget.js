@@ -86,7 +86,7 @@ export default function AIChatWidget() {
     }
 
     try {
-      const response = await fetch("http://localhost:4000/api/ai/ai-chat", {
+      const response = await fetch("https://group-32-learn-web-8hmv.onrender.com/api/ai/ai-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ msg: userText }),

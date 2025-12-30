@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:4000/api/cart';
+const API_URL = 'https://group-32-learn-web-8hmv.onrender.com/api/cart';
 
 const getAuthConfig = () => {
     const token = localStorage.getItem('token');

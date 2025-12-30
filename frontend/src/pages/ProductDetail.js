@@ -31,7 +31,7 @@ function ProductDetail() {
     const fetchProduct = async () => {
       setLoading(true);
       try {
-        const { data } = await axios.get(`http://localhost:4000/api/products/${sku}`);
+        const { data } = await axios.get(`https://group-32-learn-web-8hmv.onrender.com/api/products/${sku}`);
 
         const uniqueColors = data.variants ? [...new Set(data.variants.map(v => v.color))] : [];
         const uniqueSizes = data.variants ? [...new Set(data.variants.map(v => v.size))] : [];

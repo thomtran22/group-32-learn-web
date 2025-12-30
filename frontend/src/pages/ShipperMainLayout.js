@@ -93,7 +93,7 @@ const ShipperMainLayout = () => {
       return;
     }
     // Hoặc nếu token có nhưng role vẫn không phải shipper
-    axios.get("http://localhost:4000/api/user/me", {
+    axios.get("https://group-32-learn-web-8hmv.onrender.com/api/user/me", {
       headers: { Authorization: `Bearer ${token}` },
     }).then(response => {
       if (response.data.role !== "shipper") {
@@ -122,7 +122,7 @@ const ShipperMainLayout = () => {
       }
 
       try {
-        const response = await axios.get("http://localhost:4000/api/user/me", {
+        const response = await axios.get("https://group-32-learn-web-8hmv.onrender.com/api/user/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
 

@@ -62,7 +62,7 @@ export const CartProvider = ({ children }) => {
         }
 
         try {
-            const response = await axios.get('http://localhost:4000/api/user/me', {
+            const response = await axios.get('https://group-32-learn-web-8hmv.onrender.com/api/user/me', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setUserRole(response.data.role);

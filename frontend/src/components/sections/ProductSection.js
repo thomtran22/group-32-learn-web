@@ -14,7 +14,7 @@ export const ProductSection = ({ title, initialSlug, parentSlug }) => {
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const { data } = await axios.get('http://localhost:4000/api/categories');
+                const { data } = await axios.get('https://group-32-learn-web-8hmv.onrender.com/api/categories');
                 
                 // Tìm danh mục cha (ví dụ: "ao-nam")
                 const parentCat = data.find(cat => cat.slug === parentSlug);
@@ -50,7 +50,7 @@ export const ProductSection = ({ title, initialSlug, parentSlug }) => {
             setLoading(true);
             try {
                 // Gọi API lấy sản phẩm theo category con
-                const { data } = await axios.get(`http://localhost:4000/api/products?category=${activeSlug}&limit=8`);
+                const { data } = await axios.get(`https://group-32-learn-web-8hmv.onrender.com/api/products?category=${activeSlug}&limit=8`);
                 
                 let productList = [];
                 if (data && data.products) {

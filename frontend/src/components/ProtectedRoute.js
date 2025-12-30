@@ -28,7 +28,7 @@ const ProtectedRoute = ({ children, allowedRoles = [], isPublic = false }) => {
 
             // CÓ TOKEN -> CHECK SERVER
             try {
-                const response = await axios.get('http://localhost:4000/api/user/me', {
+                const response = await axios.get('https://group-32-learn-web-8hmv.onrender.com/api/user/me', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 

@@ -45,7 +45,7 @@ function ForgotPassword({ toggleBack }) {
     setMessage("");
 
     try {
-      await axios.post("http://localhost:4000/api/auth/forgot-password", {
+      await axios.post("https://group-32-learn-web-8hmv.onrender.com/api/auth/forgot-password", {
         email: normalizedEmail,
       });
 

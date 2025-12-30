@@ -64,7 +64,7 @@ Khi bạn muốn đưa web lên mạng cho mọi người dùng, bạn cần tá
 7. Bấm **Create Web Service**. Render sẽ cấp cho bạn 1 đường link ví dụ: `https://my-backend-api.onrender.com`.
 
 ### 3. Các bước triển khai Frontend (Lên Vercel)
-Trước khi deploy frontend, bạn cần vào code frontend, tìm các chỗ gọi API (ví dụ `http://localhost:4000`) và thay thế bằng đường link Backend mới của Render (`https://my-backend-api.onrender.com`).
+Trước khi deploy frontend, bạn cần vào code frontend, tìm các chỗ gọi API (ví dụ `https://group-32-learn-web-8hmv.onrender.com`) và thay thế bằng đường link Backend mới của Render (`https://my-backend-api.onrender.com`).
 *Mẹo: Nên dùng biến môi trường `REACT_APP_API_URL` để tự động đổi.*
 
 1. Đẩy code Frontend lên GitHub.

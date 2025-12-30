@@ -73,7 +73,7 @@ const ProductManagement = () => {
     const fetchCategories = async () => {
         try {
             // Gọi vào route có sẵn: /api/categories
-            const res = await axios.get('http://localhost:4000/api/categories');
+            const res = await axios.get('https://group-32-learn-web-8hmv.onrender.com/api/categories');
 
             // Tùy vào cấu trúc trả về của controller getCategories
             // Nếu trả về { success: true, categories: [...] } hoặc mảng trực tiếp
@@ -97,7 +97,7 @@ const ProductManagement = () => {
         setUploading(true);
         try {
             const token = localStorage.getItem('token');
-            const signatureRes = await axios.get('http://localhost:4000/api/admin/sign-cloudinary', {
+            const signatureRes = await axios.get('https://group-32-learn-web-8hmv.onrender.com/api/admin/sign-cloudinary', {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
