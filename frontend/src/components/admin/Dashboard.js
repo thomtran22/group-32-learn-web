@@ -7,7 +7,7 @@ import {
 import { apiGetDashboardStats, apiGetRevenueStats } from '../../services/adminApi';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import { subDays, startOfMonth, endOfMonth, startOfToday, endOfToday, format, eachDayOfInterval, eachHourOfInterval, eachMonthOfInterval, getYear, getMonth, getDate } from 'date-fns';
+import { subDays, startOfMonth, endOfMonth, startOfToday, endOfToday, format, eachDayOfInterval, eachHourOfInterval, eachMonthOfInterval } from 'date-fns';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 

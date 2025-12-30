@@ -5,7 +5,6 @@ import {
   FaSyncAlt,
   FaCheckCircle,
   FaClock,
-  FaSpinner,
   FaChevronDown,
   FaChevronUp,
 } from "react-icons/fa";

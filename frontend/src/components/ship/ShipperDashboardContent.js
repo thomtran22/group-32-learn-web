@@ -8,10 +8,7 @@ import {
   FaEye,
   FaTimes,
   FaUser,
-  FaMapMarkerAlt,
-  FaBox,
-  FaCheckCircle,
-  FaPhone,
+  FaMapMarkerAlt
 } from "react-icons/fa";
 import "../../assets/css/shipper.css";
 import Swal from 'sweetalert2';

@@ -8,7 +8,6 @@ import {
   FaIdCard,
   FaMotorcycle,
   FaMapMarkerAlt,
-  FaStar,
   FaEdit,
   FaSave,
   FaTimes,

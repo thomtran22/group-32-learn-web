@@ -8,7 +8,7 @@ import {
   FaBirthdayCake,
   FaTimes,
   FaEye,
-  FaEyeSlash,
+  FaEyeSlash
 } from "react-icons/fa";
 import axiosClient from "../../utils/axiosConfig";
 import "../../assets/css/userprofile.css";
@@ -60,15 +60,6 @@ const PersonalInfo = () => {
     };
     fetchUserInfo();
   }, []);
-
-  const getFormattedDate = () => {
-    if (!userInfo.birthYear || !userInfo.birthMonth || !userInfo.birthDay)
-      return "";
-    const y = userInfo.birthYear;
-    const m = String(userInfo.birthMonth).padStart(2, "0");
-    const d = String(userInfo.birthDay).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-  };
 
   const handleDateChange = (e) => {
     setUserInfo({

@@ -5,12 +5,12 @@ dotenv.config();
 
 let redisClient = null;
 
-// Chỉ khởi tạo nếu có biến môi trường REDIS_URL
-if (process.env.REDIS_URL) {
+// Chỉ khởi tạo nếu có biến môi trường REDIS_URI
+if (process.env.REDIS_URI) {
     console.log("🔌 Initializing Redis Client...");
     
     redisClient = createClient({
-        url: process.env.REDIS_URL,
+        url: process.env.REDIS_URI,
         socket: {
             // --- QUAN TRỌNG: Cấu hình giữ kết nối ---
             keepAlive: 5000, // Gửi gói tin giữ kết nối mỗi 5s (tránh bị server đóng do idle)
@@ -59,7 +59,7 @@ if (process.env.REDIS_URL) {
         }
     })();
 } else {
-    console.warn("⚠️ REDIS_URL not found in .env. Running without Cache.");
+    console.warn("⚠️ REDIS_URI not found in .env. Running without Cache.");
 }
 
 export default redisClient;
