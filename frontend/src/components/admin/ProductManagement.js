@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaTimes, FaCloudUploadAlt, FaSpinner } from 'react-icons/fa';
-import { apiGetAllProductsAdmin, apiCreateProduct, apiDeleteProduct } from '../../services/adminApi';
+import { apiGetAllProductsAdmin, apiCreateProduct, apiDeleteProduct, apiUpdateProduct } from '../../services/adminApi';
 import { toast } from 'react-toastify'; // Thông báo góc màn hình
 import 'react-toastify/dist/ReactToastify.css'; // CSS cho toast
 import axios from 'axios'; // Import axios
@@ -10,8 +10,9 @@ const ProductManagement = () => {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
 
-    // --- 1. MỚI: State lưu danh sách danh mục ---
+    // --- 1. MỚI: State lưu danh sách danh mục và edit id ---
     const [categories, setCategories] = useState([]);
+    const [editingProductId, setEditingProductId] = useState(null);
 
     const [uploading, setUploading] = useState(false);
 
@@ -104,7 +105,7 @@ const ProductManagement = () => {
         }
     };
 
-    const handleCreateProduct = async () => {
+    const handleSaveProduct = async () => {
         let finalVariants = [...formData.variants];
 
         if (tempVariant.color && tempVariant.size) {
@@ -122,23 +123,50 @@ const ProductManagement = () => {
                 ...formData,
                 variants: finalVariants,
                 images: formData.images,
-                description: [formData.description]
-                // category đã có sẵn trong formData do bind với thẻ select
+                description: [formData.description], // API mong đợi mảng
+                category: formData.category
             };
 
-            const res = await apiCreateProduct(payload);
+            let res;
+            if (editingProductId) {
+                // Update
+                res = await apiUpdateProduct(editingProductId, payload);
+            } else {
+                // Create
+                res = await apiCreateProduct(payload);
+            }
 
             if (res.success) {
-                toast.success(res.message);
-                setShowModal(false);
+                toast.success(res.message || (editingProductId ? "Cập nhật thành công!" : "Tạo mới thành công!"));
+                closeModal();
                 fetchProducts();
-                // Reset form
-                setFormData({ name: '', sku: '', price: 0, images: [], description: '', category: '', variants: [] });
-                setTempVariant({ color: '', size: '', quantity: 0 });
             }
         } catch (error) {
-            toast.error("Lỗi khi tạo sản phẩm: " + (error.response?.data?.message || error.message));
+            toast.error("Lỗi: " + (error.response?.data?.message || error.message));
         }
+    };
+
+    const handleEdit = (product) => {
+        setEditingProductId(product._id);
+        setFormData({
+            name: product.name,
+            sku: product.sku,
+            price: product.price,
+            images: product.images || [],
+            // Nếu description lưu mảng thì lấy phần tử đầu, nếu không thì lấy chính nó
+            description: Array.isArray(product.description) ? product.description[0] : (product.description || ''),
+            category: product.category?._id || product.category || '',
+            variants: product.variants || []
+        });
+        setTempVariant({ color: '', size: '', quantity: 0 });
+        setShowModal(true);
+    };
+
+    const closeModal = () => {
+        setShowModal(false);
+        setEditingProductId(null);
+        setFormData({ name: '', sku: '', price: 0, images: [], description: '', category: '', variants: [] });
+        setTempVariant({ color: '', size: '', quantity: 0 });
     };
 
     const handleDelete = async (id) => {
@@ -175,7 +203,12 @@ const ProductManagement = () => {
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-gray-800">Quản lý Sản phẩm</h1>
                 <button
-                    onClick={() => setShowModal(true)}
+                    onClick={() => {
+                        setEditingProductId(null);
+                        setFormData({ name: '', sku: '', price: 0, images: [], description: '', category: '', variants: [] });
+                        setTempVariant({ color: '', size: '', quantity: 0 });
+                        setShowModal(true);
+                    }}
                     className="flex items-center gap-2 px-4 py-2 bg-white border border-green-200 text-green-700 font-medium rounded-lg hover:bg-green-50 shadow-sm"
                 >
                     <div className="bg-green-100 p-1 rounded-md"><FaPlus size={12} /></div>
@@ -217,6 +250,7 @@ const ProductManagement = () => {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
+                                        <button onClick={() => handleEdit(p)} className="text-blue-600 hover:bg-blue-50 p-2 rounded mr-2"><FaEdit /></button>
                                         <button onClick={() => handleDelete(p._id)} className="text-red-600 hover:bg-red-50 p-2 rounded"><FaTrash /></button>
                                     </td>
                                 </tr>
@@ -230,8 +264,8 @@ const ProductManagement = () => {
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center p-6 border-b">
-                            <h2 className="text-xl font-bold">Thêm sản phẩm mới</h2>
-                            <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600"><FaTimes size={20} /></button>
+                            <h2 className="text-xl font-bold">{editingProductId ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm mới'}</h2>
+                            <button onClick={closeModal} className="text-gray-400 hover:text-gray-600"><FaTimes size={20} /></button>
                         </div>
                         <div className="p-6 space-y-4">
                             <div>
@@ -330,13 +364,13 @@ const ProductManagement = () => {
                             </div>
                         </div>
                         <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
-                            <button onClick={() => setShowModal(false)} className="px-4 py-2 border rounded hover:bg-gray-100">Hủy</button>
+                            <button onClick={closeModal} className="px-4 py-2 border rounded hover:bg-gray-100">Hủy</button>
                             <button
-                                onClick={handleCreateProduct}
+                                onClick={handleSaveProduct}
                                 disabled={uploading}
                                 className={`px-4 py-2 text-white rounded ${uploading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                             >
-                                Lưu sản phẩm
+                                {editingProductId ? 'Cập nhật' : 'Lưu sản phẩm'}
                             </button>
                         </div>
                     </div>
