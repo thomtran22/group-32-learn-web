@@ -125,7 +125,7 @@ function LoginModal({ closeModal, onLoginSuccess }) {
 
   return (
     <div
-      className="fixed inset-0 z-[999] bg-black/60 px-3 sm:px-4 overflow-y-auto"
+      className="fixed inset-0 z-[1001] bg-black/60 px-3 sm:px-4 overflow-y-auto"
       onClick={closeModal}
     >
       <div className="min-h-[100dvh] flex items-center justify-center py-6">
