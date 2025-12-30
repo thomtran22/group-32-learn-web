@@ -1,20 +1,17 @@
 import 'dotenv/config'; 
 import nodemailer from "nodemailer";
 import { google } from "googleapis";
-
 const rt = process.env.MAIL_REFRESH_TOKEN;
-console.log("Check Refresh Token:", rt ? `${rt.substring(0, 10)}...` : "UNDEFINED");
+console.log("Check Refresh Token:", rt ? `${rt.substring(0, 10)}...` : "UNDEFINED ❌");
 
-// Cấu hình OAuth2
 const CLIENT_ID = process.env.MAIL_CLIENT_ID;
 const CLIENT_SECRET = process.env.MAIL_CLIENT_SECRET;
 const REDIRECT_URI = 'https://developers.google.com/oauthplayground';
 const REFRESH_TOKEN = process.env.MAIL_REFRESH_TOKEN;
-const SENDER_EMAIL = process.env.MAIL_SENDER_EMAIL; 
+const SENDER_EMAIL = process.env.MAIL_SENDER_EMAIL;
 
-// Kiểm tra nhanh
 if (!REFRESH_TOKEN || !CLIENT_ID || !CLIENT_SECRET) {
-  throw new Error("❌ Thiếu cấu hình OAuth2 trong file .env. Hãy kiểm tra lại!");
+  throw new Error("Thiếu cấu hình OAuth2 trong file .env");
 }
 
 const oAuth2Client = new google.auth.OAuth2(
@@ -23,7 +20,6 @@ const oAuth2Client = new google.auth.OAuth2(
   REDIRECT_URI
 );
 
-// Thiết lập Refresh Token
 oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 
 export async function sendPasswordResetEmail(recipientEmail, resetUrl) {
@@ -33,10 +29,10 @@ export async function sendPasswordResetEmail(recipientEmail, resetUrl) {
   try {
     // Lấy Access Token
     const accessToken = await oAuth2Client.getAccessToken();
-
-    // Tạo Transporter
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com", 
+      port: 587,              
+      secure: false,        
       auth: {
         type: "OAuth2",
         user: SENDER_EMAIL,
@@ -45,9 +41,12 @@ export async function sendPasswordResetEmail(recipientEmail, resetUrl) {
         refreshToken: REFRESH_TOKEN,
         accessToken: accessToken.token,
       },
+      tls: {
+        rejectUnauthorized: false 
+      },
+      family: 4 // 
     });
 
-    // Nội dung Email
     const mailOptions = {
       from: `"ShopWeb Support" <${SENDER_EMAIL}>`,
       to: recipientEmail,
@@ -63,7 +62,7 @@ export async function sendPasswordResetEmail(recipientEmail, resetUrl) {
     };
 
     const result = await transporter.sendMail(mailOptions);
-    console.log("Email sent:", result.messageId);
+    console.log("✅ Email sent:", result.messageId);
     return result;
 
   } catch (error) {
