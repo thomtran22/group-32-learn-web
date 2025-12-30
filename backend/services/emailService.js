@@ -1,89 +1,85 @@
 import nodemailer from "nodemailer";
 
-const createEmailTransporter = () => {
-  const mailUser = process.env.MAIL_USER;
-  const mailPass = process.env.MAIL_PASS;
+function getBooleanFromEnvironment(value, defaultValue = false) {
+  if (value === undefined || value === null) return defaultValue;
+  const normalizedValue = String(value).trim().toLowerCase();
+  return normalizedValue === "true" || normalizedValue === "1" || normalizedValue === "yes";
+}
 
-  if (!mailUser || !mailPass) {
-    throw new Error("Missing MAIL_USER or MAIL_PASS in environment variables.");
+function getNumberFromEnvironment(value, defaultValue) {
+  const parsedNumber = Number(value);
+  return Number.isFinite(parsedNumber) ? parsedNumber : defaultValue;
+}
+
+const smtpHost = process.env.EMAIL_HOST || "smtp.gmail.com";
+const smtpPort = getNumberFromEnvironment(process.env.EMAIL_PORT, 587);
+const smtpSecure = getBooleanFromEnvironment(process.env.EMAIL_SECURE, false);
+
+const emailUser = process.env.EMAIL_USER;
+const emailPass = process.env.EMAIL_PASS;
+const emailFrom = process.env.EMAIL_FROM || emailUser;
+
+if (!emailUser || !emailPass) {
+  console.error("Missing EMAIL_USER or EMAIL_PASS in environment variables.");
+}
+
+const mailTransporter = nodemailer.createTransport({
+  host: smtpHost,
+  port: smtpPort, // ✅ 587
+  secure: smtpSecure, // ✅ false for 587
+  auth: {
+    user: emailUser,
+    pass: emailPass, // ✅ Gmail App Password
+  },
+  // Helpful timeouts for cloud deploys
+  connectionTimeout: 10_000,
+  greetingTimeout: 10_000,
+  socketTimeout: 10_000,
+
+  // STARTTLS settings
+  requireTLS: true,
+
+  // Some environments can be picky; this helps avoid TLS handshake surprises
+  tls: {
+    minVersion: "TLSv1.2",
+  },
+});
+
+export async function sendPasswordResetEmail(recipientEmail, resetUrl) {
+  if (!recipientEmail) {
+    throw new Error("recipientEmail is required");
+  }
+  if (!resetUrl) {
+    throw new Error("resetUrl is required");
   }
 
-  return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || "smtp.gmail.com",
-    port: Number(process.env.EMAIL_PORT || 465),
-    secure:
-      typeof process.env.EMAIL_SECURE === "string"
-        ? process.env.EMAIL_SECURE.toLowerCase() === "true"
-        : true,
-    auth: { user: mailUser, pass: mailPass },
-    tls: { rejectUnauthorized: false },
-  });
-};
+  // Optional: verify connection once (can be removed if you want)
+  // await mailTransporter.verify();
 
-const buildPasswordResetEmailHtml = (resetUrl) => {
-  const safeUrl = resetUrl || "#";
-  return `
-  <div style="font-family: Arial, sans-serif; background:#f6f7fb; padding:24px;">
-    <div style="max-width:560px; margin:0 auto; background:#ffffff; border-radius:12px; overflow:hidden; border:1px solid #e8e8e8;">
-      <div style="padding:18px 20px; background:#111111; color:#ffffff;">
-        <div style="font-size:18px; font-weight:700;">Đặt lại mật khẩu</div>
-        <div style="font-size:12px; opacity:0.8; margin-top:4px;">Group 32</div>
-      </div>
-      <div style="padding:20px;">
-        <p style="margin:0 0 12px; font-size:14px; color:#333;">
-          Bạn vừa yêu cầu đặt lại mật khẩu cho tài khoản của mình.
-        </p>
-        <p style="margin:0 0 16px; font-size:14px; color:#333;">
-          Nhấn vào nút bên dưới để tạo mật khẩu mới:
-        </p>
-        <div style="margin:18px 0;">
-          <a href="${safeUrl}"
-            style="display:inline-block;padding:12px 18px;background:#111;color:#fff;text-decoration:none;border-radius:10px;font-size:14px;font-weight:700;">
-            Đặt lại mật khẩu
-          </a>
-        </div>
-        <p style="margin:0 0 12px; font-size:13px; color:#666;">
-          Link này sẽ hết hạn sau <b>15 phút</b>.
-        </p>
-        <p style="margin:0; font-size:13px; color:#666;">
-          Nếu bạn không yêu cầu, hãy bỏ qua email này.
-        </p>
-        <hr style="border:none; border-top:1px solid #eee; margin:18px 0;" />
-        <p style="margin:0; font-size:12px; color:#999;">
-          Nếu nút không bấm được, copy link này vào trình duyệt:
-        </p>
-        <p style="margin:8px 0 0; font-size:12px; color:#111; word-break:break-all;">
-          ${safeUrl}
-        </p>
-      </div>
+  const subject = "Khôi phục mật khẩu";
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+      <h2>Khôi phục mật khẩu</h2>
+      <p>Anh vừa yêu cầu đặt lại mật khẩu.</p>
+      <p>Bấm vào nút bên dưới để đặt lại mật khẩu (link có hiệu lực 15 phút):</p>
+      <p>
+        <a href="${resetUrl}"
+           style="display:inline-block;padding:10px 16px;background:#111;color:#fff;text-decoration:none;border-radius:8px;">
+          Đặt lại mật khẩu
+        </a>
+      </p>
+      <p>Nếu nút không bấm được, copy link sau vào trình duyệt:</p>
+      <p style="word-break: break-all;">${resetUrl}</p>
+      <p>Nếu không phải Anh yêu cầu, có thể bỏ qua email này.</p>
     </div>
-  </div>
   `;
-};
 
-export const sendPasswordResetEmail = async (toEmail, resetUrl) => {
-  if (!toEmail || typeof toEmail !== "string") {
-    throw new Error("Invalid recipient email (toEmail)");
-  }
-  if (!resetUrl || typeof resetUrl !== "string") {
-    throw new Error("Missing resetUrl");
-  }
+  const mailOptions = {
+    from: emailFrom,
+    to: recipientEmail,
+    subject: subject,
+    html: htmlContent,
+  };
 
-  const transporter = createEmailTransporter();
-  await transporter.verify();
-
-  const fromAddress =
-    process.env.MAIL_FROM ||
-    `Group 32 <${process.env.MAIL_USER || "no-reply@example.com"}>`;
-
-  const info = await transporter.sendMail({
-    from: fromAddress,
-    to: toEmail,
-    subject: "Khôi phục mật khẩu",
-    html: buildPasswordResetEmailHtml(resetUrl),
-    text: `Bạn vừa yêu cầu đặt lại mật khẩu. Link (hết hạn 15 phút): ${resetUrl}`,
-  });
-
-  // console.log("📨 Mail sent:", info.messageId);
-  return info;
-};
+  return await mailTransporter.sendMail(mailOptions);
+}

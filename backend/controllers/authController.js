@@ -82,40 +82,57 @@ export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
-    if (!email) {
+    if (!email || typeof email !== "string") {
       return res.status(400).json({ message: "Thiếu email" });
     }
 
-    const user = await User.findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
 
+    const user = await User.findOne({ email: normalizedEmail });
+
+    // ✅ Security: không tiết lộ email có tồn tại hay không
     if (!user) {
       return res.json({
         message: "Nếu email tồn tại, link khôi phục đã được gửi",
       });
     }
 
-    if (!user.email) {
-      return res.status(400).json({ message: "Email người dùng không hợp lệ" });
-    }
     const resetToken = randomBytes(32).toString("hex");
     const hashedToken = createHash("sha256").update(resetToken).digest("hex");
 
     user.resetPasswordToken = hashedToken;
-    user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
-
+    user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 phút
     await user.save();
 
     const frontendUrl = process.env.FRONTEND_URL;
-    const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
 
-    await sendPasswordResetEmail(user.email, resetUrl);
+    // Nếu thiếu FRONTEND_URL thì vẫn trả 200 (tránh 500), nhưng log để dev biết
+    if (!frontendUrl) {
+      console.error("Missing FRONTEND_URL env");
+      return res.json({
+        message: "Nếu email tồn tại, link khôi phục đã được gửi",
+      });
+    }
+
+    const resetUrl = `${frontendUrl.replace(/\/$/, "")}/reset-password?token=${resetToken}`;
+
+    // Không để lỗi gửi mail làm API 500
+    try {
+      await sendPasswordResetEmail(user.email, resetUrl);
+    } catch (mailError) {
+      console.error("Send mail failed:", mailError);
+    }
 
     return res.json({
       message: "Nếu email tồn tại, link khôi phục đã được gửi",
     });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Lỗi server" });
+    console.error("Forgot password error:", error);
+
+    // ✅ Không trả 500 để tránh lộ hệ thống + tránh FE bị coi là lỗi
+    return res.json({
+      message: "Nếu email tồn tại, link khôi phục đã được gửi",
+    });
   }
 };
 
