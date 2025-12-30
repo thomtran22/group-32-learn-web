@@ -140,7 +140,7 @@ const UserProfile = () => {
     if (window.confirm("Bạn có chắc chắn muốn đăng xuất?")) {
       localStorage.removeItem("token");
       sessionStorage.clear();
-      navigate("/");
+      window.location.href = "/"; 
       toast.success("Đã đăng xuất thành công");
     }
   };

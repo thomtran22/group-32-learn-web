@@ -25,14 +25,14 @@ const ProductManagement = () => {
     const [formData, setFormData] = useState({
         name: '',
         sku: '',
-        price: 0,
+        price: '',
         images: [],
         description: '',
         category: '', // --- 2. MỚI: Thêm trường category vào form ---
         variants: []
     });
 
-    const [tempVariant, setTempVariant] = useState({ color: '', size: '', quantity: 0 });
+    const [tempVariant, setTempVariant] = useState({ color: '', size: '', quantity: '' });
 
     useEffect(() => {
         fetchProducts();
@@ -188,8 +188,8 @@ const ProductManagement = () => {
     const closeModal = () => {
         setShowModal(false);
         setEditingProductId(null);
-        setFormData({ name: '', sku: '', price: 0, images: [], description: '', category: '', variants: [] });
-        setTempVariant({ color: '', size: '', quantity: 0 });
+        setFormData({ name: '', sku: '', price: '', images: [], description: '', category: '', variants: [] });
+        setTempVariant({ color: '', size: '', quantity: '' });
     };
 
     const handleDelete = async (id) => {
@@ -228,8 +228,8 @@ const ProductManagement = () => {
                 <button
                     onClick={() => {
                         setEditingProductId(null);
-                        setFormData({ name: '', sku: '', price: 0, images: [], description: '', category: '', variants: [] });
-                        setTempVariant({ color: '', size: '', quantity: 0 });
+                        setFormData({ name: '', sku: '', price: '', images: [], description: '', category: '', variants: [] });
+                        setTempVariant({ color: '', size: '', quantity: '' });
                         setShowModal(true);
                     }}
                     className="flex items-center gap-2 px-4 py-2 bg-white border border-green-200 text-green-700 font-medium rounded-lg hover:bg-green-50 shadow-sm"
@@ -321,7 +321,7 @@ const ProductManagement = () => {
                         <div className="p-6 space-y-4">
                             <div>
                                 <label className="block text-sm font-medium mb-1">Tên sản phẩm</label>
-                                <input type="text" className={inputClass} value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                <input type="text" className={inputClass} placeholder="Nhập tên sản phẩm" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                             </div>
 
                             {/* --- 6. MỚI: Dropdown chọn Danh mục --- */}
@@ -345,11 +345,11 @@ const ProductManagement = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-1">SKU (Mã SP)</label>
-                                    <input type="text" className={inputClass} value={formData.sku} onChange={e => setFormData({ ...formData, sku: e.target.value })} />
+                                    <input type="text" className={inputClass} placeholder="VD: SKU-001" value={formData.sku} onChange={e => setFormData({ ...formData, sku: e.target.value })} />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Giá bán (VNĐ)</label>
-                                    <input type="number" className={inputClass} value={formData.price} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} />
+                                    <input type="number" className={inputClass} placeholder="Nhập giá bán" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value ? Number(e.target.value) : '' })} />
                                 </div>
                             </div>
 
@@ -391,7 +391,7 @@ const ProductManagement = () => {
 
                             <div>
                                 <label className="block text-sm font-medium mb-1">Mô tả ngắn</label>
-                                <textarea className={inputClass} rows="2" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}></textarea>
+                                <textarea className={inputClass} rows="2" placeholder="Nhập mô tả sản phẩm..." value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}></textarea>
                             </div>
 
                             {/* Variants Section */}
@@ -400,7 +400,7 @@ const ProductManagement = () => {
                                 <div className="flex flex-col md:flex-row gap-2 mb-2">
                                     <input type="text" placeholder="Màu (VD: Đỏ)" className={`${inputClass} w-1/3`} value={tempVariant.color} onChange={e => setTempVariant({ ...tempVariant, color: e.target.value })} />
                                     <input type="text" placeholder="Size (VD: L)" className={`${inputClass} w-1/3`} value={tempVariant.size} onChange={e => setTempVariant({ ...tempVariant, size: e.target.value })} />
-                                    <input type="number" placeholder="Số lượng" className={`${inputClass} w-1/3`} value={tempVariant.quantity} onChange={e => setTempVariant({ ...tempVariant, quantity: Number(e.target.value) })} />
+                                    <input type="number" placeholder="Số lượng" className={`${inputClass} w-1/3`} value={tempVariant.quantity} onChange={e => setTempVariant({ ...tempVariant, quantity: e.target.value ? Number(e.target.value) : '' })} />
                                     <button onClick={addVariant} className="px-4 bg-blue-600 text-white rounded hover:bg-blue-700 font-bold">+</button>
                                 </div>
                                 <div className="space-y-2 mt-3">

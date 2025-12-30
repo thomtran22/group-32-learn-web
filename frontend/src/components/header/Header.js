@@ -145,14 +145,17 @@ function Header() {
 
                 {/* User Icon */}
                 <div
-                  className="flex items-center gap-2 group p-1 md:p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 cursor-pointer"
+                  className="flex flex-col items-center justify-center gap-0.5 group p-1 hover:bg-gray-100 rounded-lg transition-all duration-300 cursor-pointer min-w-[60px]"
                   onClick={handleUserClick}
                 >
-                  <div className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-gray-200 group-hover:bg-red-100 transition-colors">
+                  <div className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-full bg-gray-200 group-hover:bg-red-100 transition-colors">
                     <FaUser className="text-sm md:text-xl text-gray-600 group-hover:text-red-600" />
                   </div>
                   {currentUser && (
-                    <span className="hidden md:block text-sm font-medium text-gray-700 group-hover:text-red-600 max-w-[100px] truncate">
+                    <span 
+                        className="hidden md:block text-[11px] font-semibold text-gray-700 group-hover:text-red-600 max-w-[90px] truncate leading-none text-center"
+                        title={currentUser.fullName || currentUser.name}
+                    >
                       {currentUser.fullName || currentUser.name}
                     </span>
                   )}
