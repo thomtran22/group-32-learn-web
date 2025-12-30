@@ -16,6 +16,7 @@ import ShipperMainLayout from "./pages/ShipperMainLayout";
 import UserProfile from "./pages/UserProfile";
 import Admin from "./pages/Admin"
 import ResetPassword from "./pages/ResetPassword";
+import NotFound from "./pages/NotFound";
 import AIChatWidget from "./components/AIChatWidget";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -55,77 +56,78 @@ function App() {
         />
         <Routes>
           {/* --- ADMIN ROUTES (Chỉ Admin) --- */}
-          <Route path="/admin/*" 
+          <Route path="/admin/*"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <Admin />
               </ProtectedRoute>
-            } 
+            }
           />
 
           {/* --- SHIPPER ROUTES (Chỉ Shipper) --- */}
-          <Route path="/shipper/*" 
+          <Route path="/shipper/*"
             element={
               <ProtectedRoute allowedRoles={['shipper']}>
                 <ShipperMainLayout />
               </ProtectedRoute>
-            } 
+            }
           />
 
           {/* --- PUBLIC & CUSTOMER ROUTES --- */}
           <Route element={<PublicLayout />}>
             <Route path="/" element={
-                <ProtectedRoute isPublic={true}> 
-                  <Home /> 
-                </ProtectedRoute>
+              <ProtectedRoute isPublic={true}>
+                <Home />
+              </ProtectedRoute>
             } />
 
             <Route path="/products/:sku" element={
-                <ProtectedRoute isPublic={true}> 
-                  <ProductDetail /> 
-                </ProtectedRoute>
+              <ProtectedRoute isPublic={true}>
+                <ProductDetail />
+              </ProtectedRoute>
             } />
 
             <Route path="/category/:categorySlug" element={
-                <ProtectedRoute isPublic={true}> 
-                  <ProductListPage /> 
-                </ProtectedRoute>
+              <ProtectedRoute isPublic={true}>
+                <ProductListPage />
+              </ProtectedRoute>
             } />
-             
-             <Route path="/reset-password" element={
-                <ProtectedRoute isPublic={true}> 
-                  <ResetPassword /> 
-                </ProtectedRoute>
+
+            <Route path="/reset-password" element={
+              <ProtectedRoute isPublic={true}>
+                <ResetPassword />
+              </ProtectedRoute>
             } />
 
 
             {/* === CÁC TRANG RIÊNG TƯ (Mặc định isPublic={false}) === */}
             {/* Logic: Chỉ Customer (đã login) xem được. Guest bị bắt login. Admin/Shipper bị đá */}
-            
+
             <Route path="/cart" element={
-                <ProtectedRoute allowedRoles={['customer']}> 
-                  <Cart /> 
-                </ProtectedRoute>
+              <ProtectedRoute allowedRoles={['customer']}>
+                <Cart />
+              </ProtectedRoute>
             } />
-            
+
             <Route path="/checkout" element={
-                <ProtectedRoute allowedRoles={['customer']}> 
-                  <Checkout /> 
-                </ProtectedRoute>
+              <ProtectedRoute allowedRoles={['customer']}>
+                <Checkout />
+              </ProtectedRoute>
             } />
 
             <Route path="/payment-result" element={
-                <ProtectedRoute allowedRoles={['customer']}> 
-                   <PaymentResult /> 
-                </ProtectedRoute>
+              <ProtectedRoute allowedRoles={['customer']}>
+                <PaymentResult />
+              </ProtectedRoute>
             } />
 
             <Route path="/profile" element={
-                <ProtectedRoute allowedRoles={['customer']}> 
-                   <UserProfile /> 
-                </ProtectedRoute>
+              <ProtectedRoute allowedRoles={['customer']}>
+                <UserProfile />
+              </ProtectedRoute>
             } />
 
+            <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
       </CartProvider>

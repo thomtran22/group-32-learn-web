@@ -42,7 +42,7 @@ function ResetPassword() {
         navigate("/");
       }, 1500);
     } catch (error) {
-      setMessage("Link không hợp lệ hoặc đã hết hạn");
+      setMessage(error.response?.data?.message || "Link không hợp lệ hoặc đã hết hạn");
     } finally {
       setLoading(false);
     }

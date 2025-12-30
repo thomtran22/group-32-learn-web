@@ -89,7 +89,7 @@ const addToCart = async (req, res) => {
         });
 
     } catch (error) {
-        console.log("Error:", error);
+        console.error("Error:", error);
         return res.status(500).json({ success: false, message: "Lỗi server" });
     }
 };
@@ -112,9 +112,9 @@ const viewCart = async (req, res) => {
         if (!cart || cart.items.length === 0) {
             return res.status(200).json({
                 success: true,
-                cart: { 
+                cart: {
                     items: [],
-                    totalAmount: 0 
+                    totalAmount: 0
                 }
             });
         }
@@ -144,7 +144,7 @@ const updateCart = async (req, res) => {
     }
 
     const userId = req.user.id;
-    const { items } = req.body; 
+    const { items } = req.body;
 
     try {
         let cart = await Cart.findOne({ userId });
@@ -210,25 +210,25 @@ const removeCartItem = async (req, res) => {
     }
 
     const userId = req.user.id;
-    const { itemId } = req.params; 
+    const { itemId } = req.params;
 
     try {
         await Cart.updateOne(
-            { userId }, 
-            { $pull: { items: { _id: itemId } } } 
+            { userId },
+            { $pull: { items: { _id: itemId } } }
         );
 
         const updatedCart = await Cart.findOne({ userId }).populate('items.productId', 'name price images variants');
 
         // Tính lại tổng tiền sau khi xóa
-        if(updatedCart) {
+        if (updatedCart) {
             updatedCart.totalAmount = updatedCart.items.reduce((acc, item) => {
-                 return acc + ((item.productId ? item.productId.price : 0) * item.quantity);
+                return acc + ((item.productId ? item.productId.price : 0) * item.quantity);
             }, 0);
             await updatedCart.save();
         }
 
-        res.status(200).json({ 
+        res.status(200).json({
             success: true,
             message: "Đã xóa sản phẩm",
             cart: updatedCart
@@ -258,9 +258,9 @@ const clearCart = async (req, res) => {
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
-}; 
+};
 
-export { 
+export {
     addToCart,
     viewCart,
     updateCart,

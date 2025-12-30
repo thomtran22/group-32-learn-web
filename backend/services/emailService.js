@@ -84,6 +84,6 @@ export const sendPasswordResetEmail = async (toEmail, resetUrl) => {
     text: `Bạn vừa yêu cầu đặt lại mật khẩu. Link (hết hạn 15 phút): ${resetUrl}`,
   });
 
-  console.log("📨 Mail sent:", info.messageId);
+  // console.log("📨 Mail sent:", info.messageId);
   return info;
 };
