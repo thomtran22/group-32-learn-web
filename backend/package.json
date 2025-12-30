@@ -67,6 +67,7 @@
     "get-caller-file": "^2.0.5",
     "get-stream": "^5.2.0",
     "get-uri": "^6.0.5",
+    "googleapis": "^169.0.0",
     "helmet": "^8.1.0",
     "hpp": "^0.2.3",
     "htmlparser2": "^10.0.0",
