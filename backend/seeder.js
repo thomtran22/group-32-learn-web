@@ -4,7 +4,7 @@ import colors from 'colors';
 import bcrypt from 'bcryptjs';
 import categories from './data/categories.js';
 import products from './data/products.js';
-import users from './users_seed_temp.js';
+import users from './data/users.js';
 import Category from './models/CategoryModel.js';
 import Product from './models/ProductModel.js';
 import User from './models/UserModel.js';
@@ -26,8 +26,6 @@ const importData = async () => {
 
     try {
         // Xóa sạch dữ liệu cũ
-        await Category.deleteMany();
-        await Product.deleteMany();
         await User.deleteMany();
         console.log('Collections Cleared'.yellow);
 
