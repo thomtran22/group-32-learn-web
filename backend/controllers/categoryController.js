@@ -1,7 +1,16 @@
 import asyncHandler from 'express-async-handler';
 import Category from '../models/CategoryModel.js'; 
+
 //Trả về danh sách danh mục sắp xếp từ A-Z
 const getCategories = asyncHandler(async (req, res) => {
+    // Kiểm tra nếu là shipper thì từ chối
+    if (req.user?.role === 'shipper') {
+        return res.status(403).json({
+            success: false,
+            message: "Shipper không được phép xem danh mục"
+        });
+    }
+
     const categories = await Category.find({}).sort({ name: 1 }); 
     res.json(categories);
 });

@@ -1,9 +1,20 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Section1 from "../components/background/BackGround";
-import { ProductSection } from "../components/sections/ProductSection"; // Đảm bảo dùng ngoặc nhọn nếu export const
-import Section4 from "../components/sections/Section4";
+import { ProductSection } from "../components/sections/ProductSection";
 
 function Home() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Kiểm tra nếu user là Shipper thì redirect
+    const userRole = localStorage.getItem('userRole');
+    if (userRole === 'shipper') {
+      navigate('/shipper', { replace: true });
+      return;
+    }
+  }, [navigate]);
+
   return (
     <div>
       <Section1 />
@@ -28,8 +39,6 @@ function Home() {
         parentSlug="phu-kien"
         initialSlug="balo" 
       />
-
-      {/* <Section4 /> */}
     </div>
   );
 }

@@ -3,7 +3,22 @@ import Product from '../models/ProductModel.js';
 import Category from '../models/CategoryModel.js';
 import mongoose from 'mongoose';
 
+// Middleware kiểm tra shipper không được xem trang chủ
+const checkShipperAccess = (req, res) => {
+    if (req.user?.role === 'shipper') {
+        return res.status(403).json({
+            success: false,
+            message: "Shipper không được phép truy cập trang chủ"
+        });
+    }
+    return null;
+};
+
 export const getProducts = asyncHandler(async (req, res) => {
+    // Kiểm tra nếu là shipper thì từ chối
+    const shipperError = checkShipperAccess(req, res);
+    if (shipperError) return;
+
     const { category: categorySlug, size, sort, page: pageQuery, priceRange } = req.query;
     
     const page = parseInt(pageQuery) || 1;
@@ -70,6 +85,10 @@ export const getProducts = asyncHandler(async (req, res) => {
 });
 
 export const getProductBySku = asyncHandler(async (req, res) => {
+    // Kiểm tra nếu là shipper thì từ chối
+    const shipperError = checkShipperAccess(req, res);
+    if (shipperError) return;
+
     const product = await Product.findOne({ sku: req.params.sku }).populate('category', 'name slug').lean();
     if (product) res.json(product);
     else {
@@ -82,6 +101,14 @@ export const getProductBySku = asyncHandler(async (req, res) => {
 // Thêm vào productController.js
 export const searchProducts = async (req, res) => {
   try {
+    // Kiểm tra nếu là shipper thì từ chối
+    if (req.user?.role === 'shipper') {
+        return res.status(403).json({
+            success: false,
+            message: "Shipper không được phép tìm kiếm sản phẩm"
+        });
+    }
+
     const keyword = req.query.q; // Lấy từ khóa người dùng gõ từ URL ?q=...
 
     if (!keyword) {

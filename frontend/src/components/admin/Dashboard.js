@@ -137,7 +137,7 @@ const Dashboard = () => {
         <div>
             <h1 className="text-2xl font-bold text-gray-800 mb-6">Dashboard</h1>
 
-            {/* Stats Cards */}
+            {/* Stats Cards - Grid này đã ổn: 1 cột mobile, 2 cột tablet, 4 cột desktop */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <StatCard
                     title="Doanh thu hôm nay"
@@ -168,14 +168,17 @@ const Dashboard = () => {
 
             {/* Charts Section */}
             <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
-                <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+                {/* Header: Mobile xếp dọc, Desktop xếp ngang */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                     <h3 className="text-lg font-bold text-gray-700">Biểu đồ Doanh thu</h3>
-                    <div className="flex flex-wrap items-center gap-2">
+                    
+                    {/* Container bộ lọc: Mobile full width */}
+                    <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
                         {Object.entries(presets).map(([key, { label }]) => (
                              <button
                                 key={key}
                                 onClick={() => handlePresetClick(key)}
-                                className={`px-3 py-1.5 text-sm rounded transition-all ${
+                                className={`flex-1 md:flex-none px-3 py-1.5 text-xs md:text-sm rounded transition-all whitespace-nowrap ${
                                     activePreset === key 
                                     ? 'bg-blue-600 text-white font-medium shadow-sm' 
                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -184,17 +187,23 @@ const Dashboard = () => {
                                 {label}
                             </button>
                         ))}
-                        <DatePicker
-                            selectsRange={true}
-                            startDate={startDate}
-                            endDate={endDate}
-                            onChange={handleDateChange}
-                            dateFormat="dd/MM/yyyy"
-                            className="w-56 text-sm border-gray-300 rounded-md shadow-sm p-1.5 text-center focus:ring-blue-500 focus:border-blue-500"
-                        />
+                        
+                        {/* DatePicker: Mobile full width (w-full), Desktop cố định (md:w-56) */}
+                        <div className="w-full md:w-auto mt-2 md:mt-0">
+                            <DatePicker
+                                selectsRange={true}
+                                startDate={startDate}
+                                endDate={endDate}
+                                onChange={handleDateChange}
+                                dateFormat="dd/MM/yyyy"
+                                className="w-full md:w-56 text-sm border-gray-300 rounded-md shadow-sm p-1.5 text-center focus:ring-blue-500 focus:border-blue-500"
+                            />
+                        </div>
                     </div>
                 </div>
-                <div className="h-[400px] w-full min-w-0">
+
+                {/* Chart Container: Mobile cao 300px, Desktop cao 400px */}
+                <div className="h-[300px] md:h-[400px] w-full min-w-0">
                     {loadingChart ? <div className="text-center pt-20">Đang tải biểu đồ...</div> : 
                     <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                         <LineChart data={revenueData}>

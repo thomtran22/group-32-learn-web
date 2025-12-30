@@ -272,3 +272,26 @@
   align-items: center;
   gap: 10px;
 }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .shipper-container {
+    flex-direction: column;
+    margin: 20px auto;
+  }
+
+  .shipper-sidebar {
+    flex: none;
+    width: 100%;
+    position: static;
+    margin-bottom: 20px;
+  }
+
+  .shipper-content {
+    padding: 15px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}

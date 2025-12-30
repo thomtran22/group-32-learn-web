@@ -7,7 +7,7 @@ import { useCart } from "../../context/CartContext";
 import { motion, AnimatePresence } from "framer-motion";
 import Search from "../search/Search";
 import axios from "axios";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 
 function Header() {
   const { cartCount } = useCart();
@@ -16,10 +16,9 @@ function Header() {
   const navigate = useNavigate();
 
   const navLinkClass = ({ isActive }) =>
-    `relative text-sm font-semibold tracking-[0.1em] transition-all duration-300 uppercase py-1 ${
-      isActive
-        ? "text-red-600 after:w-full"
-        : "text-gray-600 hover:text-red-600 after:w-0"
+    `relative text-sm font-semibold tracking-[0.1em] transition-all duration-300 uppercase py-1 ${isActive
+      ? "text-red-600 after:w-full"
+      : "text-gray-600 hover:text-red-600 after:w-0"
     } after:content-[''] after:absolute after:bottom-0 after:left-0 after:h-[2px] after:bg-red-600 after:transition-all after:duration-300 hover:after:w-full`;
 
   const handleUserClick = async () => {
@@ -83,7 +82,7 @@ function Header() {
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)]">
         <div className="container mx-auto px-4 md:px-6 max-w-[1200px]">
           <div className="inner-wrap py-2">
-            
+
             {/* Hàng 1: Logo - Search - Icon */}
             <div className="flex items-center justify-between gap-4 md:gap-10">
               <Link
@@ -158,7 +157,7 @@ function Header() {
                 </li>
               </ul>
             </nav>
-            
+
           </div>
         </div>
       </header>

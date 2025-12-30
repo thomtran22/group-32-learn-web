@@ -1,12 +1,12 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-    FaTachometerAlt, FaShoppingCart, FaBoxes, 
-    FaWarehouse, FaTruck, FaUsers, FaSignOutAlt
+    FaTachometerAlt, FaShoppingCart, FaBoxes,
+    FaTruck, FaUsers, FaSignOutAlt
 } from 'react-icons/fa';
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 
-const Sidebar = () => {
+const Sidebar = ({ onLinkClick }) => {
     const navigate = useNavigate();
 
     const handleLogout = () => {
@@ -15,11 +15,15 @@ const Sidebar = () => {
         navigate('/');
     };
 
+    const handleNavClick = () => {
+        // Đóng sidebar trên mobile khi click link
+        if (onLinkClick) onLinkClick();
+    };
+
     const navItemClass = ({ isActive }) =>
-        `flex items-center gap-3 px-6 py-4 transition-colors duration-200 ${
-            isActive 
-                ? 'bg-slate-700 border-l-4 border-blue-500 text-white' 
-                : 'text-gray-400 hover:bg-slate-800 hover:text-white'
+        `flex items-center gap-3 px-6 py-4 transition-colors duration-200 ${isActive
+            ? 'bg-slate-700 border-l-4 border-blue-500 text-white'
+            : 'text-gray-400 hover:bg-slate-800 hover:text-white'
         }`;
 
     return (
@@ -29,20 +33,20 @@ const Sidebar = () => {
                 <p className="text-sm text-gray-400 mt-1">Quản trị hệ thống</p>
             </div>
 
-            <nav className="flex-1 mt-4 space-y-1">
-                <NavLink to="/admin" end className={navItemClass}>
+            <nav className="flex-1 mt-4 space-y-1 overflow-y-auto">
+                <NavLink to="/admin" end className={navItemClass} onClick={handleNavClick}>
                     <FaTachometerAlt /> Dashboard
                 </NavLink>
-                <NavLink to="/admin/orders" className={navItemClass}>
+                <NavLink to="/admin/orders" className={navItemClass} onClick={handleNavClick}>
                     <FaShoppingCart /> Đơn hàng
                 </NavLink>
-                <NavLink to="/admin/products" className={navItemClass}>
+                <NavLink to="/admin/products" className={navItemClass} onClick={handleNavClick}>
                     <FaBoxes /> Sản phẩm
                 </NavLink>
-                <NavLink to="/admin/shippers" className={navItemClass}>
+                <NavLink to="/admin/shippers" className={navItemClass} onClick={handleNavClick}>
                     <FaTruck /> Shipper
                 </NavLink>
-                <NavLink to="/admin/users" className={navItemClass}>
+                <NavLink to="/admin/users" className={navItemClass} onClick={handleNavClick}>
                     <FaUsers /> Người dùng
                 </NavLink>
             </nav>

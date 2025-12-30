@@ -4,7 +4,7 @@ import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
 import ForgotPassword from "./ForgotPassword";
 import axios from "axios";
-import toast from "react-hot-toast";
+import { toast } from 'react-toastify'; 
 
 function LoginModal({ closeModal }) {
   const [mode, setMode] = useState("login");
@@ -66,7 +66,7 @@ function LoginModal({ closeModal }) {
           const userData = userResponse.data;
           const userRole = userData.role; // Lấy role từ database trả về
 
-          toast.success(`Chào mừng trở lại, ${userData.fullName}!`);
+          toast.success(`Xin chào, ${userData.fullName}!`);
           closeModal?.();
 
           // Chuyển hướng dựa trên role thực tế từ Server
@@ -85,10 +85,19 @@ function LoginModal({ closeModal }) {
         } catch (error) {
           console.error("Login process error:", error);
           // Xử lý lỗi chi tiết hơn
-          if (error.response?.status === 401) {
-             toast.error("Sai email hoặc mật khẩu!");
+          if (error.response) {
+            // Lỗi từ server trả về (400, 401, 500...)
+            if (error.response.status === 401) {
+              toast.error("Sai email hoặc mật khẩu!");
+            } else {
+              // Lấy message lỗi cụ thể từ Backend gửi lên (nếu có)
+              toast.error(error.response.data.message || "Đăng nhập thất bại!");
+            }
+          } else if (error.request) {
+            // Lỗi không gọi được server (mất mạng, server tắt)
+            toast.error("Không thể kết nối đến Server!");
           } else {
-             toast.error(error.response?.data?.message || "Đăng nhập thất bại!");
+            toast.error("Có lỗi xảy ra, vui lòng thử lại.");
           }
         }
       }
@@ -103,22 +112,14 @@ function LoginModal({ closeModal }) {
         setMode("login");
       }
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Có lỗi xảy ra"
-      );
+      const msg = error.response?.data?.message || "Đăng ký thất bại";
+      toast.error(msg);
     }
   };
 
   const toggleForm = (shouldBeLogin) => {
     setMode(shouldBeLogin ? "login" : "register");
-    setFormData({
-      fullName: "",
-      email: "",
-      password: "",
-      gender: "Female",
-      dateOfBirth: "",
-      role: "customer",
-    });
+    setFormData(prev => ({ ...prev, email: "", password: "" }));
   };
 
   return (

@@ -1,9 +1,9 @@
 import express from 'express';
 const router = express.Router();
-import { getCategories, createCategory } from '../controllers/categoryController.js'; 
+import { getCategories, createCategory } from '../controllers/categoryController.js';
+import { verifyToken} from '../middleware/authMiddleware.js';
 
-router.route('/')
-    .get(getCategories) 
-    .post(createCategory); 
+router.get('/', getCategories);
+router.post('/', verifyToken, createCategory);
 
 export default router;
