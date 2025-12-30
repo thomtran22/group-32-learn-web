@@ -82,74 +82,66 @@ export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
-    if (!email || typeof email !== "string") {
-      return res.status(400).json({ message: "Thiếu email" });
+    if (!email) {
+      return res.status(400).json({ message: "Vui lòng nhập email" });
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-
     const user = await User.findOne({ email: normalizedEmail });
 
-    // ✅ Security: không tiết lộ email có tồn tại hay không
+    // Bảo mật: Luôn trả về thông báo thành công dù email có tồn tại hay không
+    // để tránh hacker dò tìm email trong hệ thống
+    const successMessage = "Nếu email tồn tại, link khôi phục đã được gửi vào hòm thư của bạn.";
+
     if (!user) {
-      return res.json({
-        message: "Nếu email tồn tại, link khôi phục đã được gửi",
-      });
+      console.log(`[ForgotPwd] Email ${normalizedEmail} không tồn tại trong DB.`);
+      return res.json({ message: successMessage });
     }
 
+    // 1. Tạo Token ngẫu nhiên (Raw Token dùng để gửi qua mail)
     const resetToken = randomBytes(32).toString("hex");
+
+    // 2. Băm Token trước khi lưu vào DB (Bảo mật: nếu lộ DB cũng không lộ token reset)
     const hashedToken = createHash("sha256").update(resetToken).digest("hex");
 
+    // 3. Lưu vào DB kèm thời gian hết hạn (15 phút)
     user.resetPasswordToken = hashedToken;
-    user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 phút
+    user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
     await user.save();
 
-    const frontendUrl = process.env.FRONTEND_URL;
+    // 4. Tạo Link Reset
+    const clientUrl = process.env.FRONTEND_URL;
+    const resetUrl = `${clientUrl.replace(/\/$/, "")}/reset-password?token=${resetToken}`;
 
-    // Nếu thiếu FRONTEND_URL thì vẫn trả 200 (tránh 500), nhưng log để dev biết
-    if (!frontendUrl) {
-      console.error("Missing FRONTEND_URL env");
-      return res.json({
-        message: "Nếu email tồn tại, link khôi phục đã được gửi",
-      });
-    }
+    // 5. Gửi Email (Dùng OAuth2 Service)
+    console.log(`[ForgotPwd] Đang gửi mail tới ${user.email}...`);
+    await sendPasswordResetEmail(user.email, resetUrl);
+    
+    return res.json({ message: successMessage });
 
-    const resetUrl = `${frontendUrl.replace(/\/$/, "")}/reset-password?token=${resetToken}`;
-
-    // Không để lỗi gửi mail làm API 500
-    try {
-      await sendPasswordResetEmail(user.email, resetUrl);
-    } catch (mailError) {
-      console.error("Send mail failed:", mailError);
-    }
-
-    return res.json({
-      message: "Nếu email tồn tại, link khôi phục đã được gửi",
-    });
   } catch (error) {
-    console.error("Forgot password error:", error);
-
-    // ✅ Không trả 500 để tránh lộ hệ thống + tránh FE bị coi là lỗi
-    return res.json({
-      message: "Nếu email tồn tại, link khôi phục đã được gửi",
-    });
+    console.error("Forgot Password Error:", error);
+    return res.json({ message: "Nếu email tồn tại, link khôi phục đã được gửi." });
   }
 };
 
+// --- RESET PASSWORD ---
 export const resetPassword = async (req, res) => {
   try {
     const { token, newPassword } = req.body;
 
     if (!token || !newPassword) {
-      return res.status(400).json({ message: "Thiếu thông tin" });
+      return res.status(400).json({ message: "Thiếu thông tin token hoặc mật khẩu mới" });
     }
 
     if (newPassword.length < 6) {
       return res.status(400).json({ message: "Mật khẩu mới phải có ít nhất 6 ký tự" });
     }
 
+    // 1. Băm token nhận được để so sánh với cái đã lưu trong DB
     const hashedToken = createHash("sha256").update(token).digest("hex");
 
+    // 2. Tìm User có token trùng khớp và CHƯA hết hạn ($gt: greater than now)
     const user = await User.findOne({
       resetPasswordToken: hashedToken,
       resetPasswordExpires: { $gt: Date.now() },
@@ -157,21 +149,23 @@ export const resetPassword = async (req, res) => {
 
     if (!user) {
       return res.status(400).json({
-        message: "Link không hợp lệ hoặc đã hết hạn",
+        message: "Link khôi phục không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.",
       });
     }
 
+    // 3. Hash mật khẩu mới
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
+    // 4. Cập nhật User và Xóa token reset
     user.password = hashedPassword;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
 
     await user.save();
 
-    res.json({ message: "Đặt lại mật khẩu thành công" });
+    res.json({ message: "Đặt lại mật khẩu thành công! Bạn có thể đăng nhập ngay bây giờ." });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Lỗi server" });
+    console.error("Reset Password Error:", error);
+    res.status(500).json({ message: "Lỗi server khi đặt lại mật khẩu" });
   }
 };
