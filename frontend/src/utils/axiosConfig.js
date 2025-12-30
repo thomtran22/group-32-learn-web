@@ -1,13 +1,36 @@
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
-// Add a response interceptor
+axios.defaults.baseURL = 'http://localhost:4000/api';
+
+// REQUEST INTERCEPTOR
+// Lấy token gắn vào header
+axios.interceptors.request.use(
+  function (config) {
+    // Lấy token từ localStorage
+    const token = localStorage.getItem('token'); 
+    
+    // Nếu có token thì gắn vào header Authorization
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  function (error) {
+    return Promise.reject(error);
+  }
+);
+
+// RESPONSE INTERCEPTOR
+// Xử lý lỗi chung (401, 403, 500...)
 axios.interceptors.response.use(
   function (response) {
+    // Nếu thành công (2xx), trả về response như bình thường
     return response;
   },
   function (error) {
-    // Check if error has a response from server
+    // Nếu có lỗi (4xx, 5xx)
     if (error.response) {
       const { status, data } = error.response;
 
@@ -16,29 +39,25 @@ axios.interceptors.response.use(
         toast.error("Lỗi Server (500)! Vui lòng thử lại sau.");
       }
 
-      // 401: Unauthorized (Token expired or missing)
-      // Avoid duplicated toast for login failure which is usually handled in component
+      // 401: Unauthorized (Token hết hạn hoặc không đúng)
       else if (status === 401 && !error.config.url.includes('/login')) {
         toast.error("Phiên đăng nhập hết hạn! Vui lòng đăng nhập lại.");
-        // Optional: Redirect to login or clear localStorage?
-        // localStorage.removeItem('token');
-        // window.location.href = '/'; 
+        // Gợi ý: Xóa token cũ đi để app biết là user đã logout
+        localStorage.removeItem('token');
       }
 
-      // 403: Forbidden (Role violation)
+      // 403: Forbidden (Không có quyền)
       else if (status === 403) {
         toast.error(data.message || "Bạn không có quyền thực hiện hành động này!");
       }
 
-      // 404: Not Found
-      // We might not want to toast 404 globally as it might be a logic check (e.g. check if user exists)
+      // 404: Not Found (Tùy logic mà có toast hay không)
 
     } else if (error.request) {
-      // Network failure (Server down, no internet)
+      // Mất mạng hoặc Server chết hẳn
       toast.error("Mất kết nối đến Server! Vui lòng kiểm tra mạng.");
     }
 
-    // Always reject promise so components can handle specific cases too
     return Promise.reject(error);
   }
 );

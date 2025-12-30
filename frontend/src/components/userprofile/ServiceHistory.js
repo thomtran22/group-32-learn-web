@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   FaCalendar,
-  FaTicketAlt,
-  FaReply,
-  FaExchangeAlt,
-  FaTimes,
+  FaTicketAlt
 } from "react-icons/fa";
 import axiosClient from "../../utils/axiosConfig";
 import "../../assets/css/userprofile.css";
