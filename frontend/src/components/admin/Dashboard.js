@@ -7,7 +7,7 @@ import {
 import { apiGetDashboardStats, apiGetRevenueStats } from '../../services/adminApi';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import { subDays, startOfMonth, endOfMonth, startOfToday, endOfToday, format, eachDayOfInterval, eachHourOfInterval, eachMonthOfInterval, getYear, getMonth, getDate } from 'date-fns';
+import { subDays, startOfMonth, endOfMonth, startOfToday, endOfToday, format, eachDayOfInterval, eachHourOfInterval, eachMonthOfInterval } from 'date-fns';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
@@ -106,7 +106,7 @@ const Dashboard = () => {
                         orders: apiData ? apiData.orderCount : 0,
                     };
                 });
-                
+
                 setRevenueData(chartData);
             }
         } catch (error) {
@@ -116,12 +116,12 @@ const Dashboard = () => {
             setLoadingChart(false);
         }
     };
-    
+
     const handlePresetClick = (key) => {
         setActivePreset(key);
         setDateRange(presets[key].range);
     }
-    
+
     const handleDateChange = (update) => {
         setDateRange(update);
         if (update[1]) { // Chỉ bỏ active preset khi đã chọn xong cả 2 ngày
@@ -171,23 +171,22 @@ const Dashboard = () => {
                 {/* Header: Mobile xếp dọc, Desktop xếp ngang */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                     <h3 className="text-lg font-bold text-gray-700">Biểu đồ Doanh thu</h3>
-                    
+
                     {/* Container bộ lọc: Mobile full width */}
                     <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
                         {Object.entries(presets).map(([key, { label }]) => (
-                             <button
+                            <button
                                 key={key}
                                 onClick={() => handlePresetClick(key)}
-                                className={`flex-1 md:flex-none px-3 py-1.5 text-xs md:text-sm rounded transition-all whitespace-nowrap ${
-                                    activePreset === key 
-                                    ? 'bg-blue-600 text-white font-medium shadow-sm' 
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                }`}
+                                className={`flex-1 md:flex-none px-3 py-1.5 text-xs md:text-sm rounded transition-all whitespace-nowrap ${activePreset === key
+                                        ? 'bg-blue-600 text-white font-medium shadow-sm'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}
                             >
                                 {label}
                             </button>
                         ))}
-                        
+
                         {/* DatePicker: Mobile full width (w-full), Desktop cố định (md:w-56) */}
                         <div className="w-full md:w-auto mt-2 md:mt-0">
                             <DatePicker
@@ -204,22 +203,22 @@ const Dashboard = () => {
 
                 {/* Chart Container: Mobile cao 300px, Desktop cao 400px */}
                 <div className="h-[300px] md:h-[400px] w-full min-w-0">
-                    {loadingChart ? <div className="text-center pt-20">Đang tải biểu đồ...</div> : 
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                        <LineChart data={revenueData}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                            <XAxis dataKey="name" axisLine={false} tickLine={false} dy={10} fontSize={12} />
-                            <YAxis yAxisId="left" axisLine={false} tickLine={false} tickFormatter={val => new Intl.NumberFormat('vi-VN').format(val)} />
-                            <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} allowDecimals={false} />
-                            <Tooltip 
-                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} 
-                                formatter={(value, name) => [name === 'Doanh thu' ? formatCurrency(value) : value, name]}
-                            />
-                            <Legend />
-                            <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="#10B981" strokeWidth={2} dot={false} activeDot={{ r: 6 }} name="Doanh thu" />
-                            <Line yAxisId="right" type="monotone" dataKey="orders" stroke="#3B82F6" strokeWidth={2} dot={false} activeDot={{ r: 6 }} name="Số đơn" />
-                        </LineChart>
-                    </ResponsiveContainer>}
+                    {loadingChart ? <div className="text-center pt-20">Đang tải biểu đồ...</div> :
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                            <LineChart data={revenueData}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} dy={10} fontSize={12} />
+                                <YAxis yAxisId="left" axisLine={false} tickLine={false} tickFormatter={val => new Intl.NumberFormat('vi-VN').format(val)} width={100} />
+                                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} allowDecimals={false} />
+                                <Tooltip
+                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                    formatter={(value, name) => [name === 'Doanh thu' ? formatCurrency(value) : value, name]}
+                                />
+                                <Legend />
+                                <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="#10B981" strokeWidth={2} dot={false} activeDot={{ r: 6 }} name="Doanh thu" />
+                                <Line yAxisId="right" type="monotone" dataKey="orders" stroke="#3B82F6" strokeWidth={2} dot={false} activeDot={{ r: 6 }} name="Số đơn" />
+                            </LineChart>
+                        </ResponsiveContainer>}
                 </div>
             </div>
 

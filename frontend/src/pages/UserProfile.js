@@ -15,6 +15,7 @@ import VoucherWallet from "../components/userprofile/VoucherWallet";
 import OrderHistory from "../components/userprofile/OrderHistory";
 import LoginModal from "../components/login/LoginModal"; // Import LoginModal
 import "../assets/css/userprofile.css";
+import Swal from 'sweetalert2';
 
 const menuItems = [
   {
@@ -137,12 +138,25 @@ const UserProfile = () => {
   const ActiveTitle = menuItems.find((item) => item.id === activeTab)?.name;
 
   const handleLogout = () => {
-    if (window.confirm("Bạn có chắc chắn muốn đăng xuất?")) {
-      localStorage.removeItem("token");
-      sessionStorage.clear();
-      navigate("/");
-      toast.success("Đã đăng xuất thành công");
-    }
+    (async () => {
+      const result = await Swal.fire({
+        title: 'Bạn có chắc chắn muốn đăng xuất?',
+        text: 'Bạn sẽ bị đăng xuất khỏi hệ thống.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Đăng xuất',
+        cancelButtonText: 'Hủy',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6'
+      });
+
+      if (result.isConfirmed) {
+        localStorage.removeItem("token");
+        sessionStorage.clear();
+        window.location.href = "/";
+        toast.success("Đã đăng xuất thành công");
+      }
+    })();
   };
 
   // Hiển thị màn hình chờ hoặc null trong khi đang check quyền hoặc modal đang mở
@@ -165,15 +179,8 @@ const UserProfile = () => {
     <div className="user-profile-container">
       <div className="user-profile-sidebar">
         <h3 className="sidebar-title">Quản lý Tài khoản</h3>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            height: "100%",
-            justifyContent: "space-between",
-          }}
-        >
-          <div>
+         <div className="sidebar-menu-wrapper"> 
+          <div className="sidebar-menu-list">
             {menuItems.map((item) => (
               <SidebarItem
                 key={item.id}
@@ -184,14 +191,8 @@ const UserProfile = () => {
             ))}
           </div>
 
-          <div
-            className="sidebar-item"
+          <div className="sidebar-item sidebar-logout"
             onClick={handleLogout}
-            style={{
-              marginTop: "20px",
-              color: "var(--primary-color)",
-              borderTop: "1px solid #eee",
-            }}
           >
             <FaSignOutAlt className="sidebar-item-icon" />
             Đăng xuất

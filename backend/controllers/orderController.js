@@ -5,7 +5,40 @@ import Cart from "../models/CartModel.js";
 import crypto from "crypto";
 import querystring from "qs";
 import moment from "moment";
-import { get } from "http";
+import redisClient from "../config/redis.js";
+
+const clearAdminCache = async () => {
+  if (redisClient && redisClient.isOpen) {
+    try {
+      await redisClient.del('admin:dashboard');
+      const keys = await redisClient.keys('admin:revenue:*');
+      if (keys.length > 0) await redisClient.del(keys);
+    } catch (error) {
+      console.error('Redis Clear Error:', error);
+    }
+  }
+};
+
+// Xóa cache Sản phẩm (Khi tồn kho thay đổi)
+const clearProductCache = async (skuList = []) => {
+  if (redisClient && redisClient.isOpen) {
+    try {
+      // Xóa cache danh sách sản phẩm (vì số lượng tồn kho hiển thị bên ngoài có thể thay đổi)
+      const listKeys = await redisClient.keys('products:*');
+      if (listKeys.length > 0) await redisClient.del(listKeys);
+
+      // Xóa cache chi tiết từng sản phẩm bị thay đổi tồn kho
+      if (skuList.length > 0) {
+        const detailKeys = skuList.map(sku => `product_detail:${sku}`);
+        await redisClient.del(detailKeys);
+      }
+      // console.log('🧹 Cleared Product Stock Cache');
+    } catch (error) {
+      console.error('Redis Clear Product Error:', error);
+    }
+  }
+};
+
 
 const createOrder = async (req, res) => {
   const userId = req.user?.id;
@@ -17,6 +50,7 @@ const createOrder = async (req, res) => {
     paymentMethod, // COD / BANKING / VNPAY
   } = req.body;
 
+  const changedProductSkus = [];
   try {
     if (!orderItems || orderItems.length === 0) {
       return res.status(400).json({
@@ -83,13 +117,23 @@ const createOrder = async (req, res) => {
         product: dbProduct._id,
       });
 
+      // Thêm SKU vào danh sách cần xóa cache
+      if (dbProduct.sku && !changedProductSkus.includes(dbProduct.sku)) {
+        changedProductSkus.push(dbProduct.sku);
+      }
+
       // update trừ tồn kho
       bulkUpdateOps.push({
         updateOne: {
           filter: {
             _id: dbProduct._id,
-            "variants.color": item.color,
-            "variants.size": item.size,
+            variants: {
+              $elemMatch: {
+                color: item.color,
+                size: item.size,
+                quantity: { $gte: item.quantity },
+              },
+            },
           },
           update: {
             $inc: { "variants.$.quantity": -item.quantity },
@@ -101,11 +145,7 @@ const createOrder = async (req, res) => {
     const shippingPrice = 0; // Logic phí ship
     const totalPrice = calculatedItemsPrice + shippingPrice;
 
-    if (
-      !shippingAddress ||
-      !shippingAddress.fullName ||
-      !shippingAddress.phone
-    ) {
+    if (!shippingAddress || !shippingAddress.fullName ||!shippingAddress.phone) {
       return res.status(400).json({
         success: false,
         message: "Thiếu thông tin giao hàng",
@@ -127,20 +167,29 @@ const createOrder = async (req, res) => {
     });
 
     const createdOrder = await order.save();
-    //Tru ton kho
+
     if (bulkUpdateOps.length > 0) {
       await Product.bulkWrite(bulkUpdateOps);
     }
 
+    await clearProductCache(changedProductSkus);
+    await clearAdminCache();
+
     if (userId) {
-      const boughtProductIds = orderItems.map((item) => item.itemId);
+      // Dùng productId từ request (nếu có) hoặc tìm lại từ items
+      // orderItems ở đây là req.body.orderItems.
+      // Cần chắc chắn nó chứa itemId (cart item id) để filter.
+      // Nếu frontend gửi lên: [{ productId, quantity, color, size, itemId }, ...]
+      const boughtItemIds = orderItems
+        .map((item) => item.itemId)
+        .filter((id) => id); // Lọc null/undefined
       const userCart = await Cart.findOne({ userId }).populate(
         "items.productId"
       );
 
       if (userCart) {
         const remainingItems = userCart.items.filter(
-          (cartItem) => !boughtProductIds.includes(cartItem._id.toString())
+          (cartItem) => !boughtItemIds.includes(cartItem._id.toString())
         );
 
         let newTotal = 0;
@@ -175,7 +224,10 @@ const getOrderAvail = async (req, res) => {
   try {
     const orders = await Order.find({
       shipperId: null,
-      status: { $in: ["Pending", "Processing"] },
+      $or: [
+        { paymentMethod: "COD", status: "Pending" },
+        { status: "Processing" },
+      ],
     }).sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
@@ -337,8 +389,12 @@ const vnpayReturn = async (req, res) => {
           order.isPaid = true;
           order.paidAt = Date.now();
 
-          // Thanh toán xong thì chờ Shipper nhận đơn
-          order.status = "Processing";
+          // Chỉ chuyển trạng thái sang Processing nếu đơn đang Pending
+          // Nếu đơn đã Cancelled thì giữ nguyên (cần xử lý hoàn tiền thủ công hoặc logic khác)
+          // Nếu đơn đã Shipping (Shipper nhận trước khi thanh toán về) thì giữ nguyên status Shipping
+          if (order.status === "Pending") {
+            order.status = "Processing";
+          }
 
           order.paymentResult = {
             id: vnp_Params["vnp_TransactionNo"],
@@ -347,6 +403,9 @@ const vnpayReturn = async (req, res) => {
             bankCode: vnp_Params["vnp_BankCode"],
           };
           await order.save();
+
+          // Xóa cache Admin vì doanh thu đã thay đổi
+          await clearAdminCache();
         }
 
         res.json({
@@ -394,14 +453,12 @@ const viewOrders = async (req, res) => {
 
 const getOrderById = async (req, res) => {
   try {
-    // Lấy ID từ URL (VD: /api/orders/654abc...)
     const order = await Order.findById(req.params.id);
 
     if (order) {
       res.json({ success: true, order });
     } else {
-      res
-        .status(404)
+      res.status(404)
         .json({ success: false, message: "Không tìm thấy đơn hàng" });
     }
   } catch (error) {
@@ -468,26 +525,48 @@ const cancelOrder = async (req, res) => {
       });
     }
 
-    const bulkUpdateOps = order.orderItems.map((item) => ({
-      updateOne: {
-        filter: {
-          _id: item.product,
-          "variants.color": item.color,
-          "variants.size": item.size,
+    // Lấy product IDs để tìm SKU cho việc xóa cache
+    const productIds = order.orderItems.map(item => item.product);
+    const dbProducts = await Product.find({ _id: { $in: productIds } }).select('sku');
+
+    // Tạo map để tra cứu SKU nhanh
+    const skuMap = {};
+    dbProducts.forEach(p => skuMap[p._id.toString()] = p.sku);
+
+    const changedProductSkus = [];
+    const bulkUpdateOps = order.orderItems.map((item) => {
+      // Lưu lại SKU để xóa cache
+      const sku = skuMap[item.product.toString()];
+      if (sku && !changedProductSkus.includes(sku)) {
+        changedProductSkus.push(sku);
+      }
+
+      return {
+        updateOne: {
+          filter: {
+            _id: item.product,
+            "variants.color": item.color,
+            "variants.size": item.size,
+          },
+          update: {
+            $inc: { "variants.$.quantity": item.quantity },
+          },
         },
-        update: {
-          $inc: { "variants.$.quantity": item.quantity },
-        },
-      },
-    }));
+      };
+    });
 
     if (bulkUpdateOps.length > 0) {
       await Product.bulkWrite(bulkUpdateOps);
     }
 
     order.status = "Cancelled";
-
     await order.save();
+
+    // --- XÓA CACHE SAU KHI HỦY ĐƠN ---
+    // Tồn kho tăng lại -> Xóa cache sản phẩm
+    await clearProductCache(changedProductSkus);
+    // Số lượng đơn (Pending) thay đổi -> Xóa cache admin dashboard
+    await clearAdminCache();
 
     res.status(200).json({
       success: true,
@@ -496,8 +575,7 @@ const cancelOrder = async (req, res) => {
     });
   } catch (error) {
     console.error("Lỗi khi hủy đơn hàng:", error);
-    res
-      .status(500)
+    res.status(500)
       .json({ success: false, message: "Lỗi server khi hủy đơn hàng." });
   }
 };
@@ -519,6 +597,9 @@ const confirmOrder = async (req, res) => {
     order.completedAt = Date.now();
     await order.save();
 
+    // Doanh thu được ghi nhận chắc chắn -> Xóa cache admin
+    await clearAdminCache();
+
     res.json({ success: true, message: "Đơn hàng đã hoàn thành!", order });
   } catch (error) {
     res.status(500).json({ message: "Lỗi hệ thống" });
@@ -528,9 +609,6 @@ const confirmOrder = async (req, res) => {
 const receiveOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
-    console.log("1. Đang xử lý OrderID:", orderId);
-    console.log("2. User từ Token:", req.user);
-
     const order = await Order.findById(orderId);
 
     if (!order) {
@@ -552,13 +630,13 @@ const receiveOrder = async (req, res) => {
     order.deliveredAt = Date.now();
 
     await order.save();
-    console.log("5. Cập nhật thành công!");
 
-    res
-      .status(200)
+    // Doanh thu thay đổi -> Xóa cache Admin
+    await clearAdminCache();
+
+    res.status(200)
       .json({ message: "Xác nhận đã nhận hàng thành công!", order });
   } catch (error) {
-    // In lỗi chi tiết ra terminal để bạn đọc
     console.error("LỖI CHI TIẾT TẠI BACKEND:", error);
     res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
   }

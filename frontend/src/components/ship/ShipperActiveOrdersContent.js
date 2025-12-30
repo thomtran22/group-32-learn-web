@@ -5,12 +5,12 @@ import {
   FaSyncAlt,
   FaCheckCircle,
   FaClock,
-  FaSpinner,
   FaChevronDown,
   FaChevronUp,
 } from "react-icons/fa";
 import "../../assets/css/shipper.css";
 import { toast } from "react-toastify";
+import Swal from 'sweetalert2';
 
 const ShipperActiveOrdersContent = () => {
   const [activeOrders, setActiveOrders] = useState([]);
@@ -34,12 +34,26 @@ const ShipperActiveOrdersContent = () => {
   }, [fetchActiveOrders]);
 
   const updateStatus = async (id, status) => {
-    if (!window.confirm("Xác nhận cập nhật trạng thái?")) return;
     try {
+      const result = await Swal.fire({
+        title: 'Xác nhận cập nhật trạng thái?',
+        text: 'Bạn có chắc chắn muốn cập nhật trạng thái đơn hàng ?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Xác nhận',
+        cancelButtonText: 'Hủy',
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d'
+      });
+
+      if (!result.isConfirmed) return;
+
       await axios.put(`/shipper/orders/${id}/status`, { newStatus: status });
       fetchActiveOrders();
+      toast.success('Cập nhật trạng thái thành công');
     } catch (err) {
-      toast.error("Lỗi cập nhật");
+      console.error(err);
+      toast.error('Lỗi cập nhật');
     }
   };
 

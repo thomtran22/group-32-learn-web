@@ -5,25 +5,52 @@ import ShipperInfo from '../models/ShipperInfo.js';
 import { generateUploadSignature } from '../services/cloudinaryService.js';
 import { differenceInDays, startOfDay, endOfDay } from 'date-fns';
 import mongoose from 'mongoose';
+import redisClient from '../config/redis.js';
+
+
+const clearProductCache = async () => {
+    // Nếu Redis client đã kết nối
+    if (redisClient && redisClient.isOpen) {
+        try {
+            // Tìm tất cả keys bắt đầu bằng products:
+            const keys = await redisClient.keys('products:*');
+            if (keys.length > 0) {
+                // Xóa các key này
+                await redisClient.del(keys);
+            }
+        } catch (err) {
+            console.error('Redis Clear Error:', err);
+        }
+    }
+}
 
 // --- DASHBOARD ---
 export const getDashboardStats = async (req, res) => {
     try {
+        // --- REDIS CACHE ---
+        const cacheKey = 'admin:dashboard';
+        if (redisClient && redisClient.isOpen) {
+            const cachedData = await redisClient.get(cacheKey);
+            if (cachedData) {
+                return res.json(JSON.parse(cachedData));
+            }
+        }
+
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
         const totalRevenue = await Order.aggregate([
-            { $match: { status: 'Delivered', isPaid: true } },
+            { $match: { status: { $in: ['Delivered', 'Completed'] }, isPaid: true } },
             { $group: { _id: null, total: { $sum: '$totalPrice' } } }
         ]);
 
         const todayRevenue = await Order.aggregate([
-            { 
-                $match: { 
-                    status: 'Delivered', 
+            {
+                $match: {
+                    status: { $in: ['Delivered', 'Completed'] },
                     isPaid: true,
                     deliveredAt: { $gte: today }
-                } 
+                }
             },
             { $group: { _id: null, total: { $sum: '$totalPrice' } } }
         ]);
@@ -33,7 +60,7 @@ export const getDashboardStats = async (req, res) => {
         ]);
 
         const totalProducts = await Product.countDocuments();
-        
+
         const lowStockProducts = await Product.countDocuments({
             'variants.quantity': { $lt: 10 }
         });
@@ -41,7 +68,7 @@ export const getDashboardStats = async (req, res) => {
         const totalCustomers = await User.countDocuments({ role: 'customer' });
         const totalShippers = await User.countDocuments({ role: 'shipper' });
 
-        res.json({
+        const responseData = {
             success: true,
             data: {
                 revenue: {
@@ -58,7 +85,14 @@ export const getDashboardStats = async (req, res) => {
                     shippers: totalShippers
                 }
             }
-        });
+        };
+
+        // Save Cache 5 minutes
+        if (redisClient && redisClient.isOpen) {
+            await redisClient.setEx(cacheKey, 300, JSON.stringify(responseData));
+        }
+
+        res.json(responseData);
     } catch (error) {
         console.error('Dashboard error:', error);
         res.status(500).json({ success: false, message: 'Lỗi server' });
@@ -74,7 +108,7 @@ export const getRevenueStats = async (req, res) => {
         if (!from || !to) {
             return res.status(400).json({ success: false, message: 'Vui lòng cung cấp ngày bắt đầu và kết thúc.' });
         }
-        
+
         const startDate = startOfDay(new Date(from));
         const endDate = endOfDay(new Date(to));
 
@@ -106,11 +140,18 @@ export const getRevenueStats = async (req, res) => {
             };
             dateFormat = '%Y-%m';
         }
-        
+
+        // --- REDIS CACHE ---
+        const cacheKey = `admin:revenue:${JSON.stringify(req.query)}`;
+        if (redisClient && redisClient.isOpen) {
+            const cachedData = await redisClient.get(cacheKey);
+            if (cachedData) return res.json(JSON.parse(cachedData));
+        }
+
         const revenueData = await Order.aggregate([
             {
                 $match: {
-                    status: 'Delivered',
+                    status: { $in: ['Delivered', 'Completed'] },
                     isPaid: true,
                     deliveredAt: {
                         $gte: startDate,
@@ -128,7 +169,14 @@ export const getRevenueStats = async (req, res) => {
             { $sort: { '_id': 1 } }
         ]);
 
-        res.json({ success: true, data: revenueData });
+        const responseData = { success: true, data: revenueData };
+
+        // Cache 10 minutes
+        if (redisClient && redisClient.isOpen) {
+            await redisClient.setEx(cacheKey, 600, JSON.stringify(responseData));
+        }
+
+        res.json(responseData);
     } catch (error) {
         console.error('Revenue stats error:', error);
         res.status(500).json({ success: false, message: error.message });
@@ -198,6 +246,14 @@ export const updateOrderStatus = async (req, res) => {
         }
 
         await order.save();
+
+        // Xóa cache thống kê khi đơn hàng thay đổi trạng thái
+        if (redisClient && redisClient.isOpen) {
+            await redisClient.del('admin:dashboard');
+            const keys = await redisClient.keys('admin:revenue:*');
+            if (keys.length > 0) await redisClient.del(keys);
+        }
+
         res.json({ success: true, message: 'Cập nhật thành công', order });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -205,10 +261,9 @@ export const updateOrderStatus = async (req, res) => {
 };
 
 // --- PRODUCTS  ---
-
 export const getAllProducts = async (req, res) => {
     try {
-        const { limit = 20, search } = req.query;
+        const { page = 1, limit = 10, search } = req.query; // Default limit 10 for better pagination view
         const filter = {};
         if (search) {
             filter.$or = [
@@ -217,12 +272,26 @@ export const getAllProducts = async (req, res) => {
             ];
         }
 
+        const skip = (page - 1) * limit;
+
         const products = await Product.find(filter)
             .populate('category', 'name')
-            .sort({ createdAt: -1 })
+            .sort({ createdAt: -1, _id: 1 }) // Thêm _id để đảm bảo thứ tự nhất quán khi createdAt trùng nhau
+            .skip(skip)
             .limit(parseInt(limit));
 
-        res.json({ success: true, products });
+        const total = await Product.countDocuments(filter);
+
+        res.json({
+            success: true,
+            products,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                total,
+                pages: Math.ceil(total / limit)
+            }
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -237,20 +306,18 @@ export const createProduct = async (req, res) => {
 
         if (existingProduct) {
             // --- SẢN PHẨM ĐÃ TỒN TẠI ---
-            
             // Gộp biến thể (Variants)
             // Duyệt qua các biến thể mới được gửi lên
             variants.forEach(newVar => {
-                // Kiểm tra xem cặp màu + size này đã có trong DB chưa
                 const duplicateIndex = existingProduct.variants.findIndex(
                     v => v.color === newVar.color && v.size === newVar.size
                 );
 
                 if (duplicateIndex > -1) {
-                    // Nếu đã có (VD: Đỏ - L), thì cộng dồn số lượng
+                    // Nếu đã có thì cộng dồn số lượng
                     existingProduct.variants[duplicateIndex].quantity += newVar.quantity;
                 } else {
-                    // Nếu chưa có (VD: Xanh - M), thì push vào mảng
+                    // Nếu chưa có thì push vào mảng
                     existingProduct.variants.push(newVar);
                 }
             });
@@ -258,32 +325,36 @@ export const createProduct = async (req, res) => {
             // Gộp hình ảnh
             // Lọc ra những ảnh chưa có trong mảng cũ
             if (images && images.length > 0) {
-                 const newImages = images.filter(img => !existingProduct.images.includes(img));
-                 existingProduct.images = [...existingProduct.images, ...newImages];
+                const newImages = images.filter(img => !existingProduct.images.includes(img));
+                existingProduct.images = [...existingProduct.images, ...newImages];
             }
-            
-            // Cập nhật các thông tin khác (Tùy chọn: có thể cập nhật đè hoặc giữ nguyên)
-            // VCập nhật giá mới nhất nếu admin đổi giá
+
+            // Cập nhật các thông tin khác
+            // Cập nhật giá mới nhất nếu admin đổi giá
             existingProduct.price = price;
             existingProduct.name = name;
-            if(description) existingProduct.description = description;
+            if (description) existingProduct.description = description;
 
             await existingProduct.save();
-            
-            return res.json({ 
-                success: true, 
-                message: 'Đã cập nhật thêm biến thể vào sản phẩm cũ!', 
-                product: existingProduct 
-            });
 
+            await clearProductCache(sku);
+
+            return res.json({
+                success: true,
+                message: 'Đã cập nhật thêm biến thể vào sản phẩm cũ!',
+                product: existingProduct
+            });
         } else {
             // --- SP MỚI ---
             const newProduct = new Product(req.body);
             await newProduct.save();
-            return res.json({ 
-                success: true, 
-                message: 'Tạo sản phẩm mới thành công', 
-                product: newProduct 
+
+            await clearProductCache(); // Xóa cache
+
+            return res.json({
+                success: true,
+                message: 'Tạo sản phẩm mới thành công',
+                product: newProduct
             });
         }
 
@@ -302,11 +373,13 @@ export const updateProduct = async (req, res) => {
         );
 
         if (!product) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'Không tìm thấy sản phẩm' 
+            return res.status(404).json({
+                success: false,
+                message: 'Không tìm thấy sản phẩm'
             });
         }
+
+        await clearProductCache(product.sku);
 
         res.json({
             success: true,
@@ -320,7 +393,12 @@ export const updateProduct = async (req, res) => {
 
 export const deleteProduct = async (req, res) => {
     try {
-        await Product.findByIdAndDelete(req.params.productId);
+        const product = await Product.findByIdAndDelete(req.params.productId);
+        if (product) {
+            // Xóa cache list và cache chi tiết của SKU vừa xoá
+            await clearProductCache(product.sku);
+        }
+        
         res.json({ success: true, message: 'Xóa sản phẩm thành công' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -334,10 +412,10 @@ export const getAllShippers = async (req, res) => {
 
         const detailedShippers = await Promise.all(shippersUser.map(async (user) => {
             const info = await ShipperInfo.findOne({ userId: user._id }) || {};
-            
+
             const totalOrders = await Order.countDocuments({ shipperId: user._id });
-            const deliveredOrders = await Order.countDocuments({ shipperId: user._id, status: 'Delivered' });
-            
+            const deliveredOrders = await Order.countDocuments({ shipperId: user._id, status: { $in: ['Delivered', 'Completed'] } });
+
             return {
                 _id: user._id,
                 fullName: user.fullName,
@@ -406,9 +484,9 @@ export const getSignature = (req, res) => {
     try {
         // Có thể lấy folder từ query nếu muốn linh động (VD: ?folder=avatars)
         const folder = req.query.folder || 'products';
-        
+
         const signatureData = generateUploadSignature(folder);
-        
+
         res.status(200).json({
             success: true,
             data: signatureData

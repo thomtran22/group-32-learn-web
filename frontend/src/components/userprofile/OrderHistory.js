@@ -20,6 +20,7 @@ import "../../assets/css/userprofile.css";
 
 import { toast } from 'react-toastify'; // Thông báo góc màn hình
 import 'react-toastify/dist/ReactToastify.css'; // CSS cho toast
+import Swal from 'sweetalert2';
 
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
@@ -31,17 +32,28 @@ const OrderHistory = () => {
   const navigate = useNavigate();
 
   const handleCancelOrder = async (orderId) => {
-    if (window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) {
-      try {
-        await apiCancelOrder(orderId);
-        toast.success("Hủy đơn hàng thành công!");
-        fetchOrders();
-      } catch (err) {
-        console.error(err);
-        toast.error(
-          err.response?.data?.message || "Không thể hủy đơn hàng lúc này."
-        );
-      }
+    try {
+      const result = await Swal.fire({
+        title: 'Bạn có chắc chắn muốn hủy đơn hàng này không?',
+        text: 'Hành động này không thể hoàn tác.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Hủy đơn',
+        cancelButtonText: 'Bỏ qua'
+      });
+
+      if (!result.isConfirmed) return;
+
+      await apiCancelOrder(orderId);
+      toast.success('Hủy đơn hàng thành công!');
+      fetchOrders();
+    } catch (err) {
+      console.error(err);
+      toast.error(
+        err.response?.data?.message || 'Không thể hủy đơn hàng lúc này.'
+      );
     }
   };
 
@@ -117,25 +129,29 @@ const OrderHistory = () => {
   };
 
   const handleConfirmReceived = async (orderId) => {
-    if (
-      window.confirm(
-        "Bạn xác nhận đã nhận được hàng và muốn hoàn thành đơn hàng này?"
-      )
-    ) {
-      try {
-        await apiReceiveOrder(orderId);
+    try {
+      const result = await Swal.fire({
+        title: 'Xác nhận đã nhận hàng',
+        text: 'Bạn xác nhận đã nhận được hàng và muốn hoàn thành đơn hàng này?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Xác nhận',
+        cancelButtonText: 'Hủy',
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d'
+      });
 
-        toast.success("Cập nhật trạng thái Hoàn thành thành công!");
+      if (!result.isConfirmed) return;
 
-        await fetchOrders();
-        setActiveTab("COMPLETED");
-      } catch (err) {
-        console.error("Lỗi khi xác nhận nhận hàng:", err);
-        toast.error(
-          err.response?.data?.message ||
-            "Không thể cập nhật trạng thái đơn hàng."
-        );
-      }
+      await apiReceiveOrder(orderId);
+      toast.success('Cập nhật trạng thái Hoàn thành thành công!');
+      await fetchOrders();
+      setActiveTab('COMPLETED');
+    } catch (err) {
+      console.error('Lỗi khi xác nhận nhận hàng:', err);
+      toast.error(
+        err.response?.data?.message || 'Không thể cập nhật trạng thái đơn hàng.'
+      );
     }
   };
 

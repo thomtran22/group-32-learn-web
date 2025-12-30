@@ -58,25 +58,45 @@ app.use("/api/admin", adminRoutes);
 // Todo: Dùng để test
 // Cách dùng trên trình duyệt: http://localhost:4000/api/test/get-token/ID_USER_CUA_BAN?role=admin
 app.get('/api/test/get-token/:userId', (req, res) => {
-    const { userId } = req.params;
-    const role = req.query.role || 'customer'; 
+  const { userId } = req.params;
+  const role = req.query.role || 'customer';
 
-    if (!process.env.JWT_SECRET) {
-        return res.status(500).json({ message: "Chưa cấu hình JWT_SECRET trong file .env" });
-    }
+  if (!process.env.JWT_SECRET) {
+    return res.status(500).json({ message: "Chưa cấu hình JWT_SECRET trong file .env" });
+  }
 
-    // Tạo token hạn 30 ngày với đầy đủ id và role
-    const token = jwt.sign(
-        { id: userId, role: role }, // Đã sửa lỗi cú pháp ở đây
-        process.env.JWT_SECRET,
-        { expiresIn: '30d' }
-    );
+  // Tạo token hạn 30 ngày với đầy đủ id và role
+  const token = jwt.sign(
+    { id: userId, role: role },
+    process.env.JWT_SECRET,
+    { expiresIn: '30d' }
+  );
 
-    res.json({
-        message: `Tạo token thành công cho quyền: ${role.toUpperCase()}`,
-        userId: userId,
-        role: role,
-        token: token
-    });
+  res.json({
+    message: `Tạo token thành công cho quyền: ${role.toUpperCase()}`,
+    userId: userId,
+    role: role,
+    token: token
+  });
 });
+
+// 404 Not Found Handler
+app.use((req, res, next) => {
+  res.status(404).json({
+    success: false,
+    message: `Not Found - ${req.originalUrl}`
+  });
+});
+
+// Global Error Handler (500)
+app.use((err, req, res, next) => {
+  console.error("🔥 Error:", err.stack);
+  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+  res.status(statusCode).json({
+    success: false,
+    message: err.message,
+    stack: process.env.NODE_ENV === 'production' ? null : err.stack,
+  });
+});
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

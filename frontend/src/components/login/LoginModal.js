@@ -4,9 +4,9 @@ import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
 import ForgotPassword from "./ForgotPassword";
 import axios from "axios";
-import { toast } from 'react-toastify'; 
+import { toast } from 'react-toastify';
 
-function LoginModal({ closeModal }) {
+function LoginModal({ closeModal, onLoginSuccess }) {
   const [mode, setMode] = useState("login");
   const navigate = useNavigate();
 
@@ -67,6 +67,7 @@ function LoginModal({ closeModal }) {
           const userRole = userData.role; // Lấy role từ database trả về
 
           toast.success(`Xin chào, ${userData.fullName}!`);
+          if (onLoginSuccess) onLoginSuccess(userData);
           closeModal?.();
 
           // Chuyển hướng dựa trên role thực tế từ Server
@@ -124,7 +125,7 @@ function LoginModal({ closeModal }) {
 
   return (
     <div
-      className="fixed inset-0 z-[999] bg-black/60 px-3 sm:px-4 overflow-y-auto"
+      className="fixed inset-0 z-[1001] bg-black/60 px-3 sm:px-4 overflow-y-auto"
       onClick={closeModal}
     >
       <div className="min-h-[100dvh] flex items-center justify-center py-6">

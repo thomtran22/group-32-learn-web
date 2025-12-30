@@ -8,12 +8,10 @@ import {
   FaEye,
   FaTimes,
   FaUser,
-  FaMapMarkerAlt,
-  FaBox,
-  FaCheckCircle,
-  FaPhone,
+  FaMapMarkerAlt
 } from "react-icons/fa";
 import "../../assets/css/shipper.css";
+import Swal from 'sweetalert2';
 
 const ShipperDashboardContent = () => {
   const [stats, setStats] = useState({
@@ -45,17 +43,33 @@ const ShipperDashboardContent = () => {
   }, []);
 
   const handleAcceptOrder = async (orderId) => {
-    if (!window.confirm("Bạn chắc chắn muốn nhận giao đơn hàng này?")) return;
-    setProcessingId(orderId);
     try {
-      await axios.put(`/orders/${orderId}/accept`);
-      toast.success("Nhận đơn thành công!");
-      setSelectedOrder(null);
-      fetchAllData();
-    } catch (error) {
-      toast.error("Lỗi xảy ra!");
-    } finally {
-      setProcessingId(null);
+      const result = await Swal.fire({
+        title: 'Bạn chắc chắn muốn nhận giao đơn hàng này?',
+        text: 'Xác nhận nhận đơn để xử lý giao hàng.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Nhận đơn',
+        cancelButtonText: 'Hủy',
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d'
+      });
+
+      if (!result.isConfirmed) return;
+
+      setProcessingId(orderId);
+      try {
+        await axios.put(`/orders/${orderId}/accept`);
+        toast.success('Nhận đơn thành công!');
+        setSelectedOrder(null);
+        fetchAllData();
+      } catch (error) {
+        toast.error('Lỗi xảy ra!');
+      } finally {
+        setProcessingId(null);
+      }
+    } catch (err) {
+      console.error('Confirmation dialog error:', err);
     }
   };
 

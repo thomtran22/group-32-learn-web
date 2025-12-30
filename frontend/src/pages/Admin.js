@@ -1,7 +1,7 @@
 // --- FILE: Admin.js ---
 import React, { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { FaBars, FaTimes } from 'react-icons/fa';
+import { FaBars } from 'react-icons/fa';
 import Sidebar from '../components/admin/Sidebar';
 import Dashboard from '../components/admin/Dashboard';
 import OrderManagement from '../components/admin/OrderManagement';

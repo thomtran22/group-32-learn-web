@@ -20,13 +20,13 @@ export const CartProvider = ({ children }) => {
     const [cartItems, setCartItems] = useState([]);
     const [isCartLoaded, setIsCartLoaded] = useState(false);
     const [selectedItems, setSelectedItems] = useState([]);
-    
+
     // State quản lý Modal Login ngay tại Context
-    const [isModalOpen, setIsModalOpen] = useState(false); 
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const [userRole, setUserRole] = useState(null);
     const isUpdateActionRef = useRef(false);
-    
+
     // Check token để biết trạng thái đăng nhập
     const token = localStorage.getItem('token');
     const isLoggedIn = !!token;
@@ -51,10 +51,10 @@ export const CartProvider = ({ children }) => {
     const closeModal = () => {
         setIsModalOpen(false);
         // Sau khi đăng nhập thành công và đóng modal, load lại giỏ hàng của user đó
-        loadCart(); 
+        loadCart();
     };
 
-     const fetchUserRole = async () => {
+    const fetchUserRole = async () => {
         const token = localStorage.getItem('token');
         if (!token) {
             setUserRole(null);
@@ -113,7 +113,7 @@ export const CartProvider = ({ children }) => {
         if (result.isConfirmed) {
             selectedItems.forEach(id => handleRemoveItem(id, true));
             setSelectedItems([]);
-            
+
             Swal.fire(
                 'Đã xóa!',
                 'Các sản phẩm đã được xóa khỏi giỏ hàng.',
@@ -143,7 +143,6 @@ export const CartProvider = ({ children }) => {
         const role = userRole || await fetchUserRole();
 
         if (role !== 'customer') {
-            console.log(`User role: ${role} - Không load giỏ hàng`);
             setCartItems([]);
             setIsCartLoaded(true);
             return;
@@ -193,7 +192,6 @@ export const CartProvider = ({ children }) => {
             } else if (error.response?.status === 403) {
                 // Admin/Shipper không có quyền dùng giỏ hàng
                 // KHÔNG xóa token, chỉ set cart rỗng
-                console.log('User không có quyền sử dụng giỏ hàng (Admin/Shipper)');
                 setCartItems([]);
             }
         } finally {
@@ -255,8 +253,8 @@ export const CartProvider = ({ children }) => {
         setCartItems(prevItems => {
             const existingItem = prevItems.find(
                 item => item.productId === product._id &&
-                item.color === product.color &&
-                item.size === product.size
+                    item.color === product.color &&
+                    item.size === product.size
             );
 
             if (existingItem) {
@@ -281,8 +279,6 @@ export const CartProvider = ({ children }) => {
             return [...prevItems, newItem];
         });
 
-        toast.success(`Đã thêm "${product.name}" vào giỏ!`);
-
         try {
             await apiAddToCart({
                 productId: product._id,
@@ -298,8 +294,8 @@ export const CartProvider = ({ children }) => {
             toast.error("Lỗi khi thêm vào giỏ hàng (Check quyền hoặc Server)");
             // Nếu lỗi 403 (Admin không được mua) hoặc 401
             if (error.response?.status === 403) {
-                 // Rollback UI nếu cần
-                 await loadCart();
+                // Rollback UI nếu cần
+                await loadCart();
             }
         }
     };
@@ -314,7 +310,7 @@ export const CartProvider = ({ children }) => {
 
         try {
             await apiRemoveItem(itemId);
-            if(!isBulkDelete) {
+            if (!isBulkDelete) {
                 toast.success("Đã xóa sản phẩm khỏi giỏ hàng");
             }
         } catch (error) {

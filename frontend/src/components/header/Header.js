@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import logo from "../../assets/images/logo.svg";
 import LoginModal from "../login/LoginModal";
@@ -12,8 +12,27 @@ import { toast } from "react-toastify";
 function Header() {
   const { cartCount } = useCart();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const closeModal = () => setIsModalOpen(false);
   const navigate = useNavigate();
+
+  const fetchCurrentUser = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const response = await axios.get("http://localhost:4000/api/user/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setCurrentUser(response.data);
+    } catch (error) {
+      console.error("Failed to fetch user:", error);
+      // localStorage.removeItem("token"); // Optional: clear token if invalid
+    }
+  };
+
+  useEffect(() => {
+    fetchCurrentUser();
+  }, []);
 
   const navLinkClass = ({ isActive }) =>
     `relative text-sm font-semibold tracking-[0.1em] transition-all duration-300 uppercase py-1 ${isActive
@@ -27,6 +46,17 @@ function Header() {
       setIsModalOpen(true);
       return;
     }
+
+    // Nếu đã có thông tin user trong state thì dùng luôn để navigate
+    if (currentUser) {
+      switch (currentUser.role) {
+        case "admin": navigate("/admin"); break;
+        case "shipper": navigate("/shipper"); break;
+        default: navigate("/profile"); break;
+      }
+      return;
+    }
+
     try {
       const response = await axios.get("http://localhost:4000/api/user/me", {
         headers: { Authorization: `Bearer ${token}` },
@@ -71,15 +101,8 @@ function Header() {
 
   return (
     <>
-      {/* Top Header*/}
-      {/* <div className="bg-[#111] py-2.5 text-center text-[11px] text-gray-300 font-light tracking-widest uppercase">
-  <div className="container mx-auto px-4">
-    Free shipping cho đơn hàng từ 500k • Hotline: 0973 285 886
-  </div>
-</div> */}
-
       {/* Main Header */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)]">
+      <header className="sticky top-0 z-[1000] bg-white/95 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)]">
         <div className="container mx-auto px-4 md:px-6 max-w-[1200px]">
           <div className="inner-wrap py-2">
 
@@ -122,12 +145,20 @@ function Header() {
 
                 {/* User Icon */}
                 <div
-                  className="flex items-center gap-2 group p-1 md:p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 cursor-pointer"
+                  className="flex flex-col items-center justify-center gap-0.5 group p-1 hover:bg-gray-100 rounded-lg transition-all duration-300 cursor-pointer min-w-[60px]"
                   onClick={handleUserClick}
                 >
-                  <div className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-gray-200 group-hover:bg-red-100 transition-colors">
+                  <div className="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-full bg-gray-200 group-hover:bg-red-100 transition-colors">
                     <FaUser className="text-sm md:text-xl text-gray-600 group-hover:text-red-600" />
                   </div>
+                  {currentUser && (
+                    <span 
+                        className="hidden md:block text-[11px] font-semibold text-gray-700 group-hover:text-red-600 max-w-[90px] truncate leading-none text-center"
+                        title={currentUser.fullName || currentUser.name}
+                    >
+                      {currentUser.fullName || currentUser.name}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -161,7 +192,7 @@ function Header() {
           </div>
         </div>
       </header>
-      {isModalOpen && <LoginModal closeModal={closeModal} />}
+      {isModalOpen && <LoginModal closeModal={closeModal} onLoginSuccess={(user) => { setCurrentUser(user); fetchCurrentUser(); }} />}
     </>
   );
 }

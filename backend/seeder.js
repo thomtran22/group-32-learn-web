@@ -26,8 +26,6 @@ const importData = async () => {
 
     try {
         // Xóa sạch dữ liệu cũ
-        await Category.deleteMany();
-        await Product.deleteMany();
         await User.deleteMany();
         console.log('Collections Cleared'.yellow);
 
