@@ -43,7 +43,6 @@ app.get("/", (req, res) => {
   res.send("API is running on port " + PORT);
 });
 
-
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -56,7 +55,7 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/admin", adminRoutes);
 
 // Todo: Dùng để test
-// Cách dùng trên trình duyệt: https://group-32-learn-web-8hmv.onrender.com/api/test/get-token/ID_USER_CUA_BAN?role=admin
+// Cách dùng trên trình duyệt: https://group-32-learn-web-pd38.onrender.com/api/test/get-token/ID_USER_CUA_BAN?role=admin
 app.get('/api/test/get-token/:userId', (req, res) => {
   const { userId } = req.params;
   const role = req.query.role || 'customer';

@@ -1,85 +1,78 @@
+import 'dotenv/config';
 import nodemailer from "nodemailer";
+import { google } from "googleapis";
 
-function getBooleanFromEnvironment(value, defaultValue = false) {
-  if (value === undefined || value === null) return defaultValue;
-  const normalizedValue = String(value).trim().toLowerCase();
-  return normalizedValue === "true" || normalizedValue === "1" || normalizedValue === "yes";
+// Debug: Kiểm tra biến môi trường
+const rt = process.env.MAIL_REFRESH_TOKEN;
+console.log("Check Refresh Token:", rt ? `${rt.substring(0, 10)}...` : "UNDEFINED ❌");
+
+// 1. Cấu hình OAuth2 (Giữ nguyên của bạn)
+const CLIENT_ID = process.env.MAIL_CLIENT_ID;
+const CLIENT_SECRET = process.env.MAIL_CLIENT_SECRET;
+const REDIRECT_URI = 'https://developers.google.com/oauthplayground';
+const REFRESH_TOKEN = process.env.MAIL_REFRESH_TOKEN;
+const SENDER_EMAIL = process.env.MAIL_SENDER_EMAIL;
+
+if (!REFRESH_TOKEN || !CLIENT_ID || !CLIENT_SECRET) {
+  throw new Error("❌ Thiếu cấu hình OAuth2 trong file .env");
 }
 
-function getNumberFromEnvironment(value, defaultValue) {
-  const parsedNumber = Number(value);
-  return Number.isFinite(parsedNumber) ? parsedNumber : defaultValue;
-}
+const oAuth2Client = new google.auth.OAuth2(
+  CLIENT_ID,
+  CLIENT_SECRET,
+  REDIRECT_URI
+);
 
-const smtpHost = process.env.EMAIL_HOST || "smtp.gmail.com";
-const smtpPort = getNumberFromEnvironment(process.env.EMAIL_PORT, 587);
-const smtpSecure = getBooleanFromEnvironment(process.env.EMAIL_SECURE, false);
-
-const emailUser = process.env.EMAIL_USER;
-const emailPass = process.env.EMAIL_PASS;
-const emailFrom = process.env.EMAIL_FROM || emailUser;
-
-if (!emailUser || !emailPass) {
-  console.error("Missing EMAIL_USER or EMAIL_PASS in environment variables.");
-}
-
-const mailTransporter = nodemailer.createTransport({
-  host: smtpHost,
-  port: smtpPort, // ✅ 587
-  secure: smtpSecure, // ✅ false for 587
-  auth: {
-    user: emailUser,
-    pass: emailPass, // ✅ Gmail App Password
-  },
-  // Helpful timeouts for cloud deploys
-  connectionTimeout: 10_000,
-  greetingTimeout: 10_000,
-  socketTimeout: 10_000,
-
-  // STARTTLS settings
-  requireTLS: true,
-
-  // Some environments can be picky; this helps avoid TLS handshake surprises
-  tls: {
-    minVersion: "TLSv1.2",
-  },
-});
+oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 
 export async function sendPasswordResetEmail(recipientEmail, resetUrl) {
-  if (!recipientEmail) {
-    throw new Error("recipientEmail is required");
+  if (!recipientEmail) throw new Error("recipientEmail is required");
+  if (!resetUrl) throw new Error("resetUrl is required");
+
+  try {
+    // 2. Lấy Access Token
+    const accessToken = await oAuth2Client.getAccessToken();
+
+    // 3. Tạo Transporter (SỬA ĐOẠN NÀY ĐỂ FIX LỖI TIMEOUT)
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com", // Thay vì service: 'gmail'
+      port: 587,              // Cổng chuẩn cho Cloud
+      secure: false,          // false cho cổng 587
+      auth: {
+        type: "OAuth2",
+        user: SENDER_EMAIL,
+        clientId: CLIENT_ID,
+        clientSecret: CLIENT_SECRET,
+        refreshToken: REFRESH_TOKEN,
+        accessToken: accessToken.token,
+      },
+      tls: {
+        rejectUnauthorized: false // Giúp tránh lỗi chứng chỉ trên Render
+      },
+      family: 4 // <--- QUAN TRỌNG NHẤT: Ép dùng IPv4 để không bị treo
+    });
+
+    // 4. Nội dung Email (Giữ nguyên của bạn)
+    const mailOptions = {
+      from: `"ShopWeb Support" <${SENDER_EMAIL}>`,
+      to: recipientEmail,
+      subject: "Khôi phục mật khẩu",
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+          <h2>Khôi phục mật khẩu</h2>
+          <p>Bấm vào nút bên dưới để đặt lại mật khẩu (link có hiệu lực 15 phút):</p>
+          <a href="${resetUrl}" style="background:#000;color:#fff;padding:10px 20px;text-decoration:none;border-radius:5px;">Đặt lại mật khẩu</a>
+          <p>Hoặc copy link: ${resetUrl}</p>
+        </div>
+      `,
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log("✅ Email sent:", result.messageId);
+    return result;
+
+  } catch (error) {
+    console.error("❌ Lỗi gửi email:", error);
+    throw error;
   }
-  if (!resetUrl) {
-    throw new Error("resetUrl is required");
-  }
-
-  // Optional: verify connection once (can be removed if you want)
-  // await mailTransporter.verify();
-
-  const subject = "Khôi phục mật khẩu";
-  const htmlContent = `
-    <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-      <h2>Khôi phục mật khẩu</h2>
-      <p>Anh vừa yêu cầu đặt lại mật khẩu.</p>
-      <p>Bấm vào nút bên dưới để đặt lại mật khẩu (link có hiệu lực 15 phút):</p>
-      <p>
-        <a href="${resetUrl}"
-           style="display:inline-block;padding:10px 16px;background:#111;color:#fff;text-decoration:none;border-radius:8px;">
-          Đặt lại mật khẩu
-        </a>
-      </p>
-      <p>Nếu nút không bấm được, copy link sau vào trình duyệt:</p>
-      <p style="word-break: break-all;">${resetUrl}</p>
-      <p>Nếu không phải Anh yêu cầu, có thể bỏ qua email này.</p>
-    </div>
-  `;
-
-  const mailOptions = {
-    from: emailFrom,
-    to: recipientEmail,
-    subject: subject,
-    html: htmlContent,
-  };
-
-  return await mailTransporter.sendMail(mailOptions);
 }
