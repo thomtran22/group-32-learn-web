@@ -11,6 +11,7 @@ import "../assets/css/shipper.css";
 import { toast } from "react-toastify";
 import axios from "axios";
 import LoginModal from "../components/login/LoginModal"; // Import LoginModal
+import Swal from 'sweetalert2';
 
 const ShipperDashboardContent = lazy(() =>
   import("../components/ship/ShipperDashboardContent")
@@ -147,16 +148,25 @@ const ShipperMainLayout = () => {
   }, [navigate]);
 
   const handleLogout = () => {
-    const confirmLogout = window.confirm(
-      "Bạn có chắc chắn muốn đăng xuất tài khoản Shipper?"
-    );
-    if (confirmLogout) {
-      localStorage.removeItem("token");
-      sessionStorage.clear();
+    (async () => {
+      const result = await Swal.fire({
+        title: 'Bạn có chắc chắn muốn đăng xuất tài khoản Shipper?',
+        text: 'Bạn sẽ bị đăng xuất khỏi hệ thống.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Đăng xuất',
+        cancelButtonText: 'Hủy',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6'
+      });
 
-      toast.success("Đã đăng xuất thành công!");
-      navigate("/");
-    }
+      if (result.isConfirmed) {
+        localStorage.removeItem("token");
+        sessionStorage.clear();
+        toast.success("Đã đăng xuất thành công!");
+        navigate("/");
+      }
+    })();
   };
 
   const getActiveContent = (pathname) => {

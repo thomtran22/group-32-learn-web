@@ -4,6 +4,7 @@ import { apiGetAllProductsAdmin, apiCreateProduct, apiDeleteProduct, apiUpdatePr
 import { toast } from 'react-toastify'; // Thông báo góc màn hình
 import 'react-toastify/dist/ReactToastify.css'; // CSS cho toast
 import axios from 'axios'; // Import axios
+import Swal from 'sweetalert2';
 
 const ProductManagement = () => {
     const [products, setProducts] = useState([]);
@@ -193,14 +194,25 @@ const ProductManagement = () => {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm("Bạn chắc chắn muốn xóa?")) {
-            try {
-                await apiDeleteProduct(id);
-                toast.success("Xóa sản phẩm thành công!");
-                fetchProducts();
-            } catch (error) {
-                toast.error("Xóa thất bại");
-            }
+        try {
+            const result = await Swal.fire({
+                title: 'Bạn chắc chắn muốn xóa?',
+                text: 'Hành động này sẽ xóa sản phẩm vĩnh viễn.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy'
+            });
+
+            if (!result.isConfirmed) return;
+
+            await apiDeleteProduct(id);
+            toast.success('Xóa sản phẩm thành công!');
+            fetchProducts();
+        } catch (error) {
+            toast.error('Xóa thất bại');
         }
     };
 
