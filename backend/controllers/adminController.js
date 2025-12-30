@@ -7,6 +7,23 @@ import { differenceInDays, startOfDay, endOfDay } from 'date-fns';
 import mongoose from 'mongoose';
 import redisClient from '../config/redis.js';
 
+
+const clearProductCache = async () => {
+    // Nếu Redis client đã kết nối
+    if (redisClient && redisClient.isOpen) {
+        try {
+            // Tìm tất cả keys bắt đầu bằng products:
+            const keys = await redisClient.keys('products:*');
+            if (keys.length > 0) {
+                // Xóa các key này
+                await redisClient.del(keys);
+            }
+        } catch (err) {
+            console.error('Redis Clear Error:', err);
+        }
+    }
+}
+
 // --- DASHBOARD ---
 export const getDashboardStats = async (req, res) => {
     try {
@@ -232,9 +249,7 @@ export const updateOrderStatus = async (req, res) => {
 
         // Xóa cache thống kê khi đơn hàng thay đổi trạng thái
         if (redisClient && redisClient.isOpen) {
-            // Xóa dashboard stats
             await redisClient.del('admin:dashboard');
-            // Xóa tất cả các cache revenue (dùng pattern match nếu cần, ở đây xóa all key admin:revenue*)
             const keys = await redisClient.keys('admin:revenue:*');
             if (keys.length > 0) await redisClient.del(keys);
         }
@@ -246,7 +261,6 @@ export const updateOrderStatus = async (req, res) => {
 };
 
 // --- PRODUCTS  ---
-
 export const getAllProducts = async (req, res) => {
     try {
         const { page = 1, limit = 10, search } = req.query; // Default limit 10 for better pagination view
@@ -283,23 +297,6 @@ export const getAllProducts = async (req, res) => {
     }
 };
 
-const clearProductCache = async () => {
-    // Nếu Redis client đã kết nối
-    if (redisClient && redisClient.isOpen) {
-        try {
-            // Tìm tất cả keys bắt đầu bằng products:
-            const keys = await redisClient.keys('products:*');
-            if (keys.length > 0) {
-                // Xóa các key này
-                await redisClient.del(keys);
-                console.log('🧹 Cleared Product Cache:', keys.length, 'keys');
-            }
-        } catch (err) {
-            console.error('Redis Clear Error:', err);
-        }
-    }
-}
-
 export const createProduct = async (req, res) => {
     try {
         const { sku, variants, images, description, name, price, category } = req.body;
@@ -309,20 +306,18 @@ export const createProduct = async (req, res) => {
 
         if (existingProduct) {
             // --- SẢN PHẨM ĐÃ TỒN TẠI ---
-
             // Gộp biến thể (Variants)
             // Duyệt qua các biến thể mới được gửi lên
             variants.forEach(newVar => {
-                // Kiểm tra xem cặp màu + size này đã có trong DB chưa
                 const duplicateIndex = existingProduct.variants.findIndex(
                     v => v.color === newVar.color && v.size === newVar.size
                 );
 
                 if (duplicateIndex > -1) {
-                    // Nếu đã có (VD: Đỏ - L), thì cộng dồn số lượng
+                    // Nếu đã có thì cộng dồn số lượng
                     existingProduct.variants[duplicateIndex].quantity += newVar.quantity;
                 } else {
-                    // Nếu chưa có (VD: Xanh - M), thì push vào mảng
+                    // Nếu chưa có thì push vào mảng
                     existingProduct.variants.push(newVar);
                 }
             });
@@ -334,32 +329,28 @@ export const createProduct = async (req, res) => {
                 existingProduct.images = [...existingProduct.images, ...newImages];
             }
 
-            // Cập nhật các thông tin khác (Tùy chọn: có thể cập nhật đè hoặc giữ nguyên)
-            // VCập nhật giá mới nhất nếu admin đổi giá
+            // Cập nhật các thông tin khác
+            // Cập nhật giá mới nhất nếu admin đổi giá
             existingProduct.price = price;
             existingProduct.name = name;
             if (description) existingProduct.description = description;
 
             await existingProduct.save();
 
+            await clearProductCache(sku);
+
             return res.json({
                 success: true,
                 message: 'Đã cập nhật thêm biến thể vào sản phẩm cũ!',
                 product: existingProduct
             });
-
-            await clearProductCache(); // Xóa cache
-            return res.json({
-                success: true,
-                message: 'Đã cập nhật thêm biến thể vào sản phẩm cũ!',
-                product: existingProduct
-            });
-
         } else {
             // --- SP MỚI ---
             const newProduct = new Product(req.body);
             await newProduct.save();
+
             await clearProductCache(); // Xóa cache
+
             return res.json({
                 success: true,
                 message: 'Tạo sản phẩm mới thành công',
@@ -381,14 +372,14 @@ export const updateProduct = async (req, res) => {
             { new: true, runValidators: true }
         );
 
-        await clearProductCache(); // Xóa cache
-
         if (!product) {
             return res.status(404).json({
                 success: false,
                 message: 'Không tìm thấy sản phẩm'
             });
         }
+
+        await clearProductCache(product.sku);
 
         res.json({
             success: true,
@@ -402,8 +393,12 @@ export const updateProduct = async (req, res) => {
 
 export const deleteProduct = async (req, res) => {
     try {
-        await Product.findByIdAndDelete(req.params.productId);
-        await clearProductCache(); // Xóa cache
+        const product = await Product.findByIdAndDelete(req.params.productId);
+        if (product) {
+            // Xóa cache list và cache chi tiết của SKU vừa xoá
+            await clearProductCache(product.sku);
+        }
+        
         res.json({ success: true, message: 'Xóa sản phẩm thành công' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

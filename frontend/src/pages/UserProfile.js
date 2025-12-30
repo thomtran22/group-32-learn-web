@@ -165,15 +165,8 @@ const UserProfile = () => {
     <div className="user-profile-container">
       <div className="user-profile-sidebar">
         <h3 className="sidebar-title">Quản lý Tài khoản</h3>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            height: "100%",
-            justifyContent: "space-between",
-          }}
-        >
-          <div>
+         <div className="sidebar-menu-wrapper"> 
+          <div className="sidebar-menu-list">
             {menuItems.map((item) => (
               <SidebarItem
                 key={item.id}
@@ -184,14 +177,8 @@ const UserProfile = () => {
             ))}
           </div>
 
-          <div
-            className="sidebar-item"
+          <div className="sidebar-item sidebar-logout"
             onClick={handleLogout}
-            style={{
-              marginTop: "20px",
-              color: "var(--primary-color)",
-              borderTop: "1px solid #eee",
-            }}
           >
             <FaSignOutAlt className="sidebar-item-icon" />
             Đăng xuất

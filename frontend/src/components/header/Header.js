@@ -101,15 +101,8 @@ function Header() {
 
   return (
     <>
-      {/* Top Header*/}
-      {/* <div className="bg-[#111] py-2.5 text-center text-[11px] text-gray-300 font-light tracking-widest uppercase">
-  <div className="container mx-auto px-4">
-    Free shipping cho đơn hàng từ 500k • Hotline: 0973 285 886
-  </div>
-</div> */}
-
       {/* Main Header */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)]">
+      <header className="sticky top-0 z-[1000] bg-white/95 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)]">
         <div className="container mx-auto px-4 md:px-6 max-w-[1200px]">
           <div className="inner-wrap py-2">
 
