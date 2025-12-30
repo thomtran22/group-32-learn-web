@@ -50,6 +50,7 @@ const createOrder = async (req, res) => {
     paymentMethod, // COD / BANKING / VNPAY
   } = req.body;
 
+  const changedProductSkus = [];
   try {
     if (!orderItems || orderItems.length === 0) {
       return res.status(400).json({

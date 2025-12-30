@@ -27,3 +27,5 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 backend/users_credentials.txt
+backend/seeder.js
+backend/seed_dashboard.js
