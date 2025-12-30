@@ -4,7 +4,7 @@ import colors from 'colors';
 import bcrypt from 'bcryptjs';
 import categories from './data/categories.js';
 import products from './data/products.js';
-import users from './data/users.js';
+import users from './users_seed_temp.js';
 import Category from './models/CategoryModel.js';
 import Product from './models/ProductModel.js';
 import User from './models/UserModel.js';

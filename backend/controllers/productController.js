@@ -3,6 +3,8 @@ import Product from '../models/ProductModel.js';
 import Category from '../models/CategoryModel.js';
 import mongoose from 'mongoose';
 
+import redisClient from '../config/redis.js';
+
 // Middleware kiểm tra shipper không được xem trang chủ
 const checkShipperAccess = (req, res) => {
     if (req.user?.role === 'shipper') {
@@ -20,7 +22,7 @@ export const getProducts = asyncHandler(async (req, res) => {
     if (shipperError) return;
 
     const { category: categorySlug, size, sort, page: pageQuery, priceRange } = req.query;
-    
+
     const page = parseInt(pageQuery) || 1;
     const limit = 12;
     const skip = (page - 1) * limit;
@@ -34,13 +36,13 @@ export const getProducts = asyncHandler(async (req, res) => {
         if (categoryDoc) {
             // Tìm tất cả ID của danh mục con
             const childCategories = await Category.find({ parent: categoryDoc._id }).lean();
-            
+
             // Gom mảng ID chuẩn kiểu ObjectId
             const allCategoryIds = [
-                categoryDoc._id, 
+                categoryDoc._id,
                 ...childCategories.map(c => c._id)
             ];
-            
+
             // Lọc sản phẩm khớp với danh sách ID này
             filter.category = { $in: allCategoryIds };
 
@@ -68,6 +70,23 @@ export const getProducts = asyncHandler(async (req, res) => {
         }
     }
 
+    // --- REDIS CACHE START ---
+    const cacheKey = `products:${JSON.stringify(req.query)}`; // Tạo key duy nhất dựa trên query params
+
+    // Nếu Redis client đã kết nối, thử lấy cache
+    if (redisClient && redisClient.isOpen) {
+        try {
+            const cachedData = await redisClient.get(cacheKey);
+            if (cachedData) {
+                console.log("⚡ Fetching from Redis Cache");
+                return res.json(JSON.parse(cachedData));
+            }
+        } catch (err) {
+            console.error("Redis Get Error:", err);
+        }
+    }
+    // --- REDIS CACHE END ---
+
     // Truy vấn và đếm sản phẩm
     const count = await Product.countDocuments(filter);
     const products = await Product.find(filter)
@@ -82,6 +101,21 @@ export const getProducts = asyncHandler(async (req, res) => {
         pages: Math.ceil(count / limit) || 1,
         count: count || 0
     });
+
+    // --- SAVE TO REDIS ---
+    if (redisClient && redisClient.isOpen) {
+        try {
+            // Lưu cache trong 600 giây (10 phút)
+            await redisClient.setEx(cacheKey, 600, JSON.stringify({
+                products: products || [],
+                page,
+                pages: Math.ceil(count / limit) || 1,
+                count: count || 0
+            }));
+        } catch (err) {
+            console.error("Redis Set Error:", err);
+        }
+    }
 });
 
 export const getProductBySku = asyncHandler(async (req, res) => {
@@ -100,33 +134,33 @@ export const getProductBySku = asyncHandler(async (req, res) => {
 
 // Thêm vào productController.js
 export const searchProducts = async (req, res) => {
-  try {
-    // Kiểm tra nếu là shipper thì từ chối
-    if (req.user?.role === 'shipper') {
-        return res.status(403).json({
-            success: false,
-            message: "Shipper không được phép tìm kiếm sản phẩm"
-        });
+    try {
+        // Kiểm tra nếu là shipper thì từ chối
+        if (req.user?.role === 'shipper') {
+            return res.status(403).json({
+                success: false,
+                message: "Shipper không được phép tìm kiếm sản phẩm"
+            });
+        }
+
+        const keyword = req.query.q; // Lấy từ khóa người dùng gõ từ URL ?q=...
+
+        if (!keyword) {
+            return res.status(200).json([]);
+        }
+
+        // Tìm kiếm trong database bằng Regex (không phân biệt hoa thường)
+        const products = await Product.find({
+            $or: [
+                { name: { $regex: keyword, $options: 'i' } },
+                { sku: { $regex: keyword, $options: 'i' } }
+            ]
+        })
+            .select('name price images sku') // Chỉ lấy các trường cần thiết để load nhanh
+            .limit(8); // Chỉ lấy tối đa 8 kết quả cho gợi ý nhanh
+
+        res.status(200).json(products);
+    } catch (error) {
+        res.status(500).json({ message: "Lỗi Server", error: error.message });
     }
-
-    const keyword = req.query.q; // Lấy từ khóa người dùng gõ từ URL ?q=...
-
-    if (!keyword) {
-      return res.status(200).json([]);
-    }
-
-    // Tìm kiếm trong database bằng Regex (không phân biệt hoa thường)
-    const products = await Product.find({
-      $or: [
-        { name: { $regex: keyword, $options: 'i' } },
-        { sku: { $regex: keyword, $options: 'i' } }
-      ]
-    })
-    .select('name price images sku') // Chỉ lấy các trường cần thiết để load nhanh
-    .limit(8); // Chỉ lấy tối đa 8 kết quả cho gợi ý nhanh
-
-    res.status(200).json(products);
-  } catch (error) {
-    res.status(500).json({ message: "Lỗi Server", error: error.message });
-  }
 };

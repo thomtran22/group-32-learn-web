@@ -6,6 +6,19 @@ import crypto from "crypto";
 import querystring from "qs";
 import moment from "moment";
 import { get } from "http";
+import redisClient from "../config/redis.js";
+
+const clearAdminCache = async () => {
+  if (redisClient && redisClient.isOpen) {
+    try {
+      await redisClient.del('admin:dashboard');
+      const keys = await redisClient.keys('admin:revenue:*');
+      if (keys.length > 0) await redisClient.del(keys);
+    } catch (error) {
+      console.error('Redis Clear Error:', error);
+    }
+  }
+};
 
 const createOrder = async (req, res) => {
   const userId = req.user?.id;
@@ -88,8 +101,13 @@ const createOrder = async (req, res) => {
         updateOne: {
           filter: {
             _id: dbProduct._id,
-            "variants.color": item.color,
-            "variants.size": item.size,
+            variants: {
+              $elemMatch: {
+                color: item.color,
+                size: item.size,
+                quantity: { $gte: item.quantity },
+              },
+            },
           },
           update: {
             $inc: { "variants.$.quantity": -item.quantity },
@@ -133,14 +151,20 @@ const createOrder = async (req, res) => {
     }
 
     if (userId) {
-      const boughtProductIds = orderItems.map((item) => item.itemId);
+      // Dùng productId từ request (nếu có) hoặc tìm lại từ items
+      // orderItems ở đây là req.body.orderItems.
+      // Cần chắc chắn nó chứa itemId (cart item id) để filter.
+      // Nếu frontend gửi lên: [{ productId, quantity, color, size, itemId }, ...]
+      const boughtItemIds = orderItems
+        .map((item) => item.itemId)
+        .filter((id) => id); // Lọc null/undefined
       const userCart = await Cart.findOne({ userId }).populate(
         "items.productId"
       );
 
       if (userCart) {
         const remainingItems = userCart.items.filter(
-          (cartItem) => !boughtProductIds.includes(cartItem._id.toString())
+          (cartItem) => !boughtItemIds.includes(cartItem._id.toString())
         );
 
         let newTotal = 0;
@@ -175,7 +199,10 @@ const getOrderAvail = async (req, res) => {
   try {
     const orders = await Order.find({
       shipperId: null,
-      status: { $in: ["Pending", "Processing"] },
+      $or: [
+        { paymentMethod: "COD", status: "Pending" },
+        { status: "Processing" },
+      ],
     }).sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
@@ -337,8 +364,12 @@ const vnpayReturn = async (req, res) => {
           order.isPaid = true;
           order.paidAt = Date.now();
 
-          // Thanh toán xong thì chờ Shipper nhận đơn
-          order.status = "Processing";
+          // Chỉ chuyển trạng thái sang Processing nếu đơn đang Pending
+          // Nếu đơn đã Cancelled thì giữ nguyên (cần xử lý hoàn tiền thủ công hoặc logic khác)
+          // Nếu đơn đã Shipping (Shipper nhận trước khi thanh toán về) thì giữ nguyên status Shipping
+          if (order.status === "Pending") {
+            order.status = "Processing";
+          }
 
           order.paymentResult = {
             id: vnp_Params["vnp_TransactionNo"],

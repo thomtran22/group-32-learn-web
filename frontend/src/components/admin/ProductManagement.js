@@ -9,6 +9,12 @@ const ProductManagement = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [pagination, setPagination] = useState({
+        page: 1,
+        limit: 10,
+        total: 0,
+        pages: 1
+    });
 
     // --- 1. MỚI: State lưu danh sách danh mục và edit id ---
     const [categories, setCategories] = useState([]);
@@ -30,18 +36,35 @@ const ProductManagement = () => {
 
     useEffect(() => {
         fetchProducts();
-        fetchCategories(); // --- 3. MỚI: Gọi hàm lấy danh mục khi component load ---
+    }, [pagination.page]);
+
+    useEffect(() => {
+        fetchCategories();
     }, []);
 
     const fetchProducts = async () => {
         setLoading(true);
         try {
-            const res = await apiGetAllProductsAdmin({ limit: 50 });
-            if (res.success) setProducts(res.products);
+            const res = await apiGetAllProductsAdmin({
+                limit: pagination.limit,
+                page: pagination.page
+            });
+            if (res.success) {
+                setProducts(res.products);
+                if (res.pagination) {
+                    setPagination(prev => ({ ...prev, ...res.pagination }));
+                }
+            }
         } catch (error) {
             console.error(error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handlePageChange = (newPage) => {
+        if (newPage >= 1 && newPage <= pagination.pages) {
+            setPagination(prev => ({ ...prev, page: newPage }));
         }
     };
 
@@ -258,6 +281,34 @@ const ProductManagement = () => {
                     </tbody>
                 </table>
             </div>
+
+            {/* Pagination Controls */}
+            {pagination.pages > 1 && (
+                <div className="flex justify-between items-center mt-4 px-2">
+                    {/* <div className="text-sm text-gray-500">
+                        Hiển thị {products.length} / {pagination.total} sản phẩm
+                    </div> */}
+                    <div className="flex gap-2 items-center">
+                        <button
+                            disabled={pagination.page === 1}
+                            onClick={() => handlePageChange(pagination.page - 1)}
+                            className="px-3 py-1 border rounded text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Trước
+                        </button>
+                        <span className="text-sm font-medium">
+                            Trang {pagination.page} / {pagination.pages}
+                        </span>
+                        <button
+                            disabled={pagination.page === pagination.pages}
+                            onClick={() => handlePageChange(pagination.page + 1)}
+                            className="px-3 py-1 border rounded text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Sau
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Modal Create */}
             {showModal && (
